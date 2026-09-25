@@ -15,17 +15,17 @@ Settings: Options > Mod settings > Verbal Commands.
 
 - Supported models (docs, 2026-09-02): `claude-fable-5-1`, `claude-mythos-5-1`, `claude-fable-5`, `claude-mythos-5`, `claude-mythos-preview`, `claude-opus-5`, `claude-opus-4-8`, `claude-opus-4-7`, `claude-opus-4-6`, `claude-opus-4-5-20251101`, `claude-sonnet-5`, `claude-sonnet-4-6`.
 
-The detection is a substring match on the API error message ("effort" / "output_config"), because Anthropic does not document the exact wording of that rejection. Only one retry is made, and only when the mod actually sent `output_config`.
-
-Sources: https://platform.claude.com/docs/en/build-with-claude/effort and https://platform.claude.com/docs/en/api/errors
+Currently, Medium/High setting is used on to test on Opus 5, 5.5 and Sonnet 5. Haiku 4.5 does not support this, and even with extended reasoning it does not fully do the task it was told to do (but it can do *some* of it accurately when attention goes to it). This likely means we can potentially make a rule where haiku can be used for certain stuff by only being shown small part of actual data instead of in its entirety.
 
 ## Headless mode
 
-`Use Claude Code CLI` runs `claude -p` with your existing Claude Code login instead of an API key. Effort is passed to the CLI as `--effort` unchanged; the fallback above applies to API mode only.
+`Use Claude Code CLI` runs `claude -p` with your existing Claude Code login instead of an API key. Effort is passed to the CLI as `--effort` unchanged; the fallback above applies to API mode only. Expect claude -p to take longer for setup, a console account (or local llm after user testing) is recommended if user wants speed.
 
 ## Pawn groups
 
 Say something like "group 3 = everyone holding a rifle with range 25 or more; call it long guns" and the mod stores a RULE (weapon class, range, an explicit allow-list of weapon defNames, always-include/exclude pawns, and whether unarmed colonists count) in one of 9 hotkey slots. It does **not** store a fixed list of pawns.
+
+example prompt: "Pawns who hold sniper rifle or charge lance or other long range weapons will have group 1, medium range weapons such as assault rifles and charge rifles will have group 2, shorter range weapons such as pistols group 3, short range weapons as shotguns as group 4, melee as group 5, special weapons (staffs, insanity lance, etc) as group 6, barehanded as group 7.
 
 Pressing that slot's key evaluates the rule against colonists' **current** equipment and selects the matches, live, with no LLM call at keypress. Holding **Alt** while pressing the key also drafts every matched pawn that can be drafted (has a draft controller, is not downed, and is not already drafted); downed pawns are still selected but never drafted.
 
@@ -36,7 +36,7 @@ The first time a group is defined, a dialog asks whether to bind the group keys:
 
 Options > Mod settings > Verbal Commands has a "Choose group hotkeys…" button to re-run that prompt, and a "Restore vanilla tab keys (F1-F9)" button that undoes an F-key binding and clears every group key.
 
-## Voice input
+## Voice input (still being tested, to be updated)
 
 Voice uses a bundled **offline** English speech model (sherpa-onnx streaming zipformer) - no internet
 connection needed, and no audio ever leaves your machine. This replaced Windows' own speech
@@ -73,11 +73,6 @@ the debug log as usual and does **not** toggle voice - in dev mode, the voice to
 changeable in Options > Mod settings > Verbal Commands, or by clicking the mic icon (which rebinds
 whichever of the two is currently active).
 
-The first time you enter a game with dev mode on and the two keys still colliding (i.e. you haven't
-rebound either one), a one-time notice explains this and points at the dev-mode key. It has a "Don't
-remind me" checkbox, ticked by default, so it only appears again if you untick it before closing. You
-can also turn the reminder back on any time from Mod settings.
-
 ### Saved transcripts (opt-in, off by default)
 
 Options > Mod settings > Verbal Commands has a "Save sent orders to transcripts.jsonl (for checking
@@ -94,7 +89,8 @@ this mod never reads or writes anything there.
 ### Third-party notices
 
 - **sherpa-onnx** (`org.k2fsa.sherpa.onnx` and `org.k2fsa.sherpa.onnx.runtime.win-x64`, both version
-  1.13.8, © Xiaomi Corporation) - Apache License 2.0, per both packages' `.nuspec`
+  1.13.8, © Xiaomi Corporation) - Apache License 2.0, per both packages' `.nuspec` 
+  *(Currently not included in github files, since it is being tested)
   (`<license type="expression">Apache-2.0</license>`). Source: https://github.com/k2-fsa/sherpa-onnx
 - **onnxruntime.dll** - bundled as a native binary inside the sherpa-onnx runtime package with no
   separate license file included in it; upstream project (Microsoft) is
