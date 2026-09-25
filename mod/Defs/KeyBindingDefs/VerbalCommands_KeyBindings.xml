@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <KeyBindingDef>
+    <defName>VerbalCommands_Open</defName>
+    <label>open verbal commands</label>
+    <category>Game</category>
+    <defaultKeyCodeA>Return</defaultKeyCodeA>
+  </KeyBindingDef>
+
+  <!-- Voice dictation auto-start/stop toggle (brief 07). Category Game, same as VerbalCommands_Open.
+       defaultKeyCodeA BackQuote is the ~ key (Verse/GenText.cs:1363 maps KeyCode.BackQuote to "`").
+       NOTE (see build report): Game's checkForConflicts list includes Development
+       (mod\Defs\KeyBindingDefs is unaffected; this is vanilla data at
+       Data\Core\Defs\Misc\KeyBindings\KeyBindingCategories.xml), and vanilla's Dev_ToggleDebugLog
+       (category Development, KeyBindings.xml:395-399) also defaults to BackQuote. KeyPrefsData.ErrorCheck
+       (Verse/KeyPrefsData.cs:65-74) will log a "Key binding conflict" warning for this pair at startup,
+       but will NOT clear either binding, because both keys are already at their own default (the
+       auto-fix only fires when a binding differs from its default). This is expected and documented in
+       the build report, not a bug. -->
+  <KeyBindingDef>
+    <defName>VerbalCommands_VoiceToggle</defName>
+    <label>verbal commands: toggle voice dictation</label>
+    <category>Game</category>
+    <defaultKeyCodeA>BackQuote</defaultKeyCodeA>
+  </KeyBindingDef>
+
+  <!-- Dev-mode voice toggle (brief 08). In dev mode, Verse/DebugWindowsOpener.cs:22-33 consumes
+       BackQuote for KeyBindingDefOf.Dev_ToggleDebugLog before our GameComponentOnGUI ever runs
+       (Verse/UIRoot.cs:50 debugWindowOpener.DevToolStarterOnGUI() vs :66
+       GameComponentUtility.GameComponentOnGUI()), so voice needs a second key that is only active
+       while Prefs.DevMode is true. defaultKeyCodeA Backslash: checked against
+       E:\STEAM\steamapps\common\RimWorld\Data for any defaultKeyCodeA/B or defaultHotKey using
+       Backslash - none found. Same category as VerbalCommands_VoiceToggle, so the same
+       "both already at default" non-clearing conflict-warning note above applies if it ever
+       collides with something else at its own default. -->
+  <KeyBindingDef>
+    <defName>VerbalCommands_VoiceToggleDev</defName>
+    <label>verbal commands: toggle voice dictation (dev mode)</label>
+    <category>Game</category>
+    <defaultKeyCodeA>Backslash</defaultKeyCodeA>
+  </KeyBindingDef>
+
+  <!-- Pawn group hotkeys (brief 04). defaultKeyCodeA is deliberately None: nothing is bound
+       until the player consents via GroupHotkeyLayout.PromptIfUnset or the settings buttons. -->
+  <KeyBindingDef>
+    <defName>VerbalCommands_Group1</defName>
+    <label>verbal commands: group 1 (Alt = draft)</label>
+    <category>Game</category>
+    <defaultKeyCodeA>None</defaultKeyCodeA>
+  </KeyBindingDef>
+  <KeyBindingDef>
+    <defName>VerbalCommands_Group2</defName>
+    <label>verbal commands: group 2 (Alt = draft)</label>
+    <category>Game</category>
+    <defaultKeyCodeA>None</defaultKeyCodeA>
+  </KeyBindingDef>
+  <KeyBindingDef>
+    <defName>VerbalCommands_Group3</defName>
+    <label>verbal commands: group 3 (Alt = draft)</label>
+    <category>Game</category>
+    <defaultKeyCodeA>None</defaultKeyCodeA>
+  </KeyBindingDef>
+  <KeyBindingDef>
+    <defName>VerbalCommands_Group4</defName>
+    <label>verbal commands: group 4 (Alt = draft)</label>
+    <category>Game</category>
+    <defaultKeyCodeA>None</defaultKeyCodeA>
+  </KeyBindingDef>
+  <KeyBindingDef>
+    <defName>VerbalCommands_Group5</defName>
+    <label>verbal commands: group 5 (Alt = draft)</label>
+    <category>Game</category>
+    <defaultKeyCodeA>None</defaultKeyCodeA>
+  </KeyBindingDef>
+  <KeyBindingDef>
+    <defName>VerbalCommands_Group6</defName>
+    <label>verbal commands: group 6 (Alt = draft)</label>
+    <category>Game</category>
+    <defaultKeyCodeA>None</defaultKeyCodeA>
+  </KeyBindingDef>
+  <KeyBindingDef>
+    <defName>VerbalCommands_Group7</defName>
+    <label>verbal commands: group 7 (Alt = draft)</label>
+    <category>Game</category>
+    <defaultKeyCodeA>None</defaultKeyCodeA>
+  </KeyBindingDef>
+  <KeyBindingDef>
+    <defName>VerbalCommands_Group8</defName>
+    <label>verbal commands: group 8 (Alt = draft)</label>
+    <category>Game</category>
+    <defaultKeyCodeA>None</defaultKeyCodeA>
+  </KeyBindingDef>
+  <KeyBindingDef>
+    <defName>VerbalCommands_Group9</defName>
+    <label>verbal commands: group 9 (Alt = draft)</label>
+    <category>Game</category>
+    <defaultKeyCodeA>None</defaultKeyCodeA>
+  </KeyBindingDef>
+</Defs>

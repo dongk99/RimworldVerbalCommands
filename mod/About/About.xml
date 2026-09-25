@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>Verbal Commands</name>
+  <author>kopaz</author>
+  <packageId>kopaz.verbalcommands</packageId>
+  <supportedVersions>
+    <li>1.6</li>
+  </supportedVersions>
+  <description>Type a colony order in plain language; an LLM (Anthropic Messages API) turns it into schedule, allowed-area and work-priority changes, which the mod applies through the game's own API. Requires your own Anthropic API key (Options > Mod settings).</description>
+</ModMetaData>

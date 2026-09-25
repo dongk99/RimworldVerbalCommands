@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <VerbalCommands_WindowTitle>Verbal Commands</VerbalCommands_WindowTitle>
+  <VerbalCommands_Send>Send</VerbalCommands_Send>
+  <VerbalCommands_Apply>Apply</VerbalCommands_Apply>
+  <VerbalCommands_Cancel>Cancel</VerbalCommands_Cancel>
+  <VerbalCommands_Close>Close</VerbalCommands_Close>
+  <VerbalCommands_Placeholder>Type an order for the colony…</VerbalCommands_Placeholder>
+  <VerbalCommands_NoApiKey>No API key set. Options > Mod settings > Verbal Commands.</VerbalCommands_NoApiKey>
+  <VerbalCommands_Settings_ApiKey>Anthropic API key</VerbalCommands_Settings_ApiKey>
+  <VerbalCommands_Settings_Headless>Use Claude Code CLI instead of an API key (no key needed; uses your Claude Code login)</VerbalCommands_Settings_Headless>
+  <VerbalCommands_Settings_ClaudePath>Path to claude.exe (blank = auto-detect)</VerbalCommands_Settings_ClaudePath>
+  <VerbalCommands_Settings_Model>Model</VerbalCommands_Settings_Model>
+  <VerbalCommands_Settings_Effort>Effort (low/medium/high/xhigh/max; see README)</VerbalCommands_Settings_Effort>
+  <VerbalCommands_Settings_MaxTokens>Max output tokens</VerbalCommands_Settings_MaxTokens>
+  <VerbalCommands_Settings_Timeout>Request timeout (seconds)</VerbalCommands_Settings_Timeout>
+  <VerbalCommands_Settings_Confirm>Show parsed intent and ask before applying</VerbalCommands_Settings_Confirm>
+  <VerbalCommands_Settings_ExplainErrors>Ask the LLM to explain faults (one extra request)</VerbalCommands_Settings_ExplainErrors>
+  <VerbalCommands_Settings_Extra>Extra system prompt text</VerbalCommands_Settings_Extra>
+  <VerbalCommands_Settings_GroupLayout>Group hotkey layout</VerbalCommands_Settings_GroupLayout>
+  <VerbalCommands_Settings_ChooseGroupKeys>Choose group hotkeys…</VerbalCommands_Settings_ChooseGroupKeys>
+  <VerbalCommands_Settings_RestoreVanillaKeys>Restore vanilla tab keys (F1-F9)</VerbalCommands_Settings_RestoreVanillaKeys>
+  <VerbalCommands_GroupEmptySlot>Group slot {0} is empty.</VerbalCommands_GroupEmptySlot>
+  <VerbalCommands_PromptTitle>Verbal Commands: pawn group hotkeys</VerbalCommands_PromptTitle>
+  <VerbalCommands_PromptFKeys>Verbal Commands can bind F1-F9 to pawn groups 1-9 (Alt+key drafts). Those keys currently toggle the Work, Schedule, Assign, Animals, Wildlife, Research, Quests, World and History tabs; the tabs stay clickable, only the shortcut is removed. This is reversible in Mod settings. Unbind them?</VerbalCommands_PromptFKeys>
+  <VerbalCommands_PromptFKeysYes>Yes, use F1-F9</VerbalCommands_PromptFKeysYes>
+  <VerbalCommands_PromptFKeysNo>No</VerbalCommands_PromptFKeysNo>
+  <VerbalCommands_PromptNumberRow>Use the number row 5, 6, 7, 8, 9, 0 for groups 1-6 instead? (Unbound in vanilla and Defensive Positions; 3 slots fewer.)</VerbalCommands_PromptNumberRow>
+  <VerbalCommands_PromptNumberRowYes>Yes</VerbalCommands_PromptNumberRowYes>
+  <VerbalCommands_PromptNumberRowNo>No, I'll bind keys myself in Options &gt; Keyboard</VerbalCommands_PromptNumberRowNo>
+  <VerbalCommands_VoiceStateOn>Voice: listening</VerbalCommands_VoiceStateOn>
+  <VerbalCommands_VoiceStateOff>Voice: off</VerbalCommands_VoiceStateOff>
+  <VerbalCommands_VoiceStateLoading>Voice: loading model…</VerbalCommands_VoiceStateLoading>
+  <VerbalCommands_VoiceStateError>Voice: off ({0})</VerbalCommands_VoiceStateError>
+  <VerbalCommands_SttError>Voice input error: {0}</VerbalCommands_SttError>
+  <VerbalCommands_VoiceToggleKeyLabel>Toggle key: {0}</VerbalCommands_VoiceToggleKeyLabel>
+  <VerbalCommands_VoiceClickToChangeKey>Click to change key</VerbalCommands_VoiceClickToChangeKey>
+  <VerbalCommands_Settings_VoiceEnabled>Voice dictation on by default</VerbalCommands_Settings_VoiceEnabled>
+  <VerbalCommands_Settings_VoiceToggleEverywhere>Voice toggle key (~) works everywhere, not just in the dialog</VerbalCommands_Settings_VoiceToggleEverywhere>
+  <VerbalCommands_Settings_SaveTranscripts>Save sent orders to transcripts.jsonl (for checking voice accuracy)</VerbalCommands_Settings_SaveTranscripts>
+  <VerbalCommands_Settings_VoiceToggleKey>Voice toggle key</VerbalCommands_Settings_VoiceToggleKey>
+  <VerbalCommands_Settings_VoiceToggleKeyDev>Voice toggle key (dev mode)</VerbalCommands_Settings_VoiceToggleKeyDev>
+  <VerbalCommands_Settings_ChangeKey>Change…</VerbalCommands_Settings_ChangeKey>
+  <VerbalCommands_Settings_RemindDevModeNotice>Remind me about the dev-mode voice key</VerbalCommands_Settings_RemindDevModeNotice>
+  <VerbalCommands_DevModeNotice_Title>Verbal Commands: dev mode changes the voice toggle key</VerbalCommands_DevModeNotice_Title>
+  <VerbalCommands_DevModeNotice_Body>Dev mode is on, so ~ (BackQuote) opens the debug log and no longer toggles voice dictation.\n\nIn dev mode, the voice toggle is {0} by default.\n\nBoth keys can be changed in Options &gt; Mod settings &gt; Verbal Commands.</VerbalCommands_DevModeNotice_Body>
+  <VerbalCommands_DevModeNotice_DontRemind>Don't remind me</VerbalCommands_DevModeNotice_DontRemind>
+  <VerbalCommands_DevModeNotice_CloseTooltip>The mod folder's README.md has tips for things like this.</VerbalCommands_DevModeNotice_CloseTooltip>
+</LanguageData>
