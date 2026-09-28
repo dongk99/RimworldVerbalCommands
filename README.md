@@ -47,7 +47,7 @@ Weapon groups, work priority based on skill.
 ## Tests needing to be done:
 
 zoning based on pawn stats (so they dont waste time wandering around outside their jobsites), and eval metrics.
-Verbal command itself (Currently all of the test was done with text input for fewer variability) based on Voice-to-text models.
+Verbal command itself (Currently all of the test was done with text input for fewer variability) based on Voice-to-text models. reasonablye promises.
 Wishlist: Getting claude-haiku-4-5 to write changes properly. currently, haiku doesnt seem to make full changes and seem to accomplish tasks partially. a rule-based agentic process (sonnet + haiku), or multiple haikus (or 1 haiku with macro based rules) would be needed to keep API costs down.
 
 Users are welcome to fork mod as needed and test with different models/add feature as necessary.
