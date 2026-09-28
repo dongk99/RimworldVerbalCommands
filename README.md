@@ -8,19 +8,32 @@ Currently being tested with Anthropic models (claude-haiku-4-5, claude-sonnet-5,
 ```mermaid
 %%{init: {'flowchart': {'nodeSpacing': 20, 'rankSpacing': 25}, 'themeVariables': {'fontSize': '12px'}}}%%
 flowchart LR
-    A[Order] --> B{1. Regex}
-    B -- match --> E[4. Main model]
-    B -- no match --> C[2. Haiku]
-    C --> D[3. Regex again]
-    D --> E
-    E --> F[5. Arrangement]
+    A[Order] --> B[1. Haiku]
+    B --> C[2. Interpreter]
+    C --> D{Valid / simple?}
+    D -- yes --> E[3. Brief natural-language action description]
+    E --> F{4. User accepts?}
+    F -- yes --> G[6. Apply changes]
+    F -- no / re-prompt --> A
+    D -- complex --> H[5. Sonnet/Opus]
+    H --> C
+    G --> I[VerbalCommand mod]
+    I --> J{Show intent?}
+    J -- off --> K[Auto-accept]
+    J -- on --> L{User accepts?}
+    L -- yes --> K
+    L -- no --> M[Revert to previous state]
 ```
+1. **Haiku** looks at the user prompt, then replaces the player's words with something that interpreter can accept.
+2. **Haiku's output** goes into the interpreter to see if the prompt is actually valid.
+3. Interpreter's actions are described in natural language (without using an LLM) and shown to user in brief. It is likely to be somewhat vague.
+4. User can then accept actions as-is, or re-prompt. Complex orders (e.g. setting storage with filters, placing buildings, and combintions of simple tasks) gets routed to sonnet/opus
+5. Sonnet/Opus dictates complex queries into interpreter, and the interpreter makes appropriate change by interacting with VerbalCommand mod.
+6. Changes are then auto accepted if show intent option is off, or users can deny changes. if denied, then the game reverts to previous state.
 
-1. **Regex** looks at keyword matches first. If a keyword combination is found in the sentence, step 2 is skipped and the order goes to step 4.
-2. **Haiku** looks at the user prompt, then replaces the player's words with something that is regexable.
-3. **Haiku's output** goes into the tooling (into the user message) and makes the appropriate call based on what's found on regex table.
-4. **The actual model** the player selected in settings goes in and makes appropriate output which writes to game.
-5. **The actual model** makes the arrangement, and if you have your options selected for **Show parsed intent and ask before applying**, then it will show what it wants to do.
+Result: Significant token saving (if it works well enough, that is) since LLMs don't have to write bill changes by themselves, since the interpreter is the one manipulating game state. Since the interpreter accepts natural language (e.g. "build shelves that only accept food item into my freezer room"), that's all models need to type in.
+End goal is to have easily typable language that is natural enough so people can simply verbally speak without having to use an LLM at all, and also an interpreter/harness so one day LLMs could play rimworld by reading game states and verbally typing (and receiving game state) from/to interpreter.
+
 
 Both calls go through the same backend: the Anthropic API if you set an API key, or `claude -p` if you use the Claude Code CLI. The two are never mixed.
 
