@@ -37,7 +37,7 @@ End goal is to have easily typable language that is natural enough so people can
 
 Both calls go through the same backend: the Anthropic API if you set an API key, or `claude -p` if you use the Claude Code CLI. The two are never mixed.
 
-Older router did not use haiku for regex routing and went straight from user intent (prompt) to model. this caused too many tokens being used since model has to load tooling/data for everything.
+Older router did not use haiku for regex routing and went straight from user intent (prompt) to model. this caused too many tokens being used since model has to load tooling/data for everything. This albeit brute-force approach led to token waste and LLMs sometimes (model dependent) did not have enough attention to make all of the changes. Many tables were flipped as of result.
 
 
 ### Changing the router model
@@ -55,12 +55,11 @@ If the model name in that file doesn't work, the mod uses `claude-haiku-4-5` ins
 Test condition: 1 colony worth of 11 pawns (275x275 map), 1 colony (2 map) of 33 pawns (300x300) and 11 pawns (SOS2 space map, no odyssey), 1 colony of 325x325 map (57 pawns, 33 pawns).
 
 ## Current testing done: 
-Weapon groups, work priority based on skill. 
+Weapon groups, work priority based on skill. Verbal commands itself, but more testing needs to be done on other model to keep mod size less bloaty.
 
 ## Tests needing to be done:
 
 zoning based on pawn stats (so they dont waste time wandering around outside their jobsites), and eval metrics.
-Verbal command itself (Currently all of the test was done with text input for fewer variability) based on Voice-to-text models. reasonablye promises.
-Wishlist: Getting claude-haiku-4-5 to write changes properly. currently, haiku doesnt seem to make full changes and seem to accomplish tasks partially. a rule-based agentic process (sonnet + haiku), or multiple haikus (or 1 haiku with macro based rules) would be needed to keep API costs down.
+Verbal command itself (Currently all of the test was done with text input for fewer variability) based on Voice-to-text models. reasonable promises.
 
 Users are welcome to fork mod as needed and test with different models/add feature as necessary.
