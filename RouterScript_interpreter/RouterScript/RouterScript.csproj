@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Brief 17: the router language interpreter. Plain class library, same framework as the mod, no
+       package dependencies. The mod references it in a later brief; nothing here references the mod. -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>RouterScript</AssemblyName>
+    <RootNamespace>VerbalCommands.RouterScript</RootNamespace>
+  </PropertyGroup>
+
+</Project>
