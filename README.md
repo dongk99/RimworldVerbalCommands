@@ -58,7 +58,7 @@ If the model name in that file doesn't work, the mod uses `claude-haiku-4-5` ins
 Test condition: 1 colony worth of 11 pawns (275x275 map), 1 colony (2 map) of 33 pawns (300x300) and 11 pawns (SOS2 space map, no odyssey), 1 colony of 325x325 map (57 pawns, 33 pawns).
 
 ## Current testing done: 
-Weapon groups, work priority based on skill. Verbal commands itself, but more testing needs to be done on other model to keep mod size less bloaty.
+Weapon groups, Work priority, Item/gear query, rudimentary blueprint/plan placement (still needs to be worked on), storage settings, draft/move pawn.
 
 ## Tests needing to be done:
 
