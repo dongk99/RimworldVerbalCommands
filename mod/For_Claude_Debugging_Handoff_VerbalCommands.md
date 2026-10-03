@@ -6,7 +6,7 @@ Written 2026-09-02 by the Claude session that researched and built v1. Read this
 
 | What | Path |
 |---|---|
-| **Project directory (canonical)** | `C:\Users\[user]\.claude\projects\RimWorld-LLM-Integration` |
+| **Project directory (canonical)** | `C:\Users\dongk\.claude\projects\RimWorld-LLM-Integration` |
 | Shipping mod folder (source of truth for what ships) | `<project>\mod\` |
 | Deployed copy the game loads | `E:\STEAM\steamapps\common\RimWorld\Mods\VerbalCommands` (mirrored from `mod\` by `build.ps1` with robocopy /MIR — anything placed only in the deployed folder is deleted on next build) |
 | C# source | `<project>\src\VerbalCommands\*.cs` (10 files, ~1620 lines) + `VerbalCommands.csproj` + `nuget.config` |

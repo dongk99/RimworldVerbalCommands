@@ -21,6 +21,20 @@ Currently, Medium/High setting is used on to test on Opus 5, 5.5 and Sonnet 5. H
 
 `Use Claude Code CLI` runs `claude -p` with your existing Claude Code login instead of an API key. Effort is passed to the CLI as `--effort` unchanged; the fallback above applies to API mode only. Expect claude -p to take longer for setup, a console account (or local llm after user testing) is recommended if user wants speed.
 
+## Order routing (being built)
+
+1 > regex rule looks at keyword matches first. if there are combinations that can be seen in sentences, step 2 is skipped and goes to 4
+2 > haiku looks at the ~~garbage~~ prompt and replaces user's words with something that is regexable
+3 > output of haiku's prompt goes into the tooling (into user) and makes apporporaite call.
+4 > the actual model user selected on api console setting goes in and then does the shabam.
+5 > the actual model makes arrangement.
+
+If you like to tweak around and see which model can do initial routing do best, you can put your own router model by changing content of `router_model.txt`:
+
+`%USERPROFILE%\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\router_model.txt`
+
+If the model name in that file doesn't work, the mod uses `claude-haiku-4-5` instead and says so in the order window.
+
 ## Pawn groups
 
 Say something like "group 3 = everyone holding a rifle with range 25 or more; call it long guns" and the mod stores a RULE (weapon class, range, an explicit allow-list of weapon defNames, always-include/exclude pawns, and whether unarmed colonists count) in one of 9 hotkey slots. It does **not** store a fixed list of pawns.

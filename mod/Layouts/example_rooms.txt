@@ -1,0 +1,93 @@
+// Example rooms. The mod reads this file (ExampleRooms.cs); the model is not sent it.
+// Each block is one room seen from above, north at the top, one character per tile, walls included.
+// '#' is a wall, '+' is a door, '.' is free floor. Every other character is a letter named above the grid.
+// "letter = building" uses the game's building name (defName). A building bigger than one tile fills
+// all its tiles with its letter and is cut into whole buildings from the top left.
+// "head north" for a bed or "worker south" for a bench says which side the head is on, or which side
+// the colonist stands on. Without it the shape in the grid decides which way the building lies.
+// Drawn from five rooms of the mod author's colony. Each stool is on the tile its bench is used from.
+
+room: barracks
+b = Bed, head north
+q = Bed, head south
+e = EndTable
+D = Dresser
+grid:
+###########
+#.bebDDbeb#
+#.b.b..b.b#
++.........#
+#.q.q..q.q#
+#.qeqDDqeq#
+###########
+end
+
+room: workshop
+S = ElectricSmithy, worker south
+c = ToolCabinet
+T = ElectricTailoringBench, worker south
+U = ElectricTailoringBench, worker north
+M = TableMachining, worker north
+s = Stool
+h = Shelf
+H = Heater
+grid:
+##########
+#SSSc.TTT#
+#.shch.s.#
+#..h.h..H#
++.s....s.#
+#MMM..UUU#
+##########
+end
+
+room: kitchen
+B = TableButcher, worker south
+b = TableButcher, worker north
+V = ElectricStove, worker south
+v = ElectricStove, worker east
+k = ShelfSmall
+s = Stool
+p = PlantPot
+H = Heater
+grid:
+#########
+#BBBkVVV#
+#vs...sH#
+#vs.p.s.#
+#vk..bbb#
+####+####
+end
+
+room: workshop
+X = TableStonecutter, worker east
+x = TableStonecutter, worker west
+A = TableSculpting, worker north
+h = Shelf
+s = Stool
+grid:
+####+###
+#......#
+#Xhh..x#
+#Xs..sx#
+#Xhh..x#
+#.s..s.#
+#AAAAAA#
+########
+end
+
+room: laboratory
+L = HiTechResearchBench, worker east
+R = HiTechResearchBench, worker west
+K = Bookcase
+M = MultiAnalyzer
+s = Stool
+grid:
+###+####
+#LL.KRR#
+#LL.KRR#
+#LLssRR#
+#LLMMRR#
+#LLMMRR#
+########
+end

@@ -1,0 +1,1147 @@
+# router.txt: the router script the mod runs for every order (brief 23). Written in the router language
+# (src\RouterScript\README.md); not Python.
+#
+# One entry function, route(order). It asks Haiku to turn the player's order into sentences (lines), checks
+# every sentence, and asks the mod to plan each one. Nothing is applied here: the mod shows the planned
+# lines to the player, who says yes or no.
+#
+# The host functions it calls (contract: briefs\23_contract.md section 2):
+#   vocabulary()          the VOCABULARY block: one "name: a, b, c" line per kind
+#   pending()             none, or {"order": text, "question": text} left by an earlier ASK
+#   haiku(input)          Haiku's answer to the prompt (mod\Router\haiku_prompt.md) and this input
+#   plan(form, slots)     {"ok": true, "line": text} or {"ok": false, "reason": text}
+#   query(form, slots)    {"ok": true, "text": text} (the answer; lines separated by a new line) or
+#                         {"ok": false, "reason": text}. Brief 26: for questions; changes nothing.
+#   log(text)             one line in the mod's log
+#
+# route() gives back one of:
+#   {"result": "plans",  "lines": [text, ...]}      every sentence is planned; the player confirms
+#   {"result": "ask",    "question": text}          Haiku asked; NOTHING is planned or handed on
+#   {"result": "cannot", "reason": text}            Haiku said it can not; nothing is planned
+#   {"result": "answer", "lines": [text, ...]}      every sentence was a question and was answered
+#   {"result": "failed", "reasons": [text, ...]}    a sentence did not pass a check, or plan said no,
+#                                                   or questions and changes were mixed
+#
+# The rules in the shared block below (sections 1 to 8) are the same text as in router_lab\parse_results.txt,
+# the lab's results parser, and the check router_lab\check_router_sync.ps1 keeps them that way. Change them
+# in both files. Only section 9, the driver, differs.
+#
+# Top-level lines run again on every run, and a function can not assign a global (README section 6): so the
+# top level here only builds tables and forms (the shared block), and route() keeps what it learns in local
+# names and in the dicts MEMORY and VOCAB, which it clears or fills at the start of every call.
+
+# ==== shared rules: begin ====
+
+# ---- 1. Lowercase ----
+# Everything is compared in lowercase from here on, so nothing is rejected for its capitals.
+# (Read-back sentences are lowercase too.)
+# Brief 27: a question that ends with "?" is read as if it ended with "." ("is bob married?"); "? " in the
+# middle of a line is a period too. ASK: and CANNOT: lines are left as they are (their question keeps its "?").
+
+function to_lowercase(line):
+    s = lower(line)
+    if starts_with(trim(s), "ask:") or starts_with(trim(s), "cannot:"):
+        return s
+    s = replace(s, "? ", ". ")
+    s = trim(s)
+    if ends_with(s, "?"):
+        s = replace_last_mark(s)
+    return s
+
+# The text without its last character, then a period.
+function replace_last_mark(s):
+    out = ""
+    i = 0
+    while i < len(s) - 1:
+        out = out + s[i]
+        i = i + 1
+    return out + "."
+
+# ---- 2. Wording ----
+# Words that mean the same. Add a row to a table to add a word; nothing else needs to change.
+
+# Words that carry no meaning; dropped.
+FILLER = ["a", "an", "the"]
+
+# Where a command starts. A verb word is only changed there, so "make weapon group ..." and
+# "clear weapon group ..." keep their "group". Section 3 splits at the same places.
+SEPARATORS = [". ", " and then ", ", and then ", "\n "]
+
+# Verb words at the start of a command -> the one verb the forms use.
+# Brief 21 (user 2026-09-28): build intent is only ever "build" or "construct".
+VERBS = {"select": "select", "group": "select", "gather": "select", "construct": "build"}
+
+# Phrases anywhere in the line -> the one phrase the forms use. Longer phrases first.
+PHRASES = [
+    ["have melee weapons equipped", "have melee weapons"],
+    ["melee weapons equipped", "have melee weapons"],
+    ["all of my pawns", "everyone"],
+    ["all my pawns", "everyone"],
+    ["wield", "have"]
+]
+
+function without_filler(line):
+    kept = []
+    for w in split(line, " "):
+        if not (w in FILLER):
+            append(kept, w)
+    return join(kept, " ")
+
+# In a select-pawns command, "that who", "that", or no word before "have" is read as "who"
+# (user 2026-10-02: the form is "select PAWNS who have CONDITION."; "that" is not part of it).
+# The line is cut into commands here only to find the ones that start with "select"; section 3 cuts it
+# the same way.
+function select_who(line):
+    s = replace(line, ", and then ", ". ")
+    s = replace(s, " and then ", ". ")
+    out = []
+    for part in split(s, ". "):
+        m = find_pattern("^select (.+?)(?: that who| that| who)? have (.+)$", part)
+        if m != none:
+            part = "select " + m[1] + " who have " + m[2]
+        append(out, part)
+    return join(out, ". ")
+
+function wording(line):
+    # "\n " marks the start of the line, so the first command's verb is found like the others.
+    s = "\n " + line + " "
+    for p in PHRASES:
+        for after in [" ", ".", ","]:
+            s = replace(s, " " + p[0] + after, " " + p[1] + after)
+    for verb in keys(VERBS):
+        for sep in SEPARATORS:
+            s = replace(s, sep + verb + " ", sep + VERBS[verb] + " ")
+    s = replace(s, "\n ", "")
+    return select_who(without_filler(trim(s)))
+
+# ---- 3. Commands in one line ----
+# A period followed by a space, or "and then", ends one command and starts the next. "and" alone never
+# does (user 2026-10-01); a plain "and" before an action verb is refused in read_sentence().
+
+function commands(line):
+    s = replace(line, ", and then ", ". ")
+    s = replace(s, " and then ", ". ")
+    out = []
+    for part in split(s, ". "):
+        if trim(part) != "":
+            append(out, trim(part))
+    return out
+
+# The first word of every action sentence (the forms below, after wording). Brief 23 added the verbs
+# of the bill, building-control and group forms.
+ACTION_VERBS = [
+    "put", "keep", "set", "build", "assign", "schedule", "stop", "let", "draft", "make", "clear", "select", "move",
+    "add", "remove", "pause", "resume", "use", "allow", "never", "store", "switch", "open", "close", "hold",
+    "turn", "forbid", "unforbid", "undraft", "restrict",
+    "start", "unpause", "train", "queue", "cancel", "create", "rename", "delete", "choose"
+]
+AND_ACTION = " and (" + join(ACTION_VERBS, "|") + ")( |$)"
+
+# The first word of a line or a template, in lowercase (backticks ignored). A template can only match
+# a line that starts with the same word, so the other forms are not tried.
+function first_word(text):
+    words = split(trim(replace(lower(text), "`", "")), " ")
+    return words[0]
+
+# ---- 4. Sentence forms ----
+# The forms of haiku_prompt.md, as templates.
+
+# PLACE is "near BENCH", "in ROOM" or "near BENCH in ROOM" (both parts optional in the template;
+# check() makes sure at least one is there), or a direction from a door (brief 18): "north of door
+# to kitchen in storeroom", "3 tiles west of door to kitchen in storeroom". Each storage form is
+# tried with each PLACE, in this order.
+PLACES = [
+    "storage {DISTANCE} {UNIT} {DIRECTION} of door to {DOOR}[ in {ROOM}]",
+    "storage {DIRECTION} of door to {DOOR}[ in {ROOM}]",
+    "storage[ near {BENCH}][ in {ROOM}]"
+]
+
+forms = []
+
+# The forms added in brief 23 (bills, building controls, groups and pawn settings). Their slots are also
+# checked against the vocabulary in check().
+NEW_NAMES = {}
+
+# Brief 27: a form can carry slots the sentence does not say (the template text decides them): FIXED[template]
+# is a dict added to the slots when that template matches (bill repeat's MODE, animal training's ON).
+FIXED = {}
+
+# lists: the slots that hold several names ("a, b and c"); they are shown as lists.
+# readback: the template filled back in for the player (the form's own template when it is the same).
+# place: for the storage forms, the PLACE template; remember() fills it to remember the storage.
+# start: the first word of the template.
+function add_form(name, template, readback, lists, place):
+    append(forms, {"name": name, "template": template, "readback": readback, "lists": lists, "place": place, "start": first_word(template)})
+
+function form(name, template, lists):
+    add_form(name, template, template, lists, "")
+
+function new_form(name, template, lists):
+    NEW_NAMES[name] = true
+    form(name, template, lists)
+
+function fixed_form(name, template, lists, fixed):
+    FIXED[template] = fixed
+    new_form(name, template, lists)
+
+# One form for each PLACE: before and after are the words around it.
+function storage_form(name, before, after, lists):
+    for place in PLACES:
+        add_form(name, before + place + after, before + place + after, lists, place)
+
+# A storage form that says "those" (brief 20): the parse template has "those" written out, the read-back
+# has {OBJECTS}, which resolve() fills with the remembered objects.
+function those_form(name, before, after, lists):
+    add_form(name, before + "those" + after, before + "{OBJECTS}" + after, lists, "")
+
+# "put only" before "put", so "only" is never read as part of THINGS.
+storage_form("storage holds only", "put only {THINGS} in ", ".", ["THINGS"])
+storage_form("storage also holds", "put {THINGS} in ", ".", ["THINGS"])
+storage_form("storage no longer holds", "keep {THINGS} out of ", ".", ["THINGS"])
+storage_form("storage priority", "set ", " to {PRIORITY} priority.", [])
+# "those" = the objects an earlier sentence in the order acted on (section 7). After the forms above.
+those_form("storage holds only (those)", "put only {THINGS} in ", ".", ["THINGS"])
+those_form("storage also holds (those)", "put {THINGS} in ", ".", ["THINGS"])
+those_form("storage no longer holds (those)", "keep {THINGS} out of ", ".", ["THINGS"])
+those_form("storage priority (those)", "set ", " to {PRIORITY} priority.", [])
+# Brief 21: the build forms, the same things the mod's build tools take (src\VerbalCommands\BuildTools.cs).
+#   build option N.        blueprints for a room layout option drawn earlier (build_option)
+#   build room like ROOM.  draw the layout of an existing room, or of a saved room type, as plan options
+#                          (draw_plan)
+#   build ... BUILDING     blueprints for buildings (place_blueprint): in a room, near a building that
+#                          already stands there (ANCHOR), or on one side of it (DIRECTION of ANCHOR).
+#                          "made of STUFF" names the material. The mod picks the tile.
+# The narrow forms first, so "option 2" and "room like kitchen" are never read as a BUILDING. In each
+# pair the COUNT form is first; check() sends a COUNT that isn't a number on to the form without it.
+form("build option", "build option {OPTION}.", [])
+form("build room", "build room like {ROOM}.", [])
+form("build", "build {COUNT} {BUILDING}[ made of {STUFF}] {DIRECTION} of {ANCHOR}[ in {ROOM}].", [])
+form("build", "build {BUILDING}[ made of {STUFF}] {DIRECTION} of {ANCHOR}[ in {ROOM}].", [])
+form("build", "build {COUNT} {BUILDING}[ made of {STUFF}][ near {ANCHOR}][ in {ROOM}].", [])
+form("build", "build {BUILDING}[ made of {STUFF}][ near {ANCHOR}][ in {ROOM}].", [])
+form("bed", "assign {PAWN} to bed in {ROOM}.", [])
+form("allowed area", "keep {PAWNS} in {ROOMS}.", ["PAWNS", "ROOMS"])
+form("schedule", "schedule {PAWNS} to {ASSIGNMENT} from {FROM} to {TO}.", ["PAWNS"])
+form("work priority", "set {WORKTYPE} priority {N} for {PAWNS}.", ["PAWNS"])
+form("work off", "stop {PAWNS} doing {WORKTYPE}.", ["PAWNS"])
+form("bills", "let only {PAWNS} do bills on {BENCH}.", ["PAWNS"])
+form("draft", "draft {PAWNS}.", ["PAWNS"])
+# Brief 20: "who" is a fixed word ("that who", "that" or no word are read as "who" in section 2).
+# "select" = "group" = "gather" (section 2).
+form("select pawns", "select {PAWNS} who have {CONDITION}.", ["PAWNS"])
+form("move", "move {PAWNS} to location {NAME}.", ["PAWNS"])
+# Brief 20: only "weapon group" makes a shortcut group; plain "group" is a select word (section 2).
+form("weapon group", "make weapon group {NAME} holding {RULE}.", [])
+form("weapon group cleared", "clear weapon group {SLOT}.", [])
+form("ask", "ASK: {QUESTION}", [])
+form("cannot", "CANNOT: {REASON}", [])
+
+# Brief 23, wave 1: bills. One bill is named by its recipe and the bench it is on (and the room when
+# several benches fit). Every sentence starts with its own word, so none of them can be read as another:
+# "add", "remove", "pause", "resume", "let", "set skill range", "set ingredient radius", "store", "use only",
+# "allow", "never use". "until" and "forever" come before the COUNT form, so "add bill to make 5 stew
+# forever at ..." is not read as a count.
+BILL_AT = " at {BENCH}[ in {ROOM}]."
+new_form("bill add until", "add bill to make {RECIPE} until you have {COUNT}" + BILL_AT, [])
+new_form("bill add forever", "add bill to make {RECIPE} forever" + BILL_AT, [])
+new_form("bill add count", "add bill to make {COUNT} {RECIPE}" + BILL_AT, [])
+new_form("bill remove", "remove bill for {RECIPE}" + BILL_AT, [])
+# Brief 27: "when satisfied" forms before the plain "pause", so "when satisfied" is never part of RECIPE.
+new_form("bill pause when satisfied", "pause bill for {RECIPE} when satisfied" + BILL_AT, [])
+new_form("bill unpause when satisfied", "unpause bill for {RECIPE} when satisfied" + BILL_AT, [])
+new_form("bill pause", "pause bill for {RECIPE}" + BILL_AT, [])
+new_form("bill resume", "resume bill for {RECIPE}" + BILL_AT, [])
+# WHO is anyone, mechs, non-mechs or slaves; "anyone" belongs to this form only. Before "bill pawn".
+new_form("bill workers", "let {WHO} do bill for {RECIPE}" + BILL_AT, [])
+new_form("bill pawn", "let {PAWN} do bill for {RECIPE}" + BILL_AT, [])
+new_form("bill skill", "set skill range {MIN} to {MAX} on bill for {RECIPE}" + BILL_AT, [])
+new_form("bill radius", "set ingredient radius to {N} on bill for {RECIPE}" + BILL_AT, [])
+new_form("bill store", "store bill products on {WHERE} for {RECIPE}" + BILL_AT, [])
+new_form("bill ingredients only", "use only {THINGS} in bill for {RECIPE}" + BILL_AT, ["THINGS"])
+new_form("bill ingredients allow", "allow {THINGS} in bill for {RECIPE}" + BILL_AT, ["THINGS"])
+new_form("bill ingredients forbid", "never use {THINGS} in bill for {RECIPE}" + BILL_AT, ["THINGS"])
+
+# Brief 23, wave 2: building controls (user 2026-10-02: open/close vents, set the temperature of coolers
+# and heaters, refuel on/off on generators). TARGETS are building names and may be "those" alone (what a
+# "build" or an earlier control sentence acted on); the room is left out then. "open fire with" comes
+# before "open", so a turret is never read as a vent.
+new_form("switch on", "switch on {TARGETS}[ in {ROOM}].", ["TARGETS"])
+new_form("switch off", "switch off {TARGETS}[ in {ROOM}].", ["TARGETS"])
+new_form("turret fire", "open fire with {TARGETS}[ in {ROOM}].", ["TARGETS"])
+new_form("turret hold fire", "hold fire with {TARGETS}[ in {ROOM}].", ["TARGETS"])
+new_form("vent open", "open {TARGETS}[ in {ROOM}].", ["TARGETS"])
+new_form("vent close", "close {TARGETS}[ in {ROOM}].", ["TARGETS"])
+new_form("temperature", "set temperature of {TARGETS}[ in {ROOM}] to {DEGREES}.", ["TARGETS"])
+new_form("refuel on", "turn on auto refuel for {TARGETS}[ in {ROOM}].", ["TARGETS"])
+new_form("refuel off", "turn off auto refuel for {TARGETS}[ in {ROOM}].", ["TARGETS"])
+new_form("fuel level", "set fuel level to {N} for {TARGETS}[ in {ROOM}].", ["TARGETS"])
+new_form("door hold open", "hold door {DOOR} open.", [])
+new_form("door let close", "let door {DOOR} close.", [])
+new_form("forbid", "forbid {TARGETS}[ in {ROOM}].", ["TARGETS"])
+new_form("unforbid", "unforbid {TARGETS}[ in {ROOM}].", ["TARGETS"])
+# "every bed" first, so "every" is never read as a COUNT.
+for bed_type in ["medical", "prisoner", "colonist"]:
+    new_form("bed " + bed_type, "set every bed in {ROOM} to " + bed_type + ".", [])
+    new_form("bed " + bed_type, "set {COUNT} bed in {ROOM} to " + bed_type + ".", [])
+
+# Brief 23, wave 3: groups (the game's policies) and pawn settings. A group always has its kind in front
+# of it ("clothing group"); no extra word is written after the kind (user 2026-10-02). The "medicine group" is the pawn's medical
+# care level (user 2026-10-02): form "medical care", LEVEL from the vocabulary line "medical care". A drug
+# group is a different thing (the drug setting).
+for group_kind in ["clothing", "food", "drug", "reading"]:
+    new_form(group_kind + " group", "assign {PAWNS} to " + group_kind + " group {NAME}.", ["PAWNS"])
+new_form("medical care", "assign {PAWNS} to medicine group {LEVEL}.", ["PAWNS"])
+new_form("threat response", "set threat response of {PAWNS} to {RESPONSE}.", ["PAWNS"])
+new_form("undraft", "undraft {PAWNS}.", ["PAWNS"])
+new_form("area", "restrict {PAWNS} to area {NAME}.", ["PAWNS"])
+# What a clothing or food group allows. "put only" before "put", like the storage forms.
+new_form("group things only", "put only {THINGS} in {KIND} group {NAME}.", ["THINGS"])
+new_form("group things allow", "put {THINGS} in {KIND} group {NAME}.", ["THINGS"])
+new_form("group things forbid", "keep {THINGS} out of {KIND} group {NAME}.", ["THINGS"])
+
+# Brief 27, wave 1: player actions that need no place on the map. "bill repeat" changes an existing bill's repeat
+# mode (MODE is fixed by the template: count, until or forever); "until you have" and "forever" come before the
+# count form. "animal training" says ON by its verb ("train" = true, "stop training" = false). "pause" / "unpause"
+# of the game are SPEED paused / normal. Never the word "policy": a group has its kind in front of it.
+new_form("game speed", "set game speed to {SPEED}.", [])
+new_form("research start", "start research {PROJECT}.", [])
+fixed_form("bill repeat", "change bill for {RECIPE} to repeat until you have {COUNT}" + BILL_AT, [], {"MODE": "until"})
+fixed_form("bill repeat", "change bill for {RECIPE} to repeat forever" + BILL_AT, [], {"MODE": "forever"})
+fixed_form("bill repeat", "change bill for {RECIPE} to repeat {COUNT} times" + BILL_AT, [], {"MODE": "count"})
+new_form("fire at will on", "turn on fire at will for {PAWNS}.", ["PAWNS"])
+new_form("fire at will off", "turn off fire at will for {PAWNS}.", ["PAWNS"])
+new_form("prisoner mode", "set prisoner mode of {PAWNS} to {MODE}.", ["PAWNS"])
+new_form("animal master", "set master of {ANIMALS} to {PAWN}.", ["ANIMALS"])
+fixed_form("animal training", "train {ANIMALS} in {TRAINING}.", ["ANIMALS"], {"ON": "true"})
+fixed_form("animal training", "stop training {ANIMALS} in {TRAINING}.", ["ANIMALS"], {"ON": "false"})
+new_form("operation", "queue operation {RECIPE} for {PAWN}[ on {PART}].", [])
+new_form("operation cancel", "cancel operation {RECIPE} for {PAWN}.", [])
+new_form("drug group entry", "set {FIELD} of drug group {NAME} entry {DRUG} to {VALUE}.", [])
+new_form("policy new", "create {KIND} group {NAME}.", [])
+new_form("policy rename", "rename {KIND} group {NAME} to {NEW_NAME}.", [])
+new_form("policy delete", "delete {KIND} group {NAME}.", [])
+new_form("letter choose", "choose {OPTION} for letter {LETTER}.", [])
+
+# Brief 26: questions about the colony. They change nothing; the mod answers them from the game's data
+# (host function query(form, slots)). The same checks and the same ASK gate as the other forms: a question
+# that names no thing, pawn or group has no form that fits, so Haiku asks. "how much" is the only count
+# wording ("how many" is written the same way). RELATION is the player's word ("married", "engaged").
+QUERY_NAMES = {"query count": true, "query relations": true, "query group": true, "query pawn groups": true}
+
+function query_form(name, template, lists):
+    QUERY_NAMES[name] = true
+    new_form(name, template, lists)
+
+query_form("query count", "how much {THINGS} do i have.", ["THINGS"])
+query_form("query relations", "is {PAWN} {RELATION}.", [])
+query_form("query relations", "list relations of {PAWN}.", [])
+query_form("query pawn groups", "show groups of {PAWN}.", [])
+query_form("query group", "show {KIND} group {NAME}.", [])
+
+query_form("query alerts", "show alerts.", [])
+query_form("query letters", "show letters.", [])
+query_form("query needs", "show needs of {PAWN}.", [])
+query_form("query health", "show health of {PAWN}.", [])
+query_form("query research", "show research.", [])
+query_form("query weather", "show weather.", [])
+query_form("query colonists", "show colonists.", [])
+query_form("query prisoners", "show prisoners.", [])
+query_form("query animals", "show animals.", [])
+
+# An order is all questions or all changes (brief 26): a mix is refused as a whole, nothing is planned.
+MIXED_ORDER = "Ask the question on its own, then give the order."
+
+function is_query(name):
+    return has(QUERY_NAMES, name)
+
+# names: the form names of the parsed sentences of one order. "" when fine, else why not.
+function mixed_problem(names):
+    asks = 0
+    changes = 0
+    for n in names:
+        if is_query(n):
+            asks = asks + 1
+        else:
+            changes = changes + 1
+    if asks > 0 and changes > 0:
+        return MIXED_ORDER
+    return ""
+
+# ---- 5. Slot checks the templates can't express ----
+
+PRIORITIES = ["low", "normal", "preferred", "important", "critical"]
+
+# Direction words (brief 18): north = up = top, south = down = bottom, west = left, east = right, and
+# the corners ("northeast", "top right", "north-east"). North is +z, east is +x (Verse/Rot4.cs:155-158).
+DIRECTION_WORDS = {
+    "north": "north", "up": "north", "top": "north", "upper": "north",
+    "south": "south", "down": "south", "bottom": "south", "lower": "south",
+    "west": "west", "left": "west",
+    "east": "east", "right": "east"
+}
+CORNERS = ["northeast", "northwest", "southeast", "southwest"]
+
+# The one direction name ("top right" -> "northeast"), or none.
+function direction_name(words):
+    parts = split(replace(lower(trim(words)), "-", " "), " ")
+    north_south = ""
+    east_west = ""
+    for part in parts:
+        if part == "":
+            continue
+        if part in CORNERS and len(parts) == 1:
+            return part
+        if not has(DIRECTION_WORDS, part):
+            return none
+        d = DIRECTION_WORDS[part]
+        if d == "north" or d == "south":
+            if north_south != "":
+                return none
+            north_south = d
+        else:
+            if east_west != "":
+                return none
+            east_west = d
+    if north_south == "" and east_west == "":
+        return none
+    return north_south + east_west
+
+function whole_number_between(s, low, high):
+    n = number(s)
+    if n == none:
+        return false
+    return n == n - n % 1 and n >= low and n <= high
+
+# The vocabulary the order was written against: "name: a, b, c" lines, as in vocabulary.txt, kept in
+# lowercase. VOCAB["rooms"] = ["kitchen", ...]; the recipes line "recipes: BENCH: a, b; BENCH: c" is kept as
+# VOCAB["recipes of BENCH"]. Empty = no vocabulary was given (the lab with an old results file): the checks
+# against it are skipped.
+VOCAB = {}
+
+function names_of(text):
+    out = []
+    for item in split(lower(text), ","):
+        if trim(item) != "":
+            append(out, trim(item))
+    return out
+
+# text: the VOCABULARY block, one line per kind.
+function read_vocabulary(text):
+    for line in split(text, "\n"):
+        m = find_pattern("^([^:]+): (.*)$", trim(line))
+        if m == none:
+            continue
+        kind = trim(lower(m[1]))
+        if kind == "letters":
+            # "letters: wanderer joins (accept, reject); ransom for Bob (pay, refuse)"
+            labels = []
+            for part in split(lower(m[2]), "; "):
+                r = find_pattern("^(.*?) \\((.*)\\)$", trim(part))
+                if r != none:
+                    append(labels, trim(r[1]))
+                    VOCAB["options of " + trim(r[1])] = names_of(r[2])
+                elif trim(part) != "":
+                    append(labels, trim(part))
+            VOCAB["letters"] = labels
+        elif kind == "operations":
+            # "operations: Bob: install bionic arm, amputate left leg; Dana: ..."
+            for part in split(m[2], "; "):
+                r = find_pattern("^([^:]+): (.*)$", trim(part))
+                if r != none:
+                    VOCAB["operations of " + trim(lower(r[1]))] = names_of(r[2])
+        elif kind == "recipes":
+            for part in split(m[2], "; "):
+                r = find_pattern("^([^:]+): (.*)$", trim(part))
+                if r != none:
+                    VOCAB["recipes of " + trim(lower(r[1]))] = names_of(r[2])
+        else:
+            VOCAB[kind] = names_of(m[2])
+
+# Is item (lowercase) on the vocabulary line `kind`?
+function listed(kind, item):
+    if len(keys(VOCAB)) == 0:
+        return true
+    return has(VOCAB, kind) and item in VOCAB[kind]
+
+function listed_any(kinds, item):
+    for kind in kinds:
+        if listed(kind, item):
+            return true
+    return false
+
+# Brief 23, wave 2: which vocabulary lines the TARGETS of a form may come from, and what to call them.
+BUILDING_LINES = ["buildings", "benches", "storage buildings", "doors", "switchable", "vents", "temperature controls", "fuelled", "turrets"]
+TARGET_RULES = {
+    "switch on": [["switchable"], "building with a power switch"],
+    "switch off": [["switchable"], "building with a power switch"],
+    "vent open": [["vents"], "vent"],
+    "vent close": [["vents"], "vent"],
+    "temperature": [["temperature controls"], "building with a temperature setting"],
+    "refuel on": [["fuelled"], "building that burns fuel"],
+    "refuel off": [["fuelled"], "building that burns fuel"],
+    "fuel level": [["fuelled"], "building that burns fuel"],
+    "turret hold fire": [["turrets"], "turret"],
+    "turret fire": [["turrets"], "turret"],
+    "forbid": [BUILDING_LINES, "building"],
+    "unforbid": [BUILDING_LINES, "building"]
+}
+
+function bad_number(slots, key, low, high):
+    return has(slots, key) and not whole_number_between(slots[key], low, high)
+
+# Is the text a storage PLACE ("storage in storeroom", "storage north of door to kitchen in storeroom")?
+function is_storage_place(text):
+    for place in PLACES:
+        s = parse(place, text)
+        if s != none and (has(s, "DOOR") or has(s, "BENCH") or has(s, "ROOM")):
+            return true
+    return false
+
+# The group kinds a question can be about (brief 26). For medicine, NAME is a medical care level; weapon
+# groups are checked only when the vocabulary has a "weapon groups" line.
+QUERY_KINDS = ["clothing", "food", "drug", "reading", "medicine", "weapon"]
+
+function check_query(name, slots):
+    if has(slots, "THINGS"):
+        for item in slots["THINGS"]:
+            if item in ["those", "them", "they", "it"]:
+                return "name the things to count"
+    if has(slots, "RELATION") and starts_with(slots["RELATION"], "and "):
+        return "ask about one pawn at a time"
+    if name == "query group":
+        kind = slots["KIND"]
+        if not (kind in QUERY_KINDS):
+            return "KIND must be clothing, food, drug, reading, medicine or weapon"
+        if kind == "medicine":
+            if not listed("medical care", slots["NAME"]):
+                return "'" + slots["NAME"] + "' is not a medical care level"
+        elif kind == "weapon":
+            if has(VOCAB, "weapon groups") and not listed("weapon groups", slots["NAME"]):
+                return "'" + slots["NAME"] + "' is not a weapon group"
+        elif not listed(kind + " groups", slots["NAME"]):
+            return "'" + slots["NAME"] + "' is not a " + kind + " group in this colony"
+    return ""
+
+# Brief 27: which vocabulary lines the PAWN / PAWNS of a form may come from (default: colonists), and what to
+# call them in a refusal. "nobody" clears an animal's master.
+PAWN_RULES = {
+    "prisoner mode": [["prisoners"], "prisoner"],
+    "operation": [["colonists", "prisoners", "animals"], "colonist, prisoner or animal"],
+    "operation cancel": [["colonists", "prisoners", "animals"], "colonist, prisoner or animal"],
+    "query needs": [["colonists", "prisoners", "animals"], "colonist, prisoner or animal"],
+    "query health": [["colonists", "prisoners", "animals"], "colonist, prisoner or animal"]
+}
+
+function pawn_lines(name):
+    if has(PAWN_RULES, name):
+        return PAWN_RULES[name][0]
+    return ["colonists"]
+
+function pawn_label(name):
+    if has(PAWN_RULES, name):
+        return PAWN_RULES[name][1]
+    return "colonist"
+
+function pawn_word(name, p):
+    return p in ["them", "they"] or (name == "animal master" and p == "nobody")
+
+DRUG_FIELDS = {
+    "allow for joy": "flag", "allow scheduled": "flag", "take every": "days",
+    "only if mood below": "percent", "only if recreation below": "percent", "take to inventory": "count"
+}
+SPEEDS = ["paused", "normal", "fast", "superfast"]
+GROUP_KINDS = ["clothing", "food", "drug", "reading"]
+
+# "is mary jane married": PAWN takes the shortest text, so a name of several words ends up half in RELATION.
+# When PAWN is not a colonist but more words from RELATION make one, move them (brief 27).
+function fix_pawn_name(name, slots):
+    if name != "query relations" or not has(slots, "RELATION") or not has(VOCAB, "colonists"):
+        return none
+    if listed("colonists", slots["PAWN"]):
+        return none
+    pawn = slots["PAWN"]
+    rest = split(slots["RELATION"], " ")
+    while len(rest) > 1:
+        pawn = pawn + " " + rest[0]
+        remove_at(rest, 0)
+        if listed("colonists", pawn):
+            slots["PAWN"] = pawn
+            slots["RELATION"] = join(rest, " ")
+            return none
+    return none
+
+# "" when fine: the value of a drug group entry must fit its field.
+function check_drug_entry(slots):
+    if not has(DRUG_FIELDS, slots["FIELD"]):
+        return "FIELD must be " + join_list(keys(DRUG_FIELDS))
+    if not listed("drug groups", slots["NAME"]):
+        return "'" + slots["NAME"] + "' is not a drug group in this colony"
+    if not listed("drugs", slots["DRUG"]):
+        return "'" + slots["DRUG"] + "' is not a drug in this colony's drug groups"
+    kind = DRUG_FIELDS[slots["FIELD"]]
+    v = number(slots["VALUE"])
+    if kind == "flag":
+        if not (slots["VALUE"] in ["true", "false"]):
+            return "VALUE for '" + slots["FIELD"] + "' must be true or false"
+    elif v == none or v < 0:
+        return "VALUE for '" + slots["FIELD"] + "' must be a number, 0 or more"
+    elif kind == "percent" and v > 100:
+        return "VALUE for '" + slots["FIELD"] + "' is a percent, 0 to 100"
+    elif kind == "count" and v != v - v % 1:
+        return "VALUE for '" + slots["FIELD"] + "' must be a whole number"
+    return ""
+
+# Is the operation (recipe, part) one of those listed for that pawn? Skipped when the pawn has no list.
+function check_operation(slots):
+    key = "operations of " + slots["PAWN"]
+    if not has(VOCAB, key):
+        return ""
+    recipe = slots["RECIPE"]
+    full = recipe
+    if has(slots, "PART"):
+        full = recipe + " " + slots["PART"]
+    for entry in VOCAB[key]:
+        if entry == recipe or entry == full or starts_with(entry, recipe + " "):
+            return ""
+    return "'" + full + "' is not an operation that can be done on " + slots["PAWN"] + " now"
+
+# Brief 27: the forms of wave 1 (changes and questions); "" when fine.
+function check_wave1(name, slots):
+    if name == "game speed" and not (slots["SPEED"] in SPEEDS):
+        return "SPEED must be paused, normal, fast or superfast"
+    if name == "research start" and not listed("research", slots["PROJECT"]):
+        return "'" + slots["PROJECT"] + "' is not a research project that can be started now"
+    if name == "prisoner mode" and not listed("prisoner modes", slots["MODE"]):
+        return "'" + slots["MODE"] + "' is not a prisoner mode"
+    if has(slots, "ANIMALS"):
+        for a in slots["ANIMALS"]:
+            if not listed("animals", a):
+                return "'" + a + "' is not a tame animal on the map"
+    if name == "animal training" and not listed("trainings", slots["TRAINING"]):
+        return "'" + slots["TRAINING"] + "' is not something to train"
+    if name == "operation":
+        return check_operation(slots)
+    if name == "drug group entry":
+        return check_drug_entry(slots)
+    if starts_with(name, "policy "):
+        if not (slots["KIND"] in GROUP_KINDS):
+            return "KIND must be clothing, food, drug or reading"
+        if name != "policy new" and not listed(slots["KIND"] + " groups", slots["NAME"]):
+            return "'" + slots["NAME"] + "' is not a " + slots["KIND"] + " group in this colony"
+    if name == "letter choose":
+        if not listed("letters", slots["LETTER"]):
+            return "'" + slots["LETTER"] + "' is not an open letter with a choice"
+        if has(VOCAB, "options of " + slots["LETTER"]) and not (slots["OPTION"] in VOCAB["options of " + slots["LETTER"]]):
+            return "'" + slots["OPTION"] + "' is not an option of that letter"
+    return ""
+
+# The checks of the forms of brief 23: numbers, then names against the vocabulary, then the form's own.
+function check_new(name, slots):
+    fix_pawn_name(name, slots)
+    if bad_number(slots, "COUNT", 1, 1000):
+        return "COUNT must be a whole number"
+    if bad_number(slots, "MIN", 0, 20) or bad_number(slots, "MAX", 0, 20):
+        return "the skill range must be two whole numbers from 0 to 20"
+    if has(slots, "MIN") and number(slots["MIN"]) > number(slots["MAX"]):
+        return "the lowest skill must not be above the highest"
+    if name == "bill radius" and bad_number(slots, "N", 1, 999):
+        return "N must be a whole number of tiles, 1 to 999"
+    if name == "fuel level" and bad_number(slots, "N", 0, 100000):
+        return "N must be a whole number"
+    if has(slots, "DEGREES") and number(slots["DEGREES"]) == none:
+        return "DEGREES must be a number"
+    if bad_number(slots, "DEGREES", -273, 1000):
+        return "that temperature is not possible; it must be a whole number from -273 to 1000"
+    if name == "bill workers" and not (slots["WHO"] in ["anyone", "mechs", "non-mechs", "slaves"]):
+        return "WHO must be anyone, mechs, non-mechs or slaves"
+    if has(slots, "BENCH") and not listed("benches", slots["BENCH"]):
+        return "'" + slots["BENCH"] + "' is not a bench on the map"
+    if has(slots, "ROOM") and slots["ROOM"] != "those" and not listed("rooms", slots["ROOM"]):
+        return "'" + slots["ROOM"] + "' is not a room on the map"
+    if has(slots, "PAWN") and not pawn_word(name, slots["PAWN"]) and not listed_any(pawn_lines(name), slots["PAWN"]):
+        return "'" + slots["PAWN"] + "' is not a " + pawn_label(name)
+    if has(slots, "PAWNS"):
+        for p in slots["PAWNS"]:
+            if not (p in ["everyone", "them", "they", "those"]) and not listed_any(pawn_lines(name), p):
+                return "'" + p + "' is not a " + pawn_label(name)
+    if has(slots, "RECIPE") and (find_pattern("^[0-9]", slots["RECIPE"]) != none or contains(slots["RECIPE"], " forever") or contains(slots["RECIPE"], " until you have") or contains(slots["RECIPE"], " when satisfied")):
+        return "RECIPE is only the recipe's name, without a number or how long"
+    if name == "bill ingredients allow" and starts_with(slots["THINGS"][0], "only "):
+        return "to use only some things, write 'use only'"
+    if name == "bill store":
+        if not (slots["WHERE"] in ["floor", "best storage"]) and not is_storage_place(slots["WHERE"]):
+            return "WHERE must be floor, best storage or a storage place"
+    if has(TARGET_RULES, name):
+        rule = TARGET_RULES[name]
+        for item in slots["TARGETS"]:
+            if item != "those" and not (item in ["them", "they"]) and not listed_any(rule[0], item):
+                return "'" + item + "' is not a " + rule[1] + " on the map"
+    if starts_with(name, "door ") and not listed("doors", slots["DOOR"]):
+        return "'" + slots["DOOR"] + "' is not a door on the map"
+    if name == "medical care" and not listed("medical care", slots["LEVEL"]):
+        return "'" + slots["LEVEL"] + "' is not a medical care level"
+    if name == "threat response" and not (slots["RESPONSE"] in ["flee", "attack", "ignore"]):
+        return "RESPONSE must be flee, attack or ignore"
+    if name == "area" and slots["NAME"] != "anywhere" and not listed("areas", slots["NAME"]):
+        return "'" + slots["NAME"] + "' is not an allowed area"
+    if ends_with(name, " group") and not starts_with(name, "query "):
+        if not listed(name + "s", slots["NAME"]):
+            return "'" + slots["NAME"] + "' is not a " + name + " in this colony"
+    if starts_with(name, "group things"):
+        if not (slots["KIND"] in ["clothing", "food"]):
+            return "only a clothing group or a food group can change what it allows"
+        if not listed(slots["KIND"] + " groups", slots["NAME"]):
+            return "'" + slots["NAME"] + "' is not a " + slots["KIND"] + " group in this colony"
+        if name == "group things allow" and starts_with(slots["THINGS"][0], "only "):
+            return "to allow only some things, write 'put only'"
+    if starts_with(name, "query "):
+        return check_query(name, slots)
+    return check_wave1(name, slots)
+
+# "" when the slots are fine, else what is wrong.
+function check(name, slots):
+    if has(NEW_NAMES, name):
+        return check_new(name, slots)
+    if starts_with(name, "storage") and not ends_with(name, "(those)") and not has(slots, "BENCH") and not has(slots, "ROOM"):
+        return "storage needs a room or a bench"
+    if has(slots, "DIRECTION"):
+        if direction_name(slots["DIRECTION"]) == none:
+            return "DIRECTION must be north, south, east, west or a corner"
+        slots["DIRECTION"] = direction_name(slots["DIRECTION"])
+    if has(slots, "DISTANCE"):
+        if not whole_number_between(slots["DISTANCE"], 1, 1000) or not (lower(slots["UNIT"]) in ["tile", "tiles"]):
+            return "DISTANCE must be a number of tiles"
+    if starts_with(name, "storage priority") and not (lower(slots["PRIORITY"]) in PRIORITIES):
+        return "PRIORITY must be one of " + join_list(PRIORITIES)
+    if name == "build":
+        if has(slots, "COUNT") and not whole_number_between(slots["COUNT"], 1, 1000):
+            return "COUNT must be a number"
+        if not has(slots, "ANCHOR") and not has(slots, "ROOM"):
+            return "build needs a room, or a building to put it next to"
+        # The mod places on one of the four sides of a building, not at a corner.
+        if has(slots, "DIRECTION") and not (slots["DIRECTION"] in ["north", "south", "east", "west"]):
+            return "DIRECTION of a building must be north, south, east or west"
+    if name == "build option" and not whole_number_between(slots["OPTION"], 1, 9):
+        return "OPTION must be a number"
+    if name == "schedule":
+        if not whole_number_between(slots["FROM"], 0, 23) or not whole_number_between(slots["TO"], 0, 23):
+            return "hours must be 0 to 23"
+    if name == "work priority" and not whole_number_between(slots["N"], 1, 4):
+        return "N must be 1 to 4"
+    if name == "weapon group cleared" and not whole_number_between(slots["SLOT"], 1, 9):
+        return "SLOT must be 1 to 9"
+    return ""
+
+# ---- 6. Numbers the player said ----
+
+NUMBER_WORDS = {
+    "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
+    "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
+    "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18,
+    "nineteen": 19, "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60,
+    "seventy": 70, "eighty": 80, "ninety": 90, "hundred": 100,
+    "first": 1, "second": 2, "third": 3, "fourth": 4,
+    "noon": 12, "midnight": 0
+}
+
+# Slots that hold a number (the mod gets them as numbers).
+NUMBER_SLOTS = ["COUNT", "N", "SLOT", "DISTANCE", "OPTION", "MIN", "MAX", "DEGREES", "FROM", "TO", "VALUE"]
+
+# The slots with the number slots as numbers.
+function with_numbers(slots):
+    out = {}
+    for key in slots:
+        if key in NUMBER_SLOTS and number(slots[key]) != none:
+            out[key] = number(slots[key])
+        else:
+            out[key] = slots[key]
+    return out
+
+# Every number in the order: digit runs ("10pm" gives 10) and number words.
+function numbers_in(order):
+    found = []
+    s = lower(order) + " "
+    digits = ""
+    word = ""
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if contains("0123456789", c):
+            digits = digits + c
+        elif digits != "":
+            append(found, number(digits))
+            digits = ""
+        if contains("abcdefghijklmnopqrstuvwxyz", c):
+            word = word + c
+        elif word != "":
+            if has(NUMBER_WORDS, word):
+                append(found, NUMBER_WORDS[word])
+            word = ""
+        i = i + 1
+    return found
+
+# An hour counts as said when the player said it, or said it on a 12-hour clock (22 from "10pm",
+# 0 from "12" or "midnight").
+function hour_said(h, said):
+    return h in said or (h >= 12 and h - 12 in said) or (h == 0 and 12 in said)
+
+# "" when every number in the line was in the order (and the answer to a question), else which one wasn't.
+# DEGREES may be below zero; the minus sign is not a number the player has to say twice.
+function made_up(slots, said):
+    for key in ["COUNT", "N", "SLOT", "DISTANCE", "OPTION", "MIN", "MAX"]:
+        # OPTION is also the text of a letter's choice (brief 27): only a number has to have been said.
+        if key == "OPTION" and has(slots, key) and number(slots[key]) == none:
+            continue
+        if has(slots, key) and not (number(slots[key]) in said):
+            return key + " " + slots[key]
+    # A drug group entry's VALUE is true / false or a number; the number must be said.
+    if has(slots, "VALUE") and number(slots["VALUE"]) != none and not (number(slots["VALUE"]) in said):
+        return "VALUE " + slots["VALUE"]
+    if has(slots, "DEGREES"):
+        d = number(slots["DEGREES"])
+        if d < 0:
+            d = -d
+        if not (d in said):
+            return "DEGREES " + slots["DEGREES"]
+    for key in ["FROM", "TO"]:
+        if has(slots, key) and not hour_said(number(slots[key]), said):
+            return key + " " + slots[key]
+    return ""
+
+# ---- 7. References ----
+# Memory for one player order (one "## n." block of the results file; one call of route()): it lasts across
+# lines, periods and "and then", and is cleared at the next order.
+#   them / they = the pawns selected earlier in the order. Never objects.
+#   those       = the objects selected earlier in the order. Never pawns.
+#   those       = the objects an earlier sentence in the order acted on (brief 20): the storage of a storage
+#                 sentence (its PLACE as written), or the building of a "build" sentence with where it
+#                 goes (brief 21: "build option" and "build room" set nothing), or the TARGETS of a
+#                 building-control sentence (brief 23). Never a room, never pawns. A later sentence may say
+#                 "those" where it names the objects it acts on: the "(those)" forms of section 4 and the
+#                 TARGETS of the building-control forms.
+# MEMORY["pawns"] is set by the form "select pawns"; MEMORY["objects"] by the storage, build and
+# building-control forms (see remember()). The latest sentence replaces what was remembered, but a
+# sentence that only says "those" keeps what it pointed at. "at" counts the sentences of the order (the
+# first is 0); pawns_at / objects_at are the positions of the sentences that set them: the mod is given
+# that position as THEM / THOSE instead of names (contract, brief 23 section 2).
+# Priority (brief 22/23): only storage has a priority or an item filter. "those" from a storage sentence is
+# storage; "those" from a "build" sentence is storage only when the BUILDING is on the vocabulary line
+# "storage buildings" ("build 2 shelf in storeroom. set those to important priority" is fine, "build 2 bed
+# in barracks. set those to important priority" is refused).
+MEMORY = {"pawns": [], "objects": [], "pawns_at": -1, "objects_at": -1, "kind": "", "buildings": [], "at": -1}
+
+function clear_memory():
+    MEMORY["pawns"] = []
+    MEMORY["objects"] = []
+    MEMORY["pawns_at"] = -1
+    MEMORY["objects_at"] = -1
+    MEMORY["kind"] = ""
+    MEMORY["buildings"] = []
+    MEMORY["at"] = -1
+
+# Called once for every sentence of the order, so "at" is its position.
+function begin_sentence():
+    MEMORY["at"] = MEMORY["at"] + 1
+
+function refused(why):
+    return {"problem": why, "names": {}, "refs": {}}
+
+# Replaces them / they / those in the slots with what was remembered. Gives a dict:
+#   "problem"  "" when fine, else what is wrong
+#   "names"    the slots with them / they / those written out as names (the read-back and the lab use it)
+#   "refs"     the slots with them / those left out and THEM / THOSE = the position of the earlier sentence
+#              (what the mod is given). The "(those)" forms get their {OBJECTS} in "names" here.
+function resolve(f, slots):
+    name = f["name"]
+    takes_those = ends_with(name, "(those)")
+    if (has(slots, "ROOM") and slots["ROOM"] == "those") or (has(slots, "DOOR") and slots["DOOR"] == "those") or (has(slots, "ROOMS") and "those" in slots["ROOMS"]) or (name == "move" and slots["NAME"] == "those"):
+        return refused("'those' means objects, never a room; name the room")
+    if has(slots, "ANCHOR") and slots["ANCHOR"] in ["those", "them", "they"]:
+        return refused("'" + slots["ANCHOR"] + "' can not be what a building goes next to; name the building")
+    used_them = false
+    pawn_names = []
+    pawn_refs = []
+    if has(slots, "PAWNS"):
+        for item in slots["PAWNS"]:
+            if item in ["them", "they"]:
+                if len(MEMORY["pawns"]) == 0:
+                    return refused("'" + item + "' has no pawns selected earlier in this order")
+                used_them = true
+                for p in MEMORY["pawns"]:
+                    append(pawn_names, p)
+            elif item == "those":
+                return refused("'those' means objects, not pawns; say 'them'")
+            else:
+                append(pawn_names, item)
+                append(pawn_refs, item)
+    one_pawn = ""
+    if has(slots, "PAWN") and slots["PAWN"] in ["them", "they"]:
+        if len(MEMORY["pawns"]) != 1:
+            return refused("'" + slots["PAWN"] + "' needs exactly one pawn selected earlier in this order")
+        used_them = true
+        one_pawn = MEMORY["pawns"][0]
+    if has(slots, "THINGS"):
+        for item in slots["THINGS"]:
+            if item in ["them", "they"]:
+                return refused("'" + item + "' means pawns, not things; name the things")
+            elif item == "those":
+                return refused("'those' means the storage or buildings an earlier sentence acted on, not things to put in")
+    used_those = false
+    those_targets = false
+    if takes_those:
+        if len(MEMORY["objects"]) == 0:
+            return refused("'those' has no storage or buildings from an earlier sentence in this order")
+        if MEMORY["kind"] == "control":
+            return refused("'those' are buildings with controls, not storage; storage is the only thing with a priority or an item list")
+        if MEMORY["kind"] == "build":
+            for b in MEMORY["buildings"]:
+                if not listed("storage buildings", b):
+                    return refused("'" + b + "' is not storage, so 'those' can not take a priority or an item list; only stockpile zones and " + join_list(get(VOCAB, "storage buildings", [])) + " can")
+        used_those = true
+    if has(slots, "TARGETS"):
+        for item in slots["TARGETS"]:
+            if item in ["them", "they"]:
+                return refused("'" + item + "' means pawns, not buildings; name the buildings")
+        if "those" in slots["TARGETS"]:
+            if len(slots["TARGETS"]) != 1:
+                return refused("'those' must stand alone; name the other buildings in another sentence")
+            if has(slots, "ROOM"):
+                return refused("'those' already means the buildings; leave the room out")
+            if len(MEMORY["objects"]) == 0:
+                return refused("'those' has no storage or buildings from an earlier sentence in this order")
+            if MEMORY["kind"] == "storage":
+                return refused("'those' are storage, not something this sentence can act on")
+            used_those = true
+            those_targets = true
+    names = {}
+    refs = {}
+    for key in slots:
+        if key == "PAWNS":
+            names[key] = pawn_names
+            if len(pawn_refs) > 0:
+                refs[key] = pawn_refs
+        elif key == "PAWN" and one_pawn != "":
+            names[key] = one_pawn
+        elif key == "TARGETS" and those_targets:
+            names[key] = MEMORY["objects"]
+        else:
+            names[key] = slots[key]
+            refs[key] = slots[key]
+    if takes_those:
+        names["OBJECTS"] = MEMORY["objects"]
+    if used_them:
+        refs["THEM"] = MEMORY["pawns_at"]
+    if used_those:
+        refs["THOSE"] = MEMORY["objects_at"]
+    return {"problem": "", "names": names, "refs": refs}
+
+# After a form matched (slots = its names): what it selected is remembered for the rest of the order.
+function remember(f, slots, refs):
+    name = f["name"]
+    if name == "select pawns":
+        MEMORY["pawns"] = slots["PAWNS"]
+        MEMORY["pawns_at"] = MEMORY["at"]
+    elif f["place"] != "":
+        MEMORY["objects"] = [fill(f["place"], slots)]
+        MEMORY["objects_at"] = MEMORY["at"]
+        MEMORY["kind"] = "storage"
+        MEMORY["buildings"] = []
+    elif name == "build":
+        what = slots["BUILDING"]
+        if has(slots, "ANCHOR"):
+            if has(slots, "DIRECTION"):
+                what = what + " " + slots["DIRECTION"] + " of " + slots["ANCHOR"]
+            else:
+                what = what + " near " + slots["ANCHOR"]
+        if has(slots, "ROOM"):
+            what = what + " in " + slots["ROOM"]
+        MEMORY["objects"] = [what]
+        MEMORY["objects_at"] = MEMORY["at"]
+        MEMORY["kind"] = "build"
+        MEMORY["buildings"] = [slots["BUILDING"]]
+    elif has(TARGET_RULES, name) and not has(refs, "THOSE"):
+        objects = []
+        for t in slots["TARGETS"]:
+            if has(slots, "ROOM"):
+                append(objects, t + " in " + slots["ROOM"])
+            else:
+                append(objects, t)
+        MEMORY["objects"] = objects
+        MEMORY["objects_at"] = MEMORY["at"]
+        MEMORY["kind"] = "control"
+        MEMORY["buildings"] = []
+
+# ---- 8. One sentence ----
+# Sections 1 to 7 applied to one sentence (a command): the same for the lab and for the mod.
+
+function is_note(line):
+    low = lower(trim(line))
+    return starts_with(low, "ask:") or starts_with(low, "cannot:")
+
+# The first ASK: or CANNOT: line of an answer (a list of lines), as written, or none. An answer with one
+# is stopped: nothing in it goes on (user 2026-10-02, brief 22).
+function first_note(lines):
+    for line in lines:
+        if trim(line) != "" and is_note(line):
+            return trim(line)
+    return none
+
+# One answer line -> its commands (lowercase, through wording, cut at periods and "and then").
+function sentences_of(line):
+    return commands(wording(to_lowercase(line)))
+
+# One command, already lowercase and through wording. Gives a dict with "kind":
+#   "ok"         "form", "names" and "refs" (see resolve()), "readback" (what the player reads)
+#   "and"        a plain "and" before an action verb
+#   "made up"    "what": the number the player never said
+#   "unresolved" "form", "why": them / those pointed at nothing, or at the wrong kind
+#   "no match"   no form fits; "form" and "why" tell what it came closest to ("" when nothing did)
+function read_sentence(line, said):
+    begin_sentence()
+    if not is_note(line) and find_pattern(AND_ACTION, line) != none:
+        return {"kind": "and", "line": line}
+    first = first_word(line)
+    problem_form = ""
+    problem = ""
+    for f in forms:
+        if f["start"] != first:
+            continue
+        slots = parse(f["template"], line)
+        if slots == none:
+            continue
+        # Slots the template itself decides (brief 27).
+        if has(FIXED, f["template"]):
+            for k in keys(FIXED[f["template"]]):
+                slots[k] = FIXED[f["template"]][k]
+        # List slots become lists, the way the router will use them.
+        for key in slots:
+            if key in f["lists"]:
+                slots[key] = split_list(slots[key])
+        wrong = check(f["name"], slots)
+        if wrong != "":
+            problem_form = f["name"]
+            problem = wrong
+            continue
+        invented = made_up(slots, said)
+        if invented != "":
+            return {"kind": "made up", "line": line, "what": invented}
+        r = resolve(f, slots)
+        if r["problem"] != "":
+            return {"kind": "unresolved", "line": line, "form": f["name"], "why": r["problem"]}
+        remember(f, r["names"], r["refs"])
+        # The same template filled back in: what the player would read.
+        return {"kind": "ok", "line": line, "form": f["name"], "names": r["names"], "refs": r["refs"], "readback": fill(f["readback"], r["names"])}
+    return {"kind": "no match", "line": line, "form": problem_form, "why": problem}
+
+# ==== shared rules: end ====
+
+# ---- 9. The driver: route(order) ----
+
+# What the player reads when one sentence did not pass (r from read_sentence()).
+function reason_of(r):
+    line = r["line"]
+    if r["kind"] == "and":
+        return "\"" + line + "\": 'and' does not start a new command; use 'and then' or a period"
+    if r["kind"] == "made up":
+        return "\"" + line + "\": the number (" + r["what"] + ") was not in your order"
+    if r["kind"] == "no match" and r["why"] == "":
+        return "\"" + line + "\": I do not know how to do that"
+    return "\"" + line + "\": " + r["why"]
+
+# Haiku's answer as lines: no blank lines, no code fences.
+function answer_lines(reply):
+    out = []
+    for line in split(reply, "\n"):
+        t = trim(line)
+        if t != "" and not starts_with(t, "```"):
+            append(out, t)
+    return out
+
+function route(order):
+    vocabulary_text = vocabulary()
+    read_vocabulary(vocabulary_text)
+    waiting = pending()
+    original = order
+    asked = ""
+    answer = ""
+    if waiting != none:
+        # The second pass: the order from last time, Haiku's question, and what the player said now.
+        original = waiting["order"]
+        asked = waiting["question"]
+        answer = order
+    prompt_input = "VOCABULARY:\n" + trim(vocabulary_text) + "\nORDER:\n" + original
+    if waiting != none:
+        prompt_input = prompt_input + "\nASKED:\n" + asked + "\nANSWER:\n" + answer
+    log("asking Haiku about the order: " + original)
+    reply = haiku(prompt_input)
+    if reply == none:
+        reply = ""
+    lines = answer_lines(reply)
+
+    # An ASK or a CANNOT stops everything: no other line of the answer is looked at.
+    note = first_note(lines)
+    if note != none:
+        m = find_pattern("^(ask|cannot): *(.*)$", note)
+        if m != none and lower(m[1]) == "cannot":
+            log("Haiku can not do it: " + m[2])
+            return {"result": "cannot", "reason": m[2]}
+        question = note
+        if m != none:
+            question = m[2]
+        if trim(question) == "":
+            question = "Could you say that again, with more detail?"
+        log("Haiku asked: " + question)
+        return {"result": "ask", "question": question}
+
+    # Every sentence is read and checked; one bad sentence stops the whole order.
+    said = numbers_in(original + " " + answer)
+    clear_memory()
+    parsed = []
+    reasons = []
+    for line in lines:
+        for command in sentences_of(line):
+            r = read_sentence(command, said)
+            if r["kind"] == "ok":
+                append(parsed, r)
+            else:
+                append(reasons, reason_of(r))
+    if len(parsed) == 0 and len(reasons) == 0:
+        append(reasons, "Nothing in that order could be turned into a change.")
+    # An order is all questions or all changes: a mix is refused as a whole, nothing is planned.
+    formed = []
+    for r in parsed:
+        append(formed, r["form"])
+    if mixed_problem(formed) != "":
+        append(reasons, mixed_problem(formed))
+    if len(reasons) > 0:
+        log("the order failed: " + join(reasons, " | "))
+        return {"result": "failed", "reasons": reasons}
+
+    # Questions: the mod answers each one from the game's data; nothing is planned or changed.
+    if is_query(parsed[0]["form"]):
+        answered = []
+        for r in parsed:
+            reply = query(r["form"], with_numbers(r["refs"]))
+            if reply["ok"]:
+                for part in split(reply["text"], "\n"):
+                    if trim(part) != "":
+                        append(answered, trim(part))
+            else:
+                append(reasons, reply["reason"])
+        if len(reasons) > 0:
+            log("the question failed: " + join(reasons, " | "))
+            return {"result": "failed", "reasons": reasons}
+        return {"result": "answer", "lines": answered}
+
+    # Every sentence is planned, in order (them / those are positions of earlier sentences).
+    planned_lines = []
+    for r in parsed:
+        planned = plan(r["form"], with_numbers(r["refs"]))
+        if planned["ok"]:
+            append(planned_lines, planned["line"])
+        else:
+            append(reasons, planned["reason"])
+    if len(reasons) > 0:
+        log("the order failed: " + join(reasons, " | "))
+        return {"result": "failed", "reasons": reasons}
+    return {"result": "plans", "lines": planned_lines}
