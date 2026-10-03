@@ -198,6 +198,207 @@ who carries medicine.
 ORDER: what is bob wearing
 show gear of Bob.
 
+ORDER: what are my storage settings for the shelves in the kitchen
+CANNOT: No question shows what a storage allows.
+
+ORDER: put beer on the shelves
+ASK: Which room, or which bench is it near?
+
+ORDER: also steel on the shelves in the workshop, and no cloth on the shelves in the kitchen
+put steel in storage in workshop.
+keep cloth out of storage in kitchen.
+
+ORDER: make the shelves in the storeroom important
+set storage in storeroom to important priority.
+
+ORDER: only meat on the shelves 3 tiles left of the kitchen door in the storeroom
+put only meat in storage 3 tiles west of door to kitchen in storeroom.
+
+ORDER: put wood on the shelves by the electric smithy in the workshop, steel on those too and no cloth
+put wood in storage near electric smithy in workshop. put steel in those. keep cloth out of those.
+
+ORDER: two new shelves in the workshop and only steel on them
+build 2 shelf in workshop. put only steel in those.
+
+ORDER: go with option 2
+build option 2.
+
+ORDER: a table made of steel left of the electric stove in the kitchen, and two stools above the research bench in the workshop
+build table made of steel west of electric stove in kitchen.
+build 2 stool north of research bench in workshop.
+
+ORDER: three torch lamps by the electric smithy in the workshop
+build 3 torch lamp near electric smithy in workshop.
+
+ORDER: alice and bob stay in the hospital and barracks
+keep Alice and Bob in hospital and barracks.
+
+ORDER: set carl cooking to priority 1, and only dana does the electric stove bills
+set Cooking priority 1 for Carl.
+let only Dana do bills on electric stove.
+
+ORDER: draft alice and bob, then undraft carl
+draft Alice and Bob. undraft Carl.
+
+ORDER: new weapon group sharp for knives, and clear weapon group 2
+make weapon group sharp holding knives.
+clear weapon group 2.
+
+ORDER: cook 5 simple meals on the electric stove, and keep 20 beer in stock at the brewery
+add bill to make 5 cook simple meal at electric stove.
+add bill to make brew beer until you have 20 at brewery.
+
+ORDER: fine meals non-stop at the electric stove in the kitchen
+add bill to make cook fine meal forever at electric stove in kitchen.
+
+ORDER: drop the beer bill at the brewery and pause the fine meals at the stove
+remove bill for brew beer at brewery.
+pause bill for cook fine meal at electric stove.
+
+ORDER: fine meals at the stove can go again
+resume bill for cook fine meal at electric stove.
+
+ORDER: pause the beer bill when it has enough, and unpause the fine meals when satisfied
+pause bill for brew beer when satisfied at brewery.
+unpause bill for cook fine meal when satisfied at electric stove.
+
+ORDER: let slaves do the simple meal bill at the stove, and give the fine meal bill to alice
+let slaves do bill for cook simple meal at electric stove.
+let Alice do bill for cook fine meal at electric stove.
+
+ORDER: simple meals at the stove for skill 5 to 12, ingredients within 10 tiles, products to the storeroom shelves
+set skill range 5 to 12 on bill for cook simple meal at electric stove.
+set ingredient radius to 10 on bill for cook simple meal at electric stove.
+store bill products on storage in storeroom for cook simple meal at electric stove.
+
+ORDER: simple meals at the stove: only corn, also rice, never insect meat
+use only corn in bill for cook simple meal at electric stove.
+allow rice in bill for cook simple meal at electric stove.
+never use insect meat in bill for cook simple meal at electric stove.
+
+ORDER: make the beer bill run 3 times, the fine meals until 10, and the simple meals forever
+change bill for brew beer to repeat 3 times at brewery.
+change bill for cook fine meal to repeat until you have 10 at electric stove.
+change bill for cook simple meal to repeat forever at electric stove.
+
+ORDER: switch off the electric smithy in the workshop and switch on the electric stove in the kitchen
+switch off electric smithy in workshop.
+switch on electric stove in kitchen.
+
+ORDER: close the vents in the barracks and open them in the hospital
+close vent in barracks.
+open vent in hospital.
+
+ORDER: set the cooler in the hospital to 15 degrees
+set temperature of cooler in hospital to 15.
+
+ORDER: auto refuel on for the wood-fired generator, off for the torch lamps in the shrine, and fill it to 50
+turn on auto refuel for wood-fired generator.
+turn off auto refuel for torch lamp in shrine.
+set fuel level to 50 for wood-fired generator.
+
+ORDER: keep the door from the storeroom to the kitchen open and let the hospital door close
+hold door storeroom to kitchen open.
+let door hospital to barracks close.
+
+ORDER: forbid the shelves in the storeroom, allow them in the kitchen again
+forbid shelf in storeroom.
+unforbid shelf in kitchen.
+
+ORDER: mini-turrets in the barracks hold fire, then let them shoot
+hold fire with mini-turret in barracks.
+open fire with mini-turret in barracks.
+
+ORDER: every bed in the hospital medical, 2 beds in the barracks prisoner, and the rec room beds colonist
+set every bed in hospital to medical.
+set 2 bed in barracks to prisoner.
+set every bed in rec room to colonist.
+
+ORDER: alice and bob get soldier clothes and carl eats fine food
+assign Alice and Bob to clothing group Soldier.
+assign Carl to food group Fine.
+
+ORDER: dana takes no drugs, alice reads nothing and bob gets the best medicine
+assign Dana to drug group No drugs.
+assign Alice to reading group Nothing.
+assign Bob to medicine group best available.
+
+ORDER: alice runs away from threats, carl stays in the home area, and alice and bob hold fire
+set threat response of Alice to flee.
+restrict Carl to area Home.
+turn off fire at will for Alice and Bob.
+
+ORDER: carl shoots at will again
+turn on fire at will for Carl.
+
+ORDER: workers wear parkas but never tribalwear, only simple meals for the simple food group
+put parka in clothing group Worker.
+keep tribalwear out of clothing group Worker.
+put only simple meal in food group Simple.
+
+ORDER: set the game to fast and research electricity
+set game speed to fast.
+start research electricity.
+
+ORDER: recruit hank, make alice rex's master and train rex in obedience
+set prisoner mode of Hank to recruit.
+set master of Rex to Alice.
+train Rex in obedience.
+
+ORDER: spot should stop hauling training
+stop training Spot in haul.
+
+ORDER: amputate bob's left leg and give alice a bionic arm on the right arm
+queue operation amputate left leg for Bob.
+queue operation install bionic arm for Alice on right arm.
+
+ORDER: cancel bob's amputation
+cancel operation amputate left leg for Bob.
+
+ORDER: social drug group may take beer for joy, and flake every 3 days
+set allow for joy of drug group Social entry beer to true.
+set take every of drug group Social entry flake to 3.
+
+ORDER: new food group picky, rename the raw food group to fresh, delete the no drugs group
+create food group Picky.
+rename food group Raw to Fresh.
+delete drug group No drugs.
+
+ORDER: accept the wanderer
+choose accept for letter wanderer joins.
+
+ORDER: how much steel do i have
+how much steel do i have.
+
+ORDER: is bob married, and who are alice's relations
+is Bob married.
+list relations of Alice.
+
+ORDER: which groups is carl in, and what does the soldier clothing group allow
+show groups of Carl.
+show clothing group Soldier.
+
+ORDER: any alerts or letters
+show alerts.
+show letters.
+
+ORDER: how is alice doing
+show needs of Alice.
+show health of Alice.
+
+ORDER: weather and research
+show weather.
+show research.
+
+ORDER: list my colonists, prisoners and animals
+show colonists.
+show prisoners.
+show animals.
+
+ORDER: who has a helmet on, and who is not carrying medicine
+who wears helmet.
+who does not carry medicine.
+
 BAD -> why
 select everyone who have ranged weapons and move them to location hospital.   -> "and" never joins actions. Write: select everyone who have ranged weapons. move them to location hospital.
 build 3 shelf in storeroom.   -> the player said "some shelves"; 3 is made up. Write: ASK: How many shelves?
