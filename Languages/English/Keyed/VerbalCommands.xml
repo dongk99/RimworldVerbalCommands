@@ -28,6 +28,7 @@
   <VerbalCommands_Settings_LogAnswers>Log the player's answer to a question in the game log</VerbalCommands_Settings_LogAnswers>
   <VerbalCommands_Settings_LogHaiku>Log the small model's raw reply in the game log</VerbalCommands_Settings_LogHaiku>
   <VerbalCommands_Settings_LogPlans>Log the planned changes of an order in the game log</VerbalCommands_Settings_LogPlans>
+  <VerbalCommands_Settings_SaveRouterLog>Save router log (what was sent to Haiku, replies, and what was done)</VerbalCommands_Settings_SaveRouterLog>
   <VerbalCommands_Settings_Extra>Extra system prompt text</VerbalCommands_Settings_Extra>
   <VerbalCommands_Settings_GroupLayout>Group hotkey layout</VerbalCommands_Settings_GroupLayout>
   <VerbalCommands_Settings_ChooseGroupKeys>Choose group hotkeys…</VerbalCommands_Settings_ChooseGroupKeys>

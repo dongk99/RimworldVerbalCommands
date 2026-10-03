@@ -348,6 +348,18 @@ query_form("query colonists", "show colonists.", [])
 query_form("query prisoners", "show prisoners.", [])
 query_form("query animals", "show animals.", [])
 
+# Brief 30: what pawns wear, hold and carry (colonists only; nothing here changes). THINGS is the player's word and is
+# not checked against a vocabulary line: the mod matches it against every item def of that kind (apparel for wear,
+# weapons and other equipment for hold, any item for carry), so an item that is only on a pawn is still accepted.
+# "does not" forms start with their own words, so "who wears" never reads "who does not wear" as THINGS.
+query_form("query gear", "show gear of {PAWN}.", [])
+query_form("query wearing", "who wears {THINGS}.", ["THINGS"])
+query_form("query not wearing", "who does not wear {THINGS}.", ["THINGS"])
+query_form("query holding", "who holds {THINGS}.", ["THINGS"])
+query_form("query not holding", "who does not hold {THINGS}.", ["THINGS"])
+query_form("query carrying", "who carries {THINGS}.", ["THINGS"])
+query_form("query not carrying", "who does not carry {THINGS}.", ["THINGS"])
+
 # An order is all questions or all changes (brief 26): a mix is refused as a whole, nothing is planned.
 MIXED_ORDER = "Ask the question on its own, then give the order."
 
@@ -505,7 +517,9 @@ function check_query(name, slots):
     if has(slots, "THINGS"):
         for item in slots["THINGS"]:
             if item in ["those", "them", "they", "it"]:
-                return "name the things to count"
+                if name == "query count":
+                    return "name the things to count"
+                return "name the things to look for"
     if has(slots, "RELATION") and starts_with(slots["RELATION"], "and "):
         return "ask about one pawn at a time"
     if name == "query group":

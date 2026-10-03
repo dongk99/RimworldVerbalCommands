@@ -1,0 +1,4 @@
+# Model weights: too large for GitHub (see Models/*/DOWNLOAD.md)
+*.onnx
+# Debug symbols
+*.pdb

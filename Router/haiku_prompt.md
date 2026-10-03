@@ -105,6 +105,13 @@ show weather.
 show colonists.
 show prisoners.
 show animals.
+show gear of PAWN.
+who wears THINGS.
+who does not wear THINGS.
+who holds THINGS.
+who does not hold THINGS.
+who carries THINGS.
+who does not carry THINGS.
 ASK: one short question.
 CANNOT: one short reason.
 
@@ -118,7 +125,7 @@ SLOTS
 - WHERE: floor, best storage, or storage PLACE. RESPONSE: flee, attack or ignore. TYPE: medical, prisoner or colonist.
 - THINGS, NAME for weapon groups, RULE: the player's own words.
 - Wave 1 slots: SPEED paused, normal, fast or superfast ("pause" = paused, "unpause" = normal). PROJECT, ANIMALS, MODE (prisoner), TRAINING: copy from "research", "animals", "prisoner modes", "trainings"; PAWNS of prisoner mode from "prisoners"; "nobody" clears a master. PAWN of operation, show needs, show health: a colonist, prisoner or animal. RECIPE of an operation: copy from "operations" for that PAWN; "on PART" only when the player named a part, else leave it out. FIELD: allow for joy, allow scheduled, take every, only if mood below, only if recreation below or take to inventory; VALUE: true or false for the two allow fields, else the number said (days, percent, count); DRUG from "drugs". KIND for create, rename, delete: clothing, food, drug or reading. LETTER: from "letters"; OPTION: one of the words in brackets after it.
-- Questions (from "how much" to "show animals") change nothing. RELATION: the player's word ("married", "engaged"). "show KIND group NAME": KIND is clothing, food, drug, reading, medicine (NAME is a medical care level) or weapon.
+- Questions (from "how much" to "who does not carry") change nothing. In who wears / holds / carries, THINGS is the item as the player said it, not checked against VOCABULARY ("helmet", "recon helmet", "weapon", "medicine"); wears = apparel, holds = weapon in hand, carries = inventory; "unarmed" = "who does not hold weapon". RELATION: the player's word ("married", "engaged"). "show KIND group NAME": KIND is clothing, food, drug, reading, medicine (NAME is a medical care level) or weapon.
 - Several names: "a, b and c".
 - PRIORITY: low, normal, preferred, important or critical.
 - HOUR: 0 to 23 ("10pm" is 22). N: 1 to 4 (1 is highest) in a work priority line, in the other lines the number said. MIN, MAX: skill 0 to 20.
@@ -180,6 +187,17 @@ select everyone who have ranged weapons. move them to location hospital.
 ORDER: only steel on the shelves by the electric smithy in the workshop, then make them critical
 put only steel in storage near electric smithy in workshop. set those to critical priority.
 
+ORDER: which pawns currently hold assault rifle, and which pawns are not wearing recon helmet
+who holds assault rifle.
+who does not wear recon helmet.
+
+ORDER: who is unarmed and who has medicine on them
+who does not hold weapon.
+who carries medicine.
+
+ORDER: what is bob wearing
+show gear of Bob.
+
 BAD -> why
 select everyone who have ranged weapons and move them to location hospital.   -> "and" never joins actions. Write: select everyone who have ranged weapons. move them to location hospital.
 build 3 shelf in storeroom.   -> the player said "some shelves"; 3 is made up. Write: ASK: How many shelves?
@@ -191,3 +209,4 @@ put only beer in storage near bar in chapel.   -> "bar" and "chapel" are not cop
 schedule Alice to Sleep from 22 to 6. She needs rest.   -> extra text.
 build 2 bed in barracks. set those to important priority.   -> a bed has no priority. Write: ASK: A bed has no priority. Which storage do you mean?
 ASK: Which door? (then) put beer in storage in storeroom.   -> an ASK or CANNOT is the whole answer, never with other lines. Write only: ASK: Which door?
+CANNOT: Show commands only list items, not who holds them.   -> "which pawns", "who", "is anyone", "does anybody" + wear / hold / carry / have on / armed always fit the who lines. Write: who holds assault rifle.
