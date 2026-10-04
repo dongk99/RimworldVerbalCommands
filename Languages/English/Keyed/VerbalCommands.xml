@@ -29,6 +29,8 @@
   <VerbalCommands_Settings_LogHaiku>Log the small model's raw reply in the game log</VerbalCommands_Settings_LogHaiku>
   <VerbalCommands_Settings_LogPlans>Log the planned changes of an order in the game log</VerbalCommands_Settings_LogPlans>
   <VerbalCommands_Settings_SaveRouterLog>Save router log (what was sent to Haiku, replies, and what was done)</VerbalCommands_Settings_SaveRouterLog>
+  <VerbalCommands_Settings_AgentInbox>Agent inbox: run orders from text files in the inbox folder</VerbalCommands_Settings_AgentInbox>
+  <VerbalCommands_Settings_AgentInboxTip>Off by default. When on, each .txt file put in {0} is run as an order (oldest first) and its result is written to the outbox folder next to it. Only that folder is read; nothing listens on the network. The router log is always written while this is on.</VerbalCommands_Settings_AgentInboxTip>
   <VerbalCommands_Settings_Extra>Extra system prompt text</VerbalCommands_Settings_Extra>
   <VerbalCommands_Settings_GroupLayout>Group hotkey layout</VerbalCommands_Settings_GroupLayout>
   <VerbalCommands_Settings_ChooseGroupKeys>Choose group hotkeys…</VerbalCommands_Settings_ChooseGroupKeys>

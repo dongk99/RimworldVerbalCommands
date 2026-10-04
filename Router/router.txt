@@ -70,6 +70,16 @@ SEPARATORS = [". ", " and then ", ", and then ", "\n "]
 # Verb words at the start of a command -> the one verb the forms use.
 # Brief 21 (user 2026-09-28): build intent is only ever "build" or "construct".
 VERBS = {"select": "select", "group": "select", "gather": "select", "construct": "build"}
+# User 2026-10-03: the sentence forms stay as they are; new words for the same thing are rows here. Verb words
+# for the sentences the agent-player build added ("retreat" = move is added next to its forms, section 5).
+VERBS["pull back"] = "move"
+VERBS["fall back"] = "move"
+VERBS["put out"] = "extinguish"
+VERBS["douse"] = "extinguish"
+VERBS["patch up"] = "tend"
+VERBS["treat"] = "tend"
+VERBS["heal"] = "tend"
+VERBS["shoot"] = "attack"
 
 # Phrases anywhere in the line -> the one phrase the forms use. Longer phrases first.
 PHRASES = [
@@ -77,7 +87,9 @@ PHRASES = [
     ["melee weapons equipped", "have melee weapons"],
     ["all of my pawns", "everyone"],
     ["all my pawns", "everyone"],
-    ["wield", "have"]
+    ["wield", "have"],
+    ["closest", "nearest"],
+    ["map center", "map centre"]
 ]
 
 function without_filler(line):
@@ -133,7 +145,11 @@ ACTION_VERBS = [
     "put", "keep", "set", "build", "assign", "schedule", "stop", "let", "draft", "make", "clear", "select", "move",
     "add", "remove", "pause", "resume", "use", "allow", "never", "store", "switch", "open", "close", "hold",
     "turn", "forbid", "unforbid", "undraft", "restrict",
-    "start", "unpause", "train", "queue", "cancel", "create", "rename", "delete", "choose"
+    "start", "unpause", "train", "queue", "cancel", "create", "rename", "delete", "choose", "run",
+    "zone", "grow", "shrink", "area", "dig",
+    "chop", "cut", "harvest", "mine", "deconstruct", "uninstall", "haul", "hunt", "tame", "slaughter", "strip", "claim", "smooth",
+    "attack", "retreat", "rescue", "tend", "capture", "arrest", "extinguish", "prioritize", "equip", "have",
+    "trade", "accept"
 ]
 AND_ACTION = " and (" + join(ACTION_VERBS, "|") + ")( |$)"
 
@@ -153,7 +169,8 @@ function first_word(text):
 PLACES = [
     "storage {DISTANCE} {UNIT} {DIRECTION} of door to {DOOR}[ in {ROOM}]",
     "storage {DIRECTION} of door to {DOOR}[ in {ROOM}]",
-    "storage[ near {BENCH}][ in {ROOM}]"
+    "storage[ near {BENCH}][ in {ROOM}]",
+    "zone {ZONE}"
 ]
 
 forms = []
@@ -215,6 +232,47 @@ those_form("storage priority (those)", "set ", " to {PRIORITY} priority.", [])
 # pair the COUNT form is first; check() sends a COUNT that isn't a number on to the form without it.
 form("build option", "build option {OPTION}.", [])
 form("build room", "build room like {ROOM}.", [])
+# Agent 08 (items 19, 22): build at a place with no room, lines, floors, a walled room from nothing, and
+# cancelling blueprints. SPOT and AREA as agent 03 reads them (check_place). Blueprints only; colonists build.
+#   build room AREA [made of STUFF] [door SIDE].   walls round the edge of AREA, one door, roof area inside
+#   build BUILDING [made of STUFF] from AREA.      a straight line (AREA one cell wide): wall, fence, ...
+#   build floor FLOOR in area AREA.                a floor over every cell of AREA that takes it
+#   build BUILDING [made of STUFF] at SPOT [facing SIDE].     exactly that cell
+#   build [COUNT] BUILDING [made of STUFF] near SPOT [facing SIDE].   the nearest free cells to SPOT
+#   cancel blueprint [BUILDING] at SPOT. / cancel blueprint [BUILDING] in area AREA.
+# The room form comes before "at", and "from" before "at", so "room 7 by 7" and "wall from ..." are never a
+# BUILDING. In the "near" pair the COUNT form is first (check_new sends a COUNT that isn't a number on).
+BUILD_PLACE = {}
+function build_place_form(name, template):
+    BUILD_PLACE[name] = true
+    new_form(name, template, [])
+
+build_place_form("build room new", "build room {AREA}[ made of {STUFF}][ door {SIDE}].")
+build_place_form("build room new", "build room made of {STUFF} {AREA}[ door {SIDE}].")
+# A room dug into rock (the user settles by mountains and digs in): rock inside is mined, rock on the edge
+# stays as wall, the rest of the edge gets walls, one door.
+build_place_form("dig room", "dig room {AREA}[ made of {STUFF}][ door {SIDE}].")
+# A furnished room: the box of "build room" plus the furniture of TYPE, laid out by the game's placement
+# rules (AgentRoomLayouts.cs). TYPE is fixed by the template; barracks may say how many beds.
+ROOM_TYPES = ["bedroom", "barracks", "kitchen", "dining room", "research room"]
+function room_type_form(t, template):
+    BUILD_PLACE["build furnished room"] = true
+    fixed_form("build furnished room", template, [], {"TYPE": t})
+for t in ROOM_TYPES:
+    room_type_form(t, "build " + t + " {AREA}[ made of {STUFF}][ door {SIDE}].")
+room_type_form("barracks", "build barracks {AREA}[ made of {STUFF}][ door {SIDE}] with {COUNT} beds.")
+build_place_form("build line", "build {BUILDING}[ made of {STUFF}] from {AREA}.")
+build_place_form("build floor", "build floor {FLOOR} in area {AREA}.")
+# User 2026-10-04: a building the game allows on one kind of spot only (a geothermal generator on a steam
+# geyser) needs no place from the player: the mod takes the nearest free one. Refused by the mod for anything else.
+build_place_form("build anywhere", "build {BUILDING}[ made of {STUFF}] anywhere.")
+build_place_form("build at", "build {BUILDING}[ made of {STUFF}] at {SPOT}[ facing {FACING}].")
+build_place_form("build near", "build {COUNT} {BUILDING}[ made of {STUFF}] near {SPOT}[ facing {FACING}].")
+build_place_form("build near", "build {BUILDING}[ made of {STUFF}] near {SPOT}[ facing {FACING}].")
+build_place_form("cancel blueprint at", "cancel blueprint at {SPOT}.")
+build_place_form("cancel blueprint at", "cancel blueprint {BUILDING} at {SPOT}.")
+build_place_form("cancel blueprint area", "cancel blueprint in area {AREA}.")
+build_place_form("cancel blueprint area", "cancel blueprint {BUILDING} in area {AREA}.")
 form("build", "build {COUNT} {BUILDING}[ made of {STUFF}] {DIRECTION} of {ANCHOR}[ in {ROOM}].", [])
 form("build", "build {BUILDING}[ made of {STUFF}] {DIRECTION} of {ANCHOR}[ in {ROOM}].", [])
 form("build", "build {COUNT} {BUILDING}[ made of {STUFF}][ near {ANCHOR}][ in {ROOM}].", [])
@@ -265,6 +323,10 @@ new_form("bill ingredients forbid", "never use {THINGS} in bill for {RECIPE}" + 
 # and heaters, refuel on/off on generators). TARGETS are building names and may be "those" alone (what a
 # "build" or an earlier control sentence acted on); the room is left out then. "open fire with" comes
 # before "open", so a turret is never read as a vent.
+# User 2026-10-04: "at SPOT" names one building out of several of a kind (one power switch cuts one grid). The
+# SPOT forms come first, so a SPOT is never read as part of TARGETS.
+new_form("switch on", "switch on {TARGETS} at {SPOT}.", ["TARGETS"])
+new_form("switch off", "switch off {TARGETS} at {SPOT}.", ["TARGETS"])
 new_form("switch on", "switch on {TARGETS}[ in {ROOM}].", ["TARGETS"])
 new_form("switch off", "switch off {TARGETS}[ in {ROOM}].", ["TARGETS"])
 new_form("turret fire", "open fire with {TARGETS}[ in {ROOM}].", ["TARGETS"])
@@ -277,6 +339,30 @@ new_form("refuel off", "turn off auto refuel for {TARGETS}[ in {ROOM}].", ["TARG
 new_form("fuel level", "set fuel level to {N} for {TARGETS}[ in {ROOM}].", ["TARGETS"])
 new_form("door hold open", "hold door {DOOR} open.", [])
 new_form("door let close", "let door {DOOR} close.", [])
+
+# Agent 07: designations (item 21). Changes; the mod places the game's own designation and colonists do the
+# work. THINGS is the player's words (not checked against the vocabulary: the mod matches them against what the
+# game's own designator accepts in view). MODE is fixed by the template: all = everything in view, area = in
+# AREA, nearest = the COUNT (or one) closest to SPOT, near = within 10 tiles of SPOT. In each verb the "all" form
+# is first: its check refuses a THINGS that holds a place or "nearest", so the place forms after it are tried.
+# In the nearest pair the COUNT form is first; check_new sends a COUNT that is not a number on to the next form.
+DESIGNATE_VERBS = ["chop", "cut", "harvest", "mine", "deconstruct", "uninstall", "haul", "hunt", "tame", "slaughter", "strip", "claim", "smooth"]
+for verb in DESIGNATE_VERBS:
+    fixed_form("designate " + verb, verb + " {THINGS}.", ["THINGS"], {"MODE": "all"})
+    fixed_form("designate " + verb, verb + " {THINGS} in area {AREA}.", ["THINGS"], {"MODE": "area"})
+    fixed_form("designate " + verb, verb + " nearest {COUNT} {THINGS} near {SPOT}.", ["THINGS"], {"MODE": "nearest"})
+    fixed_form("designate " + verb, verb + " nearest {THINGS} near {SPOT}.", ["THINGS"], {"MODE": "nearest"})
+    fixed_form("designate " + verb, verb + " {THINGS} near {SPOT}.", ["THINGS"], {"MODE": "near"})
+# Items lying on the map (the older "forbid TARGETS" is for buildings). No "of THINGS" = every item.
+for verb in ["forbid", "unforbid"]:
+    fixed_form("items " + verb, verb + " items[ of {THINGS}].", ["THINGS"], {"MODE": "all"})
+    fixed_form("items " + verb, verb + " items[ of {THINGS}] in area {AREA}.", ["THINGS"], {"MODE": "area"})
+    fixed_form("items " + verb, verb + " items[ of {THINGS}] near {SPOT}.", ["THINGS"], {"MODE": "near"})
+# Cancel marks of one kind (KIND from CANCEL_KINDS). Blueprints are "cancel blueprint ..." (agent 08), whose
+# forms come earlier; "cancel operation ..." has no "all" and no "in area", so these never take it.
+fixed_form("designate cancel", "cancel all {KIND}.", [], {"MODE": "all"})
+fixed_form("designate cancel", "cancel {KIND} in area {AREA}.", [], {"MODE": "area"})
+
 new_form("forbid", "forbid {TARGETS}[ in {ROOM}].", ["TARGETS"])
 new_form("unforbid", "unforbid {TARGETS}[ in {ROOM}].", ["TARGETS"])
 # "every bed" first, so "every" is never read as a COUNT.
@@ -322,6 +408,49 @@ new_form("policy rename", "rename {KIND} group {NAME} to {NEW_NAME}.", [])
 new_form("policy delete", "delete {KIND} group {NAME}.", [])
 new_form("letter choose", "choose {OPTION} for letter {LETTER}.", [])
 
+# Agent 06 (zones and areas). Zones keep the game's own labels ("stockpile zone 1", "growing zone 1"); ZONE is
+# copied from the vocabulary line "zones". AREA is the rectangle text of the place rules (agent 03):
+# "X, Z to X, Z" or "N by N around SPOT". The create forms start with "zone" + the kind, the changes of an
+# existing zone with their own verb ("set crop", "grow zone", "shrink zone", "delete zone", "rename zone") or
+# with "zone ZONE allow / stop". NAME of an area is home, roof, no roof, snow clear or an allowed area from
+# "areas". ZONE_FORMS: the forms check_zones() checks (they are not in NEW_NAMES).
+ZONE_FORMS = {}
+AREA_WORDS = ["home", "roof", "no roof", "snow clear"]
+
+function zone_form(name, template, lists, fixed):
+    ZONE_FORMS[name] = true
+    if len(keys(fixed)) > 0:
+        FIXED[template] = fixed
+    form(name, template, lists)
+
+# "zone growing / stockpile / dumping" first, so a zone called "growing zone 1" is never read as a new zone
+# by the "zone ZONE allow" forms (those need " allow " or " stop " and no " in area ").
+zone_form("zone growing", "zone growing {CROP} in area {AREA}.", [], {})
+zone_form("zone stockpile", "zone stockpile for {THINGS} in area {AREA}.", ["THINGS"], {})
+zone_form("zone stockpile", "zone stockpile in area {AREA}.", [], {})
+zone_form("zone dumping", "zone dumping in area {AREA}.", [], {})
+zone_form("zone work", "zone {ZONE} allow {WORK}.", [], {"ON": "true"})
+zone_form("zone work", "zone {ZONE} stop {WORK}.", [], {"ON": "false"})
+zone_form("zone crop", "set crop of zone {ZONE} to {CROP}.", [], {})
+zone_form("zone grow", "grow zone {ZONE} over {AREA}.", [], {})
+zone_form("zone shrink", "shrink zone {ZONE} over {AREA}.", [], {})
+zone_form("zone delete", "delete zone {ZONE}.", [], {})
+zone_form("zone rename", "rename zone {ZONE} to {NEW_NAME}.", [], {})
+zone_form("area paint", "area {NAME} add {AREA}.", [], {"ON": "true"})
+zone_form("area paint", "area {NAME} remove {AREA}.", [], {"ON": "false"})
+zone_form("area create", "create area {NAME} over {AREA}.", [], {})
+zone_form("area delete", "delete area {NAME}.", [], {})
+
+# Agent 02 (agent_player\out\02): run the game for a time, then pause. HOURS / DAYS are numbers the player
+# said (made_up checks them); "until event" has no number: the mod runs until the first pausing event, at
+# most 24 game hours (a mod constant, so Haiku never has to make a number up). SPEED is optional (the mod
+# uses superfast). Every run pauses early on a threat or emergency (the mod's fixed list).
+new_form("run", "run until event[ at {SPEED}].", [])
+new_form("run", "run {DAYS} days[ at {SPEED}].", [])
+new_form("run", "run {DAYS} day[ at {SPEED}].", [])
+new_form("run", "run {HOURS} hours[ at {SPEED}].", [])
+new_form("run", "run {HOURS} hour[ at {SPEED}].", [])
+
 # Brief 26: questions about the colony. They change nothing; the mod answers them from the game's data
 # (host function query(form, slots)). The same checks and the same ASK gate as the other forms: a question
 # that names no thing, pawn or group has no form that fits, so Haiku asks. "how much" is the only count
@@ -336,6 +465,12 @@ query_form("query count", "how much {THINGS} do i have.", ["THINGS"])
 query_form("query relations", "is {PAWN} {RELATION}.", [])
 query_form("query relations", "list relations of {PAWN}.", [])
 query_form("query pawn groups", "show groups of {PAWN}.", [])
+# Agent 05: the building question. TARGETS is the player's words, matched by the mod against the colony's
+# built buildings. These forms come before "query group", so "show building group worker." is refused by
+# the last form that fits it, "query group" (as before), after check_readback refused it as a building.
+# The "at {SPOT}" form comes before the one without it, so a SPOT is never read as part of TARGETS.
+query_form("query building", "show building {TARGETS} at {SPOT}.", ["TARGETS"])
+query_form("query building", "show building {TARGETS}[ in {ROOM}].", ["TARGETS"])
 query_form("query group", "show {KIND} group {NAME}.", [])
 
 query_form("query alerts", "show alerts.", [])
@@ -347,6 +482,23 @@ query_form("query weather", "show weather.", [])
 query_form("query colonists", "show colonists.", [])
 query_form("query prisoners", "show prisoners.", [])
 query_form("query animals", "show animals.", [])
+# Agent 04: colony reads (questions; they change nothing).
+query_form("query status", "show status.", [])
+query_form("query threats", "show threats.", [])
+query_form("query food", "show food.", [])
+query_form("query power", "show power.", [])
+query_form("query temperature", "show temperature.", [])
+query_form("query temperature", "show temperature of {ROOM}.", [])
+query_form("query mood", "show mood of {PAWN}.", [])
+# Agent 06: zones and areas.
+query_form("query zones", "show zones.", [])
+query_form("query areas", "show areas.", [])
+# Agent 02: the clock and speed, what happened, what orders started that is still going on.
+query_form("query speed", "show speed.", [])
+query_form("query speed", "show time.", [])
+query_form("query events", "show events since day {DAY}.", [])
+query_form("query events", "show events.", [])
+query_form("query pending", "show pending.", [])
 
 # Brief 30: what pawns wear, hold and carry (colonists only; nothing here changes). THINGS is the player's word and is
 # not checked against a vocabulary line: the mod matches it against every item def of that kind (apparel for wear,
@@ -359,6 +511,386 @@ query_form("query holding", "who holds {THINGS}.", ["THINGS"])
 query_form("query not holding", "who does not hold {THINGS}.", ["THINGS"])
 query_form("query carrying", "who carries {THINGS}.", ["THINGS"])
 query_form("query not carrying", "who does not carry {THINGS}.", ["THINGS"])
+
+# Agent 03: the text map and finding things (items 10, 11). Questions; they change nothing. LAYER is one of
+# terrain, resources, buildings, roof, creatures (left out = the overview, everything that matters most);
+# SPOT and AREA are the place slots of section 5 (check_place). "where is NAME" comes before "where is
+# nearest", so a NAME that starts with "nearest" is refused there and "nearest" is tried next.
+query_form("query map", "show [{LAYER} ]map.", [])
+query_form("query map around", "show [{LAYER} ]map around {SPOT}.", [])
+query_form("query map area", "show [{LAYER} ]map of {AREA}.", [])
+query_form("query where", "where is {NAME}.", [])
+query_form("query nearest", "where is nearest {THING}[ to {SPOT}].", [])
+query_form("query list", "where are {THINGS}.", ["THINGS"])
+query_form("query list", "list {THINGS} on map.", ["THINGS"])
+
+# Agent 07: what is still marked (by kind and place), and the wild animals in view (count, nearest, whether
+# hunting is risky, whether the game lets the colony tame them).
+query_form("query designations", "show designations.", [])
+query_form("query wildlife", "show wildlife.", [])
+
+
+# Agent 05 (agent_player\out\05): read-back questions, one for each setting a change form sets. PROJECT is
+# the player's words, matched by the mod against every project the research tab shows, not against a
+# vocabulary line. SPOT is agent 03's place slot, ZONE a label from the "zones" line (agent 06). The
+# "at {SPOT}" form comes before the form without it, so a SPOT is never read as part of BENCH. The
+# "show building" forms are piece 1b, further up.
+query_form("query work of", "show work of {PAWN}.", [])
+query_form("query work", "show work.", [])
+query_form("query skills", "show skills of {PAWN}.", [])
+query_form("query schedule of", "show schedule of {PAWN}.", [])
+query_form("query schedule", "show schedule.", [])
+query_form("query area of", "show area of {PAWN}.", [])
+query_form("query bed of", "show bed of {PAWN}.", [])
+query_form("query settings of", "show settings of {PAWN}.", [])
+query_form("query bills", "show bills at {BENCH} at {SPOT}.", [])
+query_form("query bills", "show bills at {BENCH}[ in {ROOM}].", [])
+query_form("query storage", "show storage of zone {ZONE}.", [])
+for place in PLACES:
+    query_form("query storage", "show " + place + ".", [])
+query_form("query blueprints", "show blueprints.", [])
+query_form("query research path", "show research path to {PROJECT}.", [])
+
+# Agent 09: what colonists do right now (items 24-26): combat, rescue, tend, capture, gear. Changes, each the
+# order a right-click gives. SPOT is agent 03's slot. TARGET is an entry of the "hostiles" vocabulary line or
+# "nearest enemy". DOER (who does it) may be left out: the mod picks the nearest colonist the game allows.
+# A SPOT form comes before its form without the SPOT, so a SPOT is never read as part of the item's name.
+new_form("move to spot", "move {PAWNS} to {SPOT}.", ["PAWNS"])
+new_form("attack", "attack {TARGET} with {PAWNS}.", ["PAWNS"])
+new_form("rescue", "rescue {PAWN}[ with {DOER}].", [])
+new_form("tend", "tend {PAWN}[ with {DOER}].", [])
+new_form("capture", "capture {TARGET}[ with {DOER}].", [])
+new_form("arrest", "arrest {PAWN}[ with {DOER}].", [])
+for fire_word in ["fire", "fires"]:
+    for spot_end in [" at {SPOT}", " near {SPOT}", ""]:
+        new_form("extinguish", "extinguish " + fire_word + spot_end + "[ with {PAWNS}].", ["PAWNS"])
+for spot_word in [" at ", " near "]:
+    new_form("prioritize", "prioritize {WORK}" + spot_word + "{SPOT}[ with {DOER}].", [])
+for spot_end in [" at {SPOT}.", " near {SPOT}.", "."]:
+    new_form("equip", "equip {PAWN} with {WEAPON}" + spot_end, [])
+    new_form("wear", "have {PAWN} wear {APPAREL}" + spot_end, [])
+    new_form("pick up", "have {PAWN} pick up {COUNT} {ITEM}" + spot_end, [])
+    new_form("pick up", "have {PAWN} pick up {ITEM}" + spot_end, [])
+new_form("drop", "have {PAWN} drop {ITEM}.", [])
+new_form("rest", "have {PAWN} rest.", [])
+new_form("self tend on", "turn on self tend for {PAWNS}.", ["PAWNS"])
+new_form("self tend off", "turn off self tend for {PAWNS}.", ["PAWNS"])
+
+# People who are not colonists, and trading (AgentInteract.cs; user 2026-10-04: only one pawn of a caravan
+# trades, quest givers work the same way, so the question is broad). "show interactable pawns" lists them with
+# the game's right-click options; "use option" gives one of those orders: OPTION is words of the option's
+# text, TARGET a name from that list or a cell "X, Z", PAWN the colonist who does it. The trade sentences read
+# and set the game's own trade window, which opens when the colonist reaches the trader.
+new_form("interact", "use option {OPTION} on {TARGET} with {PAWN}.", [])
+new_form("trade buy", "trade buy {COUNT} {THING}.", [])
+new_form("trade sell", "trade sell {COUNT} {THING}.", [])
+new_form("trade accept", "accept trade.", [])
+new_form("trade cancel", "cancel trade.", [])
+query_form("query interactable", "show interactable pawns for {PAWN}.", [])
+query_form("query interactable", "show interactable pawns.", [])
+query_form("query trade", "show trade for {WORD}.", [])
+query_form("query trade", "show trade.", [])
+
+# Agent 10 (item 5): "show questions." and "show orders." list every sentence with one line on what it
+# prints or changes. The answer is made from the table HELP below and nothing else, so it cannot drift from
+# the forms: a form with no row is named by forms_without_help() (script test parse_help), and a row whose
+# form does not exist by help_without_form(). Rows are the sentences as the prompt's LINES write them.
+query_form("query questions", "show questions.", [])
+query_form("query questions", "show questions for {WORD}.", [])
+query_form("query orders", "show orders.", [])
+query_form("query orders", "show orders for {WORD}.", [])
+
+HELP = []
+# An answer longer than this lists the first words and how many sentences start with each (00_SHARED 6.3).
+HELP_CAP = 60
+
+function help(name, line, what):
+    append(HELP, {"name": name, "line": line, "what": what})
+
+# Questions.
+help("query questions", "show questions.", "every question sentence, one line each on what it prints")
+help("query questions", "show questions for WORD.", "the question sentences that start with WORD")
+help("query orders", "show orders.", "every order sentence, one line each on what it changes")
+help("query orders", "show orders for WORD.", "the order sentences that start with WORD")
+help("query count", "how much THINGS do I have.", "how many of that item the colony has")
+help("query relations", "is PAWN RELATION.", "whether the pawn has that relation, and with whom")
+help("query relations", "list relations of PAWN.", "the pawn's family and other relations")
+help("query group", "show KIND group NAME.", "what that clothing, food, drug, reading, medicine or weapon group allows")
+help("query pawn groups", "show groups of PAWN.", "the clothing, food, drug, reading and medicine groups the pawn is in")
+help("query alerts", "show alerts.", "the alerts the game shows now, with who or what they are about")
+help("query letters", "show letters.", "open letters with their choices, and the last messages")
+help("query needs", "show needs of PAWN.", "mood with its biggest thoughts, and each need in percent")
+help("query health", "show health of PAWN.", "injuries, diseases, missing parts, implants, pain, queued operations")
+help("query research", "show research.", "the current research project and its progress")
+help("query weather", "show weather.", "date, hour, season, outdoor temperature, weather and game conditions")
+help("query colonists", "show colonists.", "each colonist: what they are doing, mood, drafted, downed, mental break")
+help("query prisoners", "show prisoners.", "prisoners with their mode and recruit numbers")
+help("query animals", "show animals.", "tame animals with master, training and area")
+help("query status", "show status.", "the whole picture in one answer: colonists, threats, food, power, temperature")
+help("query threats", "show threats.", "enemies, manhunters, hunting predators, fires and hostile buildings in view, with distance and direction")
+help("query food", "show food.", "food by kind, nutrition, days of food, crops, what will rot")
+help("query power", "show power.", "each power net: made, used, stored, battery hours, what is off or unpowered")
+help("query temperature", "show temperature.", "outdoors, each enclosed room, who is too cold or hot")
+help("query temperature", "show temperature of ROOM.", "one room: temperature, heaters and coolers, who is in it")
+help("query mood", "show mood of PAWN.", "mood, break thresholds, every thought, inspiration")
+help("query zones", "show zones.", "every zone: kind, place, size, crop or what it holds, priority")
+help("query areas", "show areas.", "home, roof, no roof, snow clear and allowed areas: size and place")
+help("query speed", "show speed.", "game speed, paused or not, date and hour, a run in progress and why the last one stopped")
+help("query speed", "show time.", "the same as show speed")
+help("query events", "show events.", "letters, messages and events since this was last asked")
+help("query events", "show events since day DAY.", "letters, messages and events since that day (day 1 = landing day)")
+help("query pending", "show pending.", "what orders started that colonists have not finished yet")
+help("query interactable", "show interactable pawns.", "traders, visitors, quest givers, prisoners and enemies in view, with the right-click orders the game offers on each")
+help("query interactable", "show interactable pawns for PAWN.", "the same, with the orders the game offers that colonist")
+help("query trade", "show trade.", "the open trade window: silver, what is set in the deal, each thing with counts and prices")
+help("query trade", "show trade for WORD.", "the same, only the things with WORD in their name")
+help("query gear", "show gear of PAWN.", "what the pawn wears, holds and carries")
+help("query wearing", "who wears THINGS.", "the colonists wearing that apparel")
+help("query not wearing", "who does not wear THINGS.", "the colonists not wearing that apparel")
+help("query holding", "who holds THINGS.", "the colonists with that weapon in hand")
+help("query not holding", "who does not hold THINGS.", "the colonists without that weapon in hand")
+help("query carrying", "who carries THINGS.", "the colonists with that item in their inventory")
+help("query not carrying", "who does not carry THINGS.", "the colonists without that item in their inventory")
+help("query map", "show LAYER map.", "a coarse text map of the whole map; LAYER (terrain, resources, buildings, roof, creatures) may be left out")
+help("query map around", "show LAYER map around SPOT.", "a detail map, 41 by 41 cells, centred on SPOT")
+help("query map area", "show LAYER map of AREA.", "a detail map of AREA, up to 60 by 50 cells")
+help("query where", "where is NAME.", "the cell of a colonist, prisoner, animal, landmark or zone")
+help("query nearest", "where is nearest THING to SPOT.", "the nearest ore, rock, tree, plant, item, creature or mountain in view; to SPOT may be left out")
+help("query list", "where are THINGS.", "every such thing in view with its cell; also: list THINGS on map")
+help("query designations", "show designations.", "what is still marked to mine, chop, hunt and so on: counts by kind and place, and kinds nobody works on")
+help("query wildlife", "show wildlife.", "wild animals in view by kind: count, nearest, whether hunting is risky, whether they can be tamed")
+
+help("query work of", "show work of PAWN.", "the pawn's work priorities, which work they do and which they are off")
+help("query work", "show work.", "the work priorities of every colonist")
+help("query skills", "show skills of PAWN.", "the pawn's skill levels and passions, the work they cannot do, and their traits")
+help("query schedule of", "show schedule of PAWN.", "the pawn's 24 hour schedule")
+help("query schedule", "show schedule.", "the schedule of every colonist")
+help("query area of", "show area of PAWN.", "the allowed area the pawn is restricted to")
+help("query bed of", "show bed of PAWN.", "the bed the pawn owns, where it is and what kind")
+help("query settings of", "show settings of PAWN.", "whether the pawn is drafted, fire at will, threat response, medical care and self-tend")
+help("query bills", "show bills at BENCH in ROOM.", "each bill at that bench: repeat, paused, who may do it, skill range, radius, where products go, ingredients; in ROOM may be left out, or write at SPOT")
+help("query storage", "show storage of zone ZONE.", "what that storage accepts, its priority and what is in it; also near BENCH, in ROOM, or a direction from a door")
+help("query building", "show building TARGETS in ROOM.", "the state of those built buildings: on or off, power, fuel, temperature, door, forbidden, turret, bed")
+help("query blueprints", "show blueprints.", "what is not built yet, what material it lacks, and what blocks it")
+help("query research path", "show research path to PROJECT.", "the unfinished projects before that project, with cost, bench and progress")
+
+# Orders.
+help("storage holds only", "put only THINGS in storage PLACE.", "that storage takes only those things")
+help("storage also holds", "put THINGS in storage PLACE.", "that storage also takes those things")
+help("storage no longer holds", "keep THINGS out of storage PLACE.", "that storage no longer takes those things")
+help("storage priority", "set storage PLACE to PRIORITY priority.", "that storage's priority, low to critical")
+help("storage holds only (those)", "put only THINGS in those.", "the storage of the sentence before takes only those things")
+help("storage also holds (those)", "put THINGS in those.", "the storage of the sentence before also takes those things")
+help("storage no longer holds (those)", "keep THINGS out of those.", "the storage of the sentence before no longer takes them")
+help("storage priority (those)", "set those to PRIORITY priority.", "the priority of the storage of the sentence before")
+help("build", "build COUNT BUILDING near ANCHOR in ROOM.", "blueprints for buildings; COUNT, near ANCHOR and in ROOM may be left out")
+help("build", "build BUILDING DIRECTION of ANCHOR in ROOM.", "a blueprint on that side of a building that stands in the room")
+help("build room", "build room like ROOM.", "draws plan options for a room like that room or layout")
+help("build option", "build option N.", "blueprints for plan option N drawn by build room like")
+help("build at", "build BUILDING made of STUFF at SPOT facing SIDE.", "one blueprint exactly on that cell; made of STUFF and facing SIDE may be left out")
+help("build anywhere", "build BUILDING anywhere.", "for a building that fits one kind of spot only: a geothermal generator on the nearest free steam geyser in view")
+help("build near", "build COUNT BUILDING made of STUFF near SPOT facing SIDE.", "blueprints on the nearest free cells to SPOT; COUNT, made of STUFF and facing SIDE may be left out")
+help("build line", "build BUILDING made of STUFF from AREA.", "a straight line one cell wide: wall, fence, sandbags, conduit")
+help("build floor", "build floor FLOOR in area AREA.", "floor blueprints over AREA")
+help("build room new", "build room AREA made of STUFF door SIDE.", "walls round the edge of AREA and one door; colonists roof the closed box themselves")
+help("dig room", "dig room AREA made of STUFF door SIDE.", "a room dug into rock: mines the inside, keeps rock as wall, walls the open edge, one door")
+help("build furnished room", "build TYPE AREA made of STUFF door SIDE.", "a walled room with its furniture; TYPE is bedroom, barracks (with COUNT beds), kitchen, dining room or research room")
+help("cancel blueprint at", "cancel blueprint BUILDING at SPOT.", "cancels the blueprints and frames on that cell; BUILDING may be left out")
+help("cancel blueprint area", "cancel blueprint BUILDING in area AREA.", "cancels the blueprints and frames in AREA; BUILDING may be left out")
+help("bed", "assign PAWN to bed in ROOM.", "gives the pawn a bed in that room")
+help("allowed area", "keep PAWNS in ROOMS.", "an allowed area made of those rooms for the pawns")
+help("schedule", "schedule PAWNS to ASSIGNMENT from HOUR to HOUR.", "the pawns' schedule for those hours")
+help("work priority", "set WORKTYPE priority N for PAWNS.", "work priority 1 (highest) to 4")
+help("work off", "stop PAWNS doing WORKTYPE.", "the pawns no longer do that work")
+help("bills", "let only PAWNS do bills on BENCH.", "only those pawns do the bench's bills")
+help("draft", "draft PAWNS.", "drafts the pawns")
+help("undraft", "undraft PAWNS.", "undrafts the pawns")
+help("select pawns", "select PAWNS who have CONDITION.", "picks pawns for them / they in the next sentence")
+help("move", "move PAWNS to location NAME.", "sends drafted pawns to a room")
+help("weapon group", "make weapon group NAME holding RULE.", "a weapon shortcut group")
+help("weapon group cleared", "clear weapon group SLOT.", "empties a weapon shortcut group")
+help("bill add count", "add bill to make COUNT RECIPE at BENCH in ROOM.", "a bill that makes COUNT")
+help("bill add until", "add bill to make RECIPE until you have COUNT at BENCH in ROOM.", "a bill that keeps COUNT in stock")
+help("bill add forever", "add bill to make RECIPE forever at BENCH in ROOM.", "a bill that never stops")
+help("bill remove", "remove bill for RECIPE at BENCH in ROOM.", "deletes the bill")
+help("bill pause", "pause bill for RECIPE at BENCH in ROOM.", "pauses the bill")
+help("bill resume", "resume bill for RECIPE at BENCH in ROOM.", "resumes the bill")
+help("bill workers", "let WHO do bill for RECIPE at BENCH in ROOM.", "anyone, mechs, non-mechs or slaves may do the bill")
+help("bill pawn", "let PAWN do bill for RECIPE at BENCH in ROOM.", "only that pawn does the bill")
+help("bill skill", "set skill range MIN to MAX on bill for RECIPE at BENCH in ROOM.", "the bill's skill range")
+help("bill radius", "set ingredient radius to N on bill for RECIPE at BENCH in ROOM.", "the bill's ingredient radius")
+help("bill store", "store bill products on WHERE for RECIPE at BENCH in ROOM.", "where the bill's products go")
+help("bill ingredients only", "use only THINGS in bill for RECIPE at BENCH in ROOM.", "the bill uses only those")
+help("bill ingredients allow", "allow THINGS in bill for RECIPE at BENCH in ROOM.", "the bill may also use those")
+help("bill ingredients forbid", "never use THINGS in bill for RECIPE at BENCH in ROOM.", "the bill never uses those")
+help("bill repeat", "change bill for RECIPE to repeat COUNT times at BENCH in ROOM.", "also: until you have COUNT, forever")
+help("bill pause when satisfied", "pause bill for RECIPE when satisfied at BENCH in ROOM.", "an until-you-have bill pauses when full")
+help("bill unpause when satisfied", "unpause bill for RECIPE when satisfied at BENCH in ROOM.", "it no longer pauses")
+help("switch on", "switch on TARGETS in ROOM.", "switches buildings on")
+help("switch off", "switch off TARGETS in ROOM.", "switches buildings off")
+help("vent open", "open TARGETS in ROOM.", "opens vents")
+help("vent close", "close TARGETS in ROOM.", "closes vents")
+help("temperature", "set temperature of TARGETS in ROOM to DEGREES.", "a heater's or cooler's target temperature")
+help("refuel on", "turn on auto refuel for TARGETS in ROOM.", "colonists keep it fuelled")
+help("refuel off", "turn off auto refuel for TARGETS in ROOM.", "colonists stop refuelling it")
+help("fuel level", "set fuel level to N for TARGETS in ROOM.", "how much fuel colonists keep in it")
+help("door hold open", "hold door DOOR open.", "the door stays open")
+help("door let close", "let door DOOR close.", "the door closes again")
+help("forbid", "forbid TARGETS in ROOM.", "colonists leave it alone")
+help("unforbid", "unforbid TARGETS in ROOM.", "colonists may use it again")
+DESIGNATE_HELP = {
+    "chop": "marks trees to be chopped for wood",
+    "cut": "marks plants to be cut down",
+    "harvest": "marks ripe plants (berries, crops, healroot) to be harvested",
+    "mine": "marks rock, ore or compacted machinery to be mined; in area digs out a room",
+    "deconstruct": "marks buildings to be taken apart (ship chunks, ruins, own buildings: risky)",
+    "uninstall": "marks buildings to be uninstalled and carried as items",
+    "haul": "marks items not in storage to be hauled",
+    "hunt": "marks wild animals to be hunted; risky when they fight back",
+    "tame": "marks wild animals to be tamed",
+    "slaughter": "marks the colony's own animals to be slaughtered; risky",
+    "strip": "marks corpses and downed pawns to be stripped",
+    "claim": "makes unowned buildings the colony's at once",
+    "smooth": "marks rough stone walls or floors to be smoothed"
+}
+for verb in DESIGNATE_VERBS:
+    help("designate " + verb, verb + " THINGS in area AREA.", DESIGNATE_HELP[verb] + "; also: " + verb + " THINGS. / " + verb + " nearest COUNT THINGS near SPOT. / " + verb + " THINGS near SPOT.")
+help("items forbid", "forbid items of THINGS in area AREA.", "items lying there are forbidden; of THINGS and in area AREA may be left out; also: near SPOT")
+help("items unforbid", "unforbid items of THINGS in area AREA.", "items lying there may be used again; of THINGS and in area AREA may be left out; also: near SPOT")
+help("designate cancel", "cancel KIND in area AREA.", "removes marks of one kind (mining, chopping, hunting, ..., designations = all); also: cancel all KIND")
+help("turret hold fire", "hold fire with TARGETS in ROOM.", "turrets hold fire")
+help("turret fire", "open fire with TARGETS in ROOM.", "turrets shoot again")
+help("bed medical", "set every bed in ROOM to medical.", "also: set COUNT bed in ROOM to medical")
+help("bed prisoner", "set every bed in ROOM to prisoner.", "also: set COUNT bed in ROOM to prisoner")
+help("bed colonist", "set every bed in ROOM to colonist.", "also: set COUNT bed in ROOM to colonist")
+help("clothing group", "assign PAWNS to clothing group NAME.", "the pawns' clothing group")
+help("food group", "assign PAWNS to food group NAME.", "the pawns' food group")
+help("drug group", "assign PAWNS to drug group NAME.", "the pawns' drug group")
+help("reading group", "assign PAWNS to reading group NAME.", "the pawns' reading group")
+help("medical care", "assign PAWNS to medicine group LEVEL.", "the pawns' medical care level")
+help("threat response", "set threat response of PAWNS to RESPONSE.", "flee, attack or ignore")
+help("area", "restrict PAWNS to area NAME.", "the pawns' allowed area; anywhere lifts it")
+help("group things only", "put only THINGS in KIND group NAME.", "a clothing or food group allows only those")
+help("group things allow", "put THINGS in KIND group NAME.", "a clothing or food group also allows those")
+help("group things forbid", "keep THINGS out of KIND group NAME.", "a clothing or food group no longer allows those")
+help("game speed", "set game speed to SPEED.", "paused, normal, fast or superfast")
+help("research start", "start research PROJECT.", "the current research project")
+help("fire at will on", "turn on fire at will for PAWNS.", "drafted pawns shoot on their own")
+help("fire at will off", "turn off fire at will for PAWNS.", "drafted pawns hold fire")
+help("prisoner mode", "set prisoner mode of PAWNS to MODE.", "what wardens do with the prisoners; execute and release are risky")
+help("animal master", "set master of ANIMALS to PAWN.", "the animals' master; nobody clears it")
+help("animal training", "train ANIMALS in TRAINING.", "also: stop training ANIMALS in TRAINING")
+help("operation", "queue operation RECIPE for PAWN on PART.", "a surgery bill; on PART may be left out")
+help("operation cancel", "cancel operation RECIPE for PAWN.", "removes a queued surgery")
+help("drug group entry", "set FIELD of drug group NAME entry DRUG to VALUE.", "one setting of a drug in a drug group")
+help("policy new", "create KIND group NAME.", "a new clothing, food, drug or reading group")
+help("policy rename", "rename KIND group NAME to NEW_NAME.", "renames a group")
+help("policy delete", "delete KIND group NAME.", "deletes a group nobody uses")
+help("letter choose", "choose OPTION for letter LETTER.", "answers an open choice letter")
+help("zone growing", "zone growing CROP in area AREA.", "a new growing zone over AREA, planting CROP")
+help("zone stockpile", "zone stockpile in area AREA.", "a new stockpile over AREA, the game's default filter")
+help("zone stockpile", "zone stockpile for THINGS in area AREA.", "a new stockpile over AREA holding only THINGS")
+help("zone dumping", "zone dumping in area AREA.", "a new dumping stockpile over AREA (corpses, chunks)")
+help("zone work", "zone ZONE allow WORK.", "sowing or cutting on in a growing zone")
+help("zone work", "zone ZONE stop WORK.", "sowing or cutting off in a growing zone")
+help("zone crop", "set crop of zone ZONE to CROP.", "what a growing zone plants")
+help("zone grow", "grow zone ZONE over AREA.", "adds the cells of AREA that touch the zone")
+help("zone shrink", "shrink zone ZONE over AREA.", "takes the zone's cells in AREA out of it")
+help("zone delete", "delete zone ZONE.", "deletes the zone and its settings; items stay")
+help("zone rename", "rename zone ZONE to NEW_NAME.", "the zone's name")
+help("area paint", "area NAME add AREA.", "adds AREA to home, roof, no roof, snow clear or an allowed area")
+help("area paint", "area NAME remove AREA.", "takes AREA out of that area; roof or no roof: clears the roof marks there")
+help("area create", "create area NAME over AREA.", "a new allowed area with the cells of AREA")
+help("area delete", "delete area NAME.", "deletes an allowed area; pawns kept to it go free")
+help("move to spot", "move PAWNS to SPOT.", "sends pawns to a place; drafts them first; also: retreat PAWNS to SPOT")
+help("attack", "attack TARGET with PAWNS.", "TARGET is an enemy from the hostiles line or nearest enemy; risky")
+help("rescue", "rescue PAWN with DOER.", "carries a downed colonist to a bed; with DOER may be left out")
+help("tend", "tend PAWN with DOER.", "treats a colonist, prisoner or animal now; with DOER may be left out")
+help("capture", "capture TARGET with DOER.", "carries a downed enemy to a prisoner bed; with DOER may be left out; risky")
+help("arrest", "arrest PAWN with DOER.", "arrests a colonist in a mental break; with DOER may be left out; risky")
+help("extinguish", "extinguish fire at SPOT with PAWNS.", "puts out a fire; at SPOT and with PAWNS may be left out")
+help("prioritize", "prioritize WORK at SPOT with DOER.", "WORK is hauling, constructing, repairing, mining, sowing, harvesting, cutting or cleaning")
+help("equip", "equip PAWN with WEAPON at SPOT.", "the pawn picks up and wields the weapon; at SPOT may be left out")
+help("wear", "have PAWN wear APPAREL at SPOT.", "the pawn puts on the clothing; at SPOT may be left out")
+help("pick up", "have PAWN pick up COUNT ITEM at SPOT.", "the pawn carries the item in its inventory; COUNT and at SPOT may be left out")
+help("drop", "have PAWN drop ITEM.", "the pawn drops what it holds, wears or carries; risky")
+help("rest", "have PAWN rest.", "the pawn goes to bed until healed")
+help("self tend on", "turn on self tend for PAWNS.", "the pawns treat their own wounds")
+help("self tend off", "turn off self tend for PAWNS.", "the pawns stop treating their own wounds")
+help("interact", "use option OPTION on TARGET with PAWN.", "gives PAWN the right-click order whose text holds OPTION, on a person from show interactable pawns or on a cell")
+help("trade buy", "trade buy COUNT THING.", "sets the open trade deal to buy that many; nothing changes hands yet")
+help("trade sell", "trade sell COUNT THING.", "sets the open trade deal to sell that many; nothing changes hands yet")
+help("trade accept", "accept trade.", "settles the deal as set and closes the trade window")
+help("trade cancel", "cancel trade.", "closes the trade window without trading")
+help("run", "run HOURS hours[ at SPEED].", "runs the game that many hours (1 to 120), then pauses; earlier on a threat or emergency")
+help("run", "run DAYS days[ at SPEED].", "the same in days (1 to 5)")
+help("run", "run until event[ at SPEED].", "runs until a threat or emergency, at most 24 game hours, then pauses")
+
+function help_rows(questions, word):
+    rows = []
+    for h in HELP:
+        if is_query(h["name"]) == questions:
+            if word == "" or first_word(h["line"]) == lower(word):
+                append(rows, h)
+    return rows
+
+# The answer of "show questions." / "show orders." (name = the form, slots = its slots).
+function help_answer(name, slots):
+    questions = name == "query questions"
+    kind = "order"
+    if questions:
+        kind = "question"
+    word = ""
+    if has(slots, "WORD"):
+        word = trim(slots["WORD"])
+    rows = help_rows(questions, word)
+    if len(rows) == 0:
+        return ["No " + kind + " sentence starts with '" + word + "'."]
+    out = []
+    if word == "" and len(rows) > HELP_CAP:
+        words = []
+        counts = {}
+        for h in rows:
+            w = first_word(h["line"])
+            if not has(counts, w):
+                append(words, w)
+                counts[w] = 0
+            counts[w] = counts[w] + 1
+        for w in words:
+            if counts[w] == 1:
+                append(out, w + ": 1 sentence")
+            else:
+                append(out, w + ": " + text(counts[w]) + " sentences")
+        append(out, "Say 'show " + kind + "s for WORD.' for the sentences that start with WORD.")
+        return out
+    for h in rows:
+        append(out, h["line"] + " = " + h["what"])
+    return out
+
+function is_help(name):
+    return name == "query questions" or name == "query orders"
+
+# The form names that have no HELP row (ask and cannot are not sentences to list).
+function forms_without_help():
+    named = {}
+    for h in HELP:
+        named[h["name"]] = true
+    out = []
+    for f in forms:
+        if not has(named, f["name"]) and not (f["name"] in ["ask", "cannot"]) and not (f["name"] in out):
+            append(out, f["name"])
+    return out
+
+# The HELP rows whose form name is no form.
+function help_without_form():
+    names = {}
+    for f in forms:
+        names[f["name"]] = true
+    out = []
+    for h in HELP:
+        if not has(names, h["name"]):
+            append(out, h["name"])
+    return out
 
 # An order is all questions or all changes (brief 26): a mix is refused as a whole, nothing is planned.
 MIXED_ORDER = "Ask the question on its own, then give the order."
@@ -505,15 +1037,399 @@ function bad_number(slots, key, low, high):
 function is_storage_place(text):
     for place in PLACES:
         s = parse(place, text)
-        if s != none and (has(s, "DOOR") or has(s, "BENCH") or has(s, "ROOM")):
+        if s != none and (has(s, "DOOR") or has(s, "BENCH") or has(s, "ROOM") or has(s, "ZONE")):
             return true
     return false
 
+# ---- Agent 03: places without rooms (SPOT, AREA) ----
+# A fresh map has no rooms, so a place is said with these two slots (agent_player\opus\00_SHARED.md 6.1).
+# SPOT, one cell; a template puts it after a fixed word ("at {SPOT}", "near {SPOT}", "to {SPOT}"):
+#   "112, 87"               the game's own cell: x grows east, z grows north, 0, 0 is the south-west corner
+#   "bob", "ship chunk 1"   a name from the vocabulary lines in SPOT_LINES (colonist, prisoner, colony animal,
+#                           landmark, zone, room)
+#   "near bob"              the same as "bob": a leading "near" is dropped ("at near bob" reads "at bob")
+#   "6 tiles north of bob"  N tiles from a name; a corner (northeast) goes N tiles along both axes
+# AREA, a rectangle; a template puts it after a fixed word ("from {AREA}", "in area {AREA}", "of {AREA}"):
+#   "100, 80 to 120, 95"    two corners, both included
+#   "10 by 10 around SPOT"  W by H cells centred on a SPOT ("10x10", "10 x 10", "at"/"near" are read the same)
+# check_place() writes each SPOT / AREA slot in that one form (the read-back shows it, and the mod reads it:
+# AgentPlace.TryCell / TryRect). place_made_up() refuses a coordinate, distance or size the player never said;
+# numbers inside a name ("ship chunk 1") are not checked. Every slot whose name starts with SPOT or AREA is
+# read this way (SPOT2, AREA2 for a form that needs two).
+
+SPOT_LINES = ["colonists", "prisoners", "animals", "landmarks", "zones", "rooms"]
+SPOT_SHAPES = "a place is x, z (two numbers), a colonist, a name from landmarks or zones, or 'N tiles DIRECTION of NAME'"
+AREA_SHAPES = "an area is 'x, z to x, z' or 'W by H around SPOT'"
+
+# The map layers a "show map" question can ask for, and the words read as each.
+MAP_LAYERS = {
+    "terrain": "terrain", "land": "terrain", "ground": "terrain", "soil": "terrain",
+    "resources": "resources", "resource": "resources", "ore": "resources", "ores": "resources",
+    "buildings": "buildings", "building": "buildings", "zones": "buildings",
+    "roof": "roof", "roofs": "roof",
+    "creatures": "creatures", "pawns": "creatures"
+}
+
+# {"text": the one written form, "why": ""} or {"why": what is wrong}.
+function read_spot(raw):
+    s = trim(raw)
+    # "112, 87 (6 tiles north of bob)": the brackets are how an answer described the cell; dropped.
+    m = find_pattern("^(.+?) *\\(.*\\)$", s)
+    if m != none:
+        s = trim(m[1])
+    m = find_pattern("^near (.+)$", s)
+    if m != none:
+        s = trim(m[1])
+    m = find_pattern("^\\(? *([0-9]+) *, *([0-9]+) *\\)?$", s)
+    if m != none:
+        return {"text": text(number(m[1])) + ", " + text(number(m[2])), "why": ""}
+    m = find_pattern("^([a-z0-9]+) tiles? (.+?) of (.+)$", s)
+    if m != none:
+        n = m[1]
+        if has(NUMBER_WORDS, n):
+            n = text(NUMBER_WORDS[n])
+        if not whole_number_between(n, 1, 300):
+            return {"why": "the distance must be a whole number of tiles, 1 to 300"}
+        d = direction_name(m[2])
+        if d == none:
+            return {"why": "'" + m[2] + "' is not a direction: north, south, east, west or a corner"}
+        base = read_spot_name(m[3])
+        if base["why"] != "":
+            return base
+        return {"text": text(number(n)) + " tiles " + d + " of " + base["text"], "why": ""}
+    m = find_pattern("^(.+?) of (.+)$", s)
+    if m != none and direction_name(m[1]) != none:
+        return {"why": "say how many tiles: 'N tiles " + direction_name(m[1]) + " of " + m[2] + "'"}
+    return read_spot_name(s)
+
+function read_spot_name(s):
+    s = replace(trim(s), "map center", "map centre")
+    if s in ["those", "them", "they", "it", "there", "here"]:
+        return {"why": "'" + s + "' is not a place; " + SPOT_SHAPES}
+    if find_pattern("^[0-9]", s) != none:
+        return {"why": "'" + s + "' is not a place; a cell is two numbers, x then z: '112, 87'"}
+    if listed_any(SPOT_LINES, s):
+        return {"text": s, "why": ""}
+    return {"why": "'" + s + "' is not a place on the map; " + SPOT_SHAPES}
+
+function read_area(raw):
+    s = trim(raw)
+    m = find_pattern("^\\(? *([0-9]+) *, *([0-9]+) *\\)? *to *\\(? *([0-9]+) *, *([0-9]+) *\\)?$", s)
+    if m != none:
+        return {"text": text(number(m[1])) + ", " + text(number(m[2])) + " to " + text(number(m[3])) + ", " + text(number(m[4])), "why": ""}
+    m = find_pattern("^([0-9]+) *(?:by|x) *([0-9]+) (?:around|at|near|centred on|centered on) (.+)$", s)
+    if m != none:
+        if not whole_number_between(m[1], 1, 250) or not whole_number_between(m[2], 1, 250):
+            return {"why": "an area's size must be two whole numbers, 1 to 250"}
+        spot = read_spot(m[3])
+        if spot["why"] != "":
+            return spot
+        return {"text": text(number(m[1])) + " by " + text(number(m[2])) + " around " + spot["text"], "why": ""}
+    if find_pattern("^[0-9]+ *(?:by|x) *[0-9]+$", s) != none:
+        return {"why": "say where the area is: 'W by H around SPOT'"}
+    return {"why": "'" + s + "' is not an area; " + AREA_SHAPES}
+
+# "" when every SPOT / AREA slot (and LAYER, THING, NAME of agent 03's questions) is fine, else what is wrong.
+# The SPOT / AREA slots are rewritten in their one form.
+function check_place(name, slots):
+    for key in keys(slots):
+        r = none
+        if starts_with(key, "SPOT"):
+            r = read_spot(slots[key])
+        elif starts_with(key, "AREA"):
+            r = read_area(slots[key])
+        if r != none:
+            if r["why"] != "":
+                return r["why"]
+            slots[key] = r["text"]
+    if has(slots, "LAYER"):
+        if not has(MAP_LAYERS, slots["LAYER"]):
+            return "LAYER must be terrain, resources, buildings, roof or creatures"
+        slots["LAYER"] = MAP_LAYERS[slots["LAYER"]]
+    if name == "query where":
+        if starts_with(slots["NAME"], "closest "):
+            return "write 'where is nearest THING', not 'closest'"
+        if starts_with(slots["NAME"], "nearest ") or slots["NAME"] in ["those", "them", "they", "it"]:
+            return "NAME must be a colonist, prisoner, animal, landmark or zone"
+    if has(slots, "THING") and (slots["THING"] in ["those", "them", "they", "it", "thing", "things"]):
+        return "name the thing to look for"
+    if starts_with(name, "query list"):
+        for item in slots["THINGS"]:
+            if item in ["those", "them", "they", "it", "thing", "things"]:
+                return "name the things to look for"
+    return ""
+
+# The numbers in a SPOT / AREA form (as check_place wrote it) that the player must have said: coordinates,
+# a distance in tiles, an area's size. Never the numbers inside a name.
+function place_numbers(s):
+    out = []
+    m = find_pattern("^([0-9]+), ([0-9]+) to ([0-9]+), ([0-9]+)$", s)
+    if m != none:
+        return [number(m[1]), number(m[2]), number(m[3]), number(m[4])]
+    m = find_pattern("^([0-9]+) by ([0-9]+) around (.+)$", s)
+    if m != none:
+        append(out, number(m[1]))
+        append(out, number(m[2]))
+        s = m[3]
+    m = find_pattern("^([0-9]+), ([0-9]+)$", s)
+    if m != none:
+        append(out, number(m[1]))
+        append(out, number(m[2]))
+        return out
+    m = find_pattern("^([0-9]+) tiles ", s)
+    if m != none:
+        append(out, number(m[1]))
+    return out
+
+# "" when every such number was said, else which slot holds one that was not.
+function place_made_up(slots, said):
+    for key in keys(slots):
+        if starts_with(key, "SPOT") or starts_with(key, "AREA"):
+            for n in place_numbers(slots[key]):
+                if not (n in said):
+                    return key + " " + slots[key]
+    return ""
+
+# ---- Agent 08: the build forms that need no room ----
+# FACING (which way a building is turned) and SIDE (which wall of a new room gets the door): one of the
+# four sides; "on the south side" is read as "south".
+SIDES = ["north", "south", "east", "west"]
+NOT_A_BUILDING = ["those", "them", "they", "it", "room", "floor", "blueprint"]
+
+function side_name(words):
+    s = trim(words)
+    m = find_pattern("^(?:on )?(.+?)(?: side)?$", s)
+    if m != none:
+        s = trim(m[1])
+    d = direction_name(s)
+    if d == none or not (d in SIDES):
+        return none
+    return d
+
+# "" when fine. Runs after check_place (agent 03), so SPOT and AREA are already in their one form.
+function check_build_place(name, slots):
+    for key in ["FACING", "SIDE"]:
+        if has(slots, key):
+            d = side_name(slots[key])
+            if d == none:
+                return key + " must be north, south, east or west"
+            slots[key] = d
+    if has(slots, "BUILDING"):
+        b = slots["BUILDING"]
+        first = split(b, " ")[0]
+        if b in NOT_A_BUILDING or first in ["room", "floor"]:
+            return "'" + b + "' is not a building: a room is 'build room AREA', a floor is 'build floor FLOOR in area AREA'"
+        if not listed("buildings", b):
+            return "'" + b + "' is not on the buildings line (what the colony can build now)"
+    if has(slots, "FLOOR") and not listed("floors", slots["FLOOR"]):
+        return "'" + slots["FLOOR"] + "' is not on the floors line (the floors the colony can lay now)"
+    if name == "build near":
+        # A bare name that is a building or a bench is an ANCHOR: the older "near ANCHOR" form takes it (it
+        # finds the standing building and places next to it). With no vocabulary every name goes there.
+        spot = slots["SPOT"]
+        if find_pattern("^[0-9]", spot) == none:
+            if len(keys(VOCAB)) == 0 or listed_any(["benches", "buildings", "storage buildings"], spot):
+                return "'" + spot + "' is a building; 'near ANCHOR' is the older build form"
+    return ""
+
+# The older form "build BUILDING [made of STUFF]." (no room, no anchor) is the last one tried, and a sentence
+# no form takes is reported with the last form's problem. When the sentence was one of the forms above, this
+# gives that form's problem instead ("FACING must be ..."), so the player reads the real reason. "" = none.
+function build_place_why(slots):
+    line = "build " + slots["BUILDING"]
+    if has(slots, "STUFF"):
+        line = line + " made of " + slots["STUFF"]
+    line = line + "."
+    for f in forms:
+        if not has(BUILD_PLACE, f["name"]):
+            continue
+        s = parse(f["template"], line)
+        if s == none:
+            continue
+        why = check_place(f["name"], s)
+        if why == "":
+            why = check_build_place(f["name"], s)
+        if why != "":
+            return why
+    # "build campfire north of bob": the older side form with a colonist or landmark as the building.
+    s = parse("build {BUILDING} {DIRECTION} of {ANCHOR}.", line)
+    if s != none and direction_name(s["DIRECTION"]) != none:
+        return anchor_not_place(s)
+    return ""
+
+# The older forms' ANCHOR is a building that stands on the map. A colonist, landmark or zone there is a
+# SPOT said without "near" or "N tiles": "" when fine, else what to write instead. Skipped with no vocabulary.
+function anchor_not_place(slots):
+    if not has(slots, "ANCHOR") or len(keys(VOCAB)) == 0:
+        return ""
+    a = slots["ANCHOR"]
+    if listed_any(["colonists", "landmarks", "zones"], a) and not listed_any(["benches", "buildings", "storage buildings"], a):
+        return "'" + a + "' is not a building; write 'near " + a + "' or 'at N tiles DIRECTION of " + a + "'"
+    return ""
+
+# ---- Agent 09: pawn actions (combat, rescue, tend, capture, gear) ----
+# "retreat" is a verb word for "move" (section 2, wording() rewrites a verb at the start of a command), so
+# "retreat bob to 112, 87" is the form "move to spot" and "retreat bob to location kitchen" the old "move" form.
+VERBS["retreat"] = "move"
+# The work the "prioritize" sentence can name (the game's "Prioritize ..." right-click options).
+WORKS = ["hauling", "constructing", "repairing", "mining", "sowing", "harvesting", "cutting", "cleaning"]
+DOWN = " (down)"
+NO_ENEMY = "no enemy is in view"
+
+# The pawn-action forms; check_pawn_actions does nothing for any other form.
+PAWN_ACTION_FORMS = [
+    "move to spot", "attack", "rescue", "tend", "capture", "arrest", "extinguish",
+    "prioritize", "equip", "wear", "drop", "pick up", "rest", "self tend on", "self tend off"
+]
+
+# The entry of the "hostiles" vocabulary line that is t (as "raider 1") or t + " (down)", else none. With no
+# vocabulary at all (the lab with an old results file) every name is accepted as it is.
+function hostile_entry(t):
+    if len(keys(VOCAB)) == 0:
+        return t
+    if not has(VOCAB, "hostiles"):
+        return none
+    for e in VOCAB["hostiles"]:
+        if e != "none" and (e == t or e == t + DOWN):
+            return e
+    return none
+
+# True when the vocabulary is empty, or the hostiles line has an entry other than "none" that is not down.
+function enemies_in_view():
+    if len(keys(VOCAB)) == 0:
+        return true
+    if not has(VOCAB, "hostiles"):
+        return false
+    for e in VOCAB["hostiles"]:
+        if e != "none" and not ends_with(e, DOWN):
+            return true
+    return false
+
+# "" when the pawn-action form's slots are fine, else the reason. The TARGET slot is rewritten without a
+# "(down)" the player may have copied from the vocabulary line ("raider 2 (down)" -> "raider 2").
+function check_pawn_actions(name, slots):
+    if not (name in PAWN_ACTION_FORMS):
+        return ""
+    if has(slots, "DOER"):
+        if slots["DOER"] in ["them", "they", "those"]:
+            return "name who does it, not '" + slots["DOER"] + "'"
+        if not listed("colonists", slots["DOER"]):
+            return "'" + slots["DOER"] + "' is not a colonist, so it can not be the one who does it"
+        if name in ["rescue", "arrest"] and has(slots, "PAWN") and slots["DOER"] == slots["PAWN"]:
+            return slots["PAWN"] + " can not " + name + " themselves; name another colonist"
+    if has(slots, "TARGET"):
+        t = slots["TARGET"]
+        m = find_pattern("^(.+?) \\(down\\)$", t)
+        if m != none:
+            t = trim(m[1])
+        if t == "nearest enemy" and name != "attack":
+            return "'nearest enemy' is only for attack; " + name + " needs the name of one enemy"
+        if t in ["them", "they", "those", "it"]:
+            return "'" + t + "' is not an enemy; name the enemy, like 'raider 1'"
+        if len(keys(VOCAB)) > 0:
+            if t == "nearest enemy":
+                if not enemies_in_view():
+                    return NO_ENEMY
+            else:
+                entry = hostile_entry(t)
+                if entry == none:
+                    if not enemies_in_view():
+                        if name == "attack":
+                            return NO_ENEMY
+                    return "'" + t + "' is not an enemy in view"
+                if name == "attack" and ends_with(entry, DOWN):
+                    return "'" + t + "' is already down; capture them instead"
+                if name == "capture" and not ends_with(entry, DOWN):
+                    return "'" + t + "' is not down; only a downed enemy can be captured"
+        slots["TARGET"] = t
+    if name == "prioritize" and not (slots["WORK"] in WORKS):
+        return "WORK must be one of " + join_list(WORKS)
+    for key in ["WEAPON", "APPAREL", "ITEM"]:
+        if has(slots, key):
+            why = check_item_words(name, key, slots)
+            if why != "":
+                return why
+    return ""
+
+# The item of equip / wear / drop / pick up is a plain name. When the form with a place or with a COUNT did not
+# fit, the next form (without them) would take the whole rest as the item name ("rifle at nowhere", "two herbal
+# medicine"); those are refused here with the reason of the part that was meant.
+function check_item_words(name, key, slots):
+    v = slots[key]
+    first = split(v, " ")[0]
+    m = find_pattern("^(.+?) (?:at|near) (.+)$", v)
+    if m != none:
+        r = read_spot(m[2])
+        if r["why"] != "":
+            return r["why"]
+    if find_pattern("^[0-9]", v) != none or (name == "pick up" and has(NUMBER_WORDS, first) and not (first in ["first", "second", "third", "fourth", "noon", "midnight"])):
+        if name == "pick up" and not has(slots, "COUNT"):
+            return "COUNT must be a whole number, written in digits"
+        return "'" + v + "' must be a name, not a number of things"
+    if m != none:
+        return "'" + v + "' must be a name; put the place last, like 'at 10, 12'"
+    return ""
+
 # The group kinds a question can be about (brief 26). For medicine, NAME is a medical care level; weapon
 # groups are checked only when the vocabulary has a "weapon groups" line.
+
+# ---- Agent 07: the designation forms ----
+CANCEL_KINDS = ["mining", "chopping", "cutting", "harvesting", "deconstructing", "uninstalling", "hauling", "hunting", "taming", "slaughtering", "stripping", "smoothing", "designations"]
+
+# "" when the slots of a designate / items form are fine, else what is wrong. Runs after check_place (SPOT and
+# AREA are read) and after the COUNT check of check_new.
+function check_designate(name, slots):
+    if name == "designate cancel":
+        if not (slots["KIND"] in CANCEL_KINDS):
+            return "KIND must be one of " + join_list(CANCEL_KINDS) + "; blueprints are 'cancel blueprint in area AREA'"
+        return ""
+    if not has(slots, "THINGS"):
+        return ""
+    for item in slots["THINGS"]:
+        if item in ["those", "it", "there", "here"]:
+            return "THINGS must say what to mark, like trees, steel or deer"
+        if starts_with(item, "nearest ") or find_pattern("^[0-9]", item) != none:
+            return "a count goes after 'nearest': '... nearest N THINGS near SPOT'"
+        if contains(item, " near ") or contains(item, " in area ") or ends_with(item, " near") or contains(item, " at ") or starts_with(item, "items "):
+            return "THINGS is only what to mark; the place goes after 'near' or 'in area'"
+        if on_line("landmarks", item):
+            return "'" + item + "' is a landmark, a place: say what to mark near it, like '... nearest ship chunks near " + item + "'"
+    return ""
+
 QUERY_KINDS = ["clothing", "food", "drug", "reading", "medicine", "weapon"]
 
+# Agent 05: the slot checks of the read-back questions. The storage question takes the same PLACE as the
+# storage change forms (plus a zone), so it gets their checks: a room, bench, door or zone must be named,
+# DIRECTION is turned into its one name (as check() does for the storage forms), DISTANCE is whole tiles.
+READBACK_CHECKED = {"query storage": true, "query building": true}
+
+function check_readback(name, slots):
+    if name == "query building":
+        for item in slots["TARGETS"]:
+            if item in ["those", "them", "they", "it"]:
+                return "name the buildings to show"
+            if find_pattern("(^| )group( |$)", item) != none:
+                return "a group is not a building"
+        return ""
+    if has(slots, "ZONE"):
+        if has(VOCAB, "zones") and not listed("zones", slots["ZONE"]):
+            return "'" + slots["ZONE"] + "' is not a zone on the map"
+        return ""
+    if not has(slots, "BENCH") and not has(slots, "ROOM") and not has(slots, "DOOR"):
+        return "name the storage: near a bench, in a room, or of zone NAME"
+    if has(slots, "DIRECTION"):
+        d = direction_name(slots["DIRECTION"])
+        if d == none:
+            return "DIRECTION must be north, south, east, west or a corner"
+        slots["DIRECTION"] = d
+    if has(slots, "DISTANCE"):
+        if not whole_number_between(slots["DISTANCE"], 1, 1000) or not (lower(slots["UNIT"]) in ["tile", "tiles"]):
+            return "DISTANCE must be a number of tiles"
+    return ""
+
 function check_query(name, slots):
+    if starts_with(name, "query ") and has(READBACK_CHECKED, name):
+        return check_readback(name, slots)
     if has(slots, "THINGS"):
         for item in slots["THINGS"]:
             if item in ["those", "them", "they", "it"]:
@@ -545,6 +1461,9 @@ PAWN_RULES = {
     "query needs": [["colonists", "prisoners", "animals"], "colonist, prisoner or animal"],
     "query health": [["colonists", "prisoners", "animals"], "colonist, prisoner or animal"]
 }
+# Agent 04: the mood question; agent 09: who can be tended.
+PAWN_RULES["query mood"] = [["colonists", "prisoners"], "colonist or prisoner"]
+PAWN_RULES["tend"] = [["colonists", "prisoners", "animals"], "colonist, prisoner or animal"]
 
 function pawn_lines(name):
     if has(PAWN_RULES, name):
@@ -649,9 +1568,29 @@ function check_wave1(name, slots):
             return "'" + slots["OPTION"] + "' is not an option of that letter"
     return ""
 
+# Agent 02: the checks of its forms ("" when fine). DAY: "day 1" is the landing day.
+AGENT02_FORMS = {"run": true, "query speed": true, "query events": true, "query pending": true}
+RUN_SPEEDS = ["normal", "fast", "superfast"]
+
+function check_agent02(name, slots):
+    if bad_number(slots, "HOURS", 1, 120):
+        return "HOURS must be a whole number of game hours, 1 to 120"
+    if bad_number(slots, "DAYS", 1, 5):
+        return "DAYS must be a whole number of days, 1 to 5"
+    if has(slots, "SPEED") and not (slots["SPEED"] in RUN_SPEEDS):
+        return "SPEED of a run must be normal, fast or superfast"
+    if bad_number(slots, "DAY", 1, 100000):
+        return "DAY must be a whole number, 1 or more"
+    return ""
+
 # The checks of the forms of brief 23: numbers, then names against the vocabulary, then the form's own.
 function check_new(name, slots):
+    wrong = check_place(name, slots)
+    if wrong != "":
+        return wrong
     fix_pawn_name(name, slots)
+    if has(AGENT02_FORMS, name):
+        return check_agent02(name, slots)
     if bad_number(slots, "COUNT", 1, 1000):
         return "COUNT must be a whole number"
     if bad_number(slots, "MIN", 0, 20) or bad_number(slots, "MAX", 0, 20):
@@ -708,16 +1647,59 @@ function check_new(name, slots):
             return "'" + slots["NAME"] + "' is not a " + slots["KIND"] + " group in this colony"
         if name == "group things allow" and starts_with(slots["THINGS"][0], "only "):
             return "to allow only some things, write 'put only'"
+    if has(BUILD_PLACE, name):
+        return check_build_place(name, slots)
+    wrong = check_pawn_actions(name, slots)
+    if wrong != "":
+        return wrong
+    if starts_with(name, "designate ") or starts_with(name, "items "):
+        return check_designate(name, slots)
     if starts_with(name, "query "):
         return check_query(name, slots)
     return check_wave1(name, slots)
 
+# Is item on the vocabulary line kind? Unlike listed(), false when the order came with a vocabulary that has
+# no such line (a map with no zones has no "zones" line).
+function on_line(kind, item):
+    return has(VOCAB, kind) and item in VOCAB[kind]
+
+# Agent 06: the zone and area forms; "" when fine. AREA is read and rewritten by agent 03's check_place()
+# (agent_player\out\03\router_rules.txt PART B); these forms are not in NEW_NAMES, so it is called here.
+function check_zones(name, slots):
+    why = check_place(name, slots)
+    if why != "":
+        return why
+    if has(slots, "CROP") and not listed("crops", slots["CROP"]):
+        return "'" + slots["CROP"] + "' is not a crop that can be planted now"
+    if has(slots, "ZONE") and not listed("zones", slots["ZONE"]):
+        return "'" + slots["ZONE"] + "' is not a zone on the map"
+    if name == "zone work" and not (slots["WORK"] in ["sowing", "cutting"]):
+        return "WORK must be sowing or cutting"
+    if name == "zone rename":
+        if slots["NEW_NAME"] == slots["ZONE"] or on_line("zones", slots["NEW_NAME"]):
+            return "a zone is already called '" + slots["NEW_NAME"] + "'"
+    if name == "area paint" and not (slots["NAME"] in AREA_WORDS) and not listed("areas", slots["NAME"]):
+        return "'" + slots["NAME"] + "' is not an area; NAME is home, roof, no roof, snow clear or an allowed area"
+    if name == "area create":
+        if slots["NAME"] in AREA_WORDS or slots["NAME"] == "anywhere" or on_line("areas", slots["NAME"]):
+            return "there is already an area called '" + slots["NAME"] + "'"
+    if name == "area delete":
+        if slots["NAME"] in AREA_WORDS:
+            return "the " + slots["NAME"] + " area can not be deleted; take cells out of it with 'area " + slots["NAME"] + " remove'"
+        if not listed("areas", slots["NAME"]):
+            return "'" + slots["NAME"] + "' is not an allowed area"
+    return ""
+
 # "" when the slots are fine, else what is wrong.
 function check(name, slots):
+    if has(ZONE_FORMS, name):
+        return check_zones(name, slots)
     if has(NEW_NAMES, name):
         return check_new(name, slots)
-    if starts_with(name, "storage") and not ends_with(name, "(those)") and not has(slots, "BENCH") and not has(slots, "ROOM"):
-        return "storage needs a room or a bench"
+    if starts_with(name, "storage") and not ends_with(name, "(those)") and not has(slots, "BENCH") and not has(slots, "ROOM") and not has(slots, "ZONE"):
+        return "storage needs a room, a bench or a zone"
+    if has(slots, "ZONE") and not listed("zones", slots["ZONE"]):
+        return "'" + slots["ZONE"] + "' is not a zone on the map"
     if has(slots, "DIRECTION"):
         if direction_name(slots["DIRECTION"]) == none:
             return "DIRECTION must be north, south, east, west or a corner"
@@ -731,7 +1713,14 @@ function check(name, slots):
         if has(slots, "COUNT") and not whole_number_between(slots["COUNT"], 1, 1000):
             return "COUNT must be a number"
         if not has(slots, "ANCHOR") and not has(slots, "ROOM"):
+            why = build_place_why(slots)
+            if why != "":
+                return why
             return "build needs a room, or a building to put it next to"
+        if has(slots, "ROOM") and starts_with(slots["ROOM"], "area "):
+            return "'in area' is only for floors: build floor FLOOR in area AREA"
+        if anchor_not_place(slots) != "":
+            return anchor_not_place(slots)
         # The mod places on one of the four sides of a building, not at a corner.
         if has(slots, "DIRECTION") and not (slots["DIRECTION"] in ["north", "south", "east", "west"]):
             return "DIRECTION of a building must be north, south, east or west"
@@ -759,7 +1748,7 @@ NUMBER_WORDS = {
 }
 
 # Slots that hold a number (the mod gets them as numbers).
-NUMBER_SLOTS = ["COUNT", "N", "SLOT", "DISTANCE", "OPTION", "MIN", "MAX", "DEGREES", "FROM", "TO", "VALUE"]
+NUMBER_SLOTS = ["COUNT", "N", "SLOT", "DISTANCE", "OPTION", "MIN", "MAX", "DEGREES", "FROM", "TO", "VALUE", "HOURS", "DAYS", "DAY"]
 
 # The slots with the number slots as numbers.
 function with_numbers(slots):
@@ -802,7 +1791,10 @@ function hour_said(h, said):
 # "" when every number in the line was in the order (and the answer to a question), else which one wasn't.
 # DEGREES may be below zero; the minus sign is not a number the player has to say twice.
 function made_up(slots, said):
-    for key in ["COUNT", "N", "SLOT", "DISTANCE", "OPTION", "MIN", "MAX"]:
+    p = place_made_up(slots, said)
+    if p != "":
+        return p
+    for key in ["COUNT", "N", "SLOT", "DISTANCE", "OPTION", "MIN", "MAX", "HOURS", "DAYS", "DAY"]:
         # OPTION is also the text of a letter's choice (brief 27): only a number has to have been said.
         if key == "OPTION" and has(slots, key) and number(slots[key]) == none:
             continue
@@ -990,14 +1982,26 @@ function remember(f, slots, refs):
 
 function is_note(line):
     low = lower(trim(line))
-    return starts_with(low, "ask:") or starts_with(low, "cannot:")
+    return starts_with(low, "ask:") or starts_with(low, "cannot:") or is_bare_note(line)
+
+# Agent 10 (item 31): "CANNOT" or "ASK" alone (no colon, no reason, a period allowed) is a note too, with
+# an empty reason. Haiku wrote a bare "CANNOT" in run h1 and it did not parse.
+function is_bare_note(line):
+    low = lower(trim(line))
+    return low == "cannot" or low == "cannot." or low == "ask" or low == "ask."
+
+# A note as the driver reads it: a bare one gets its colon ("CANNOT" -> "cannot:").
+function note_of(line):
+    if is_bare_note(line):
+        return replace(lower(trim(line)), ".", "") + ":"
+    return trim(line)
 
 # The first ASK: or CANNOT: line of an answer (a list of lines), as written, or none. An answer with one
 # is stopped: nothing in it goes on (user 2026-10-02, brief 22).
 function first_note(lines):
     for line in lines:
         if trim(line) != "" and is_note(line):
-            return trim(line)
+            return note_of(line)
     return none
 
 # One answer line -> its commands (lowercase, through wording, cut at periods and "and then").
@@ -1098,6 +2102,9 @@ function route(order):
         m = find_pattern("^(ask|cannot): *(.*)$", note)
         if m != none and lower(m[1]) == "cannot":
             log("Haiku can not do it: " + m[2])
+            # A bare CANNOT (agent 10, item 31) has an empty reason; the player still reads something.
+            if trim(m[2]) == "":
+                return {"result": "cannot", "reason": "Haiku said it cannot do that, without a reason."}
             return {"result": "cannot", "reason": m[2]}
         question = note
         if m != none:
@@ -1107,8 +2114,16 @@ function route(order):
         log("Haiku asked: " + question)
         return {"result": "ask", "question": question}
 
+    # Every sentence is read and checked; one bad sentence stops the whole order (agent 01: the tail of
+    # route() is run_lines() below, shared with route_raw()).
+    return run_lines(lines, numbers_in(original + " " + answer))
+
+# ---- 9b. Raw sentences (agent inbox, agent_player brief 01): no Haiku call ----
+
+# The same checks, questions and plans as route() does once Haiku has answered.
+# lines: the router sentences, one per line. said: the numbers the player is allowed to use.
+function run_lines(lines, said):
     # Every sentence is read and checked; one bad sentence stops the whole order.
-    said = numbers_in(original + " " + answer)
     clear_memory()
     parsed = []
     reasons = []
@@ -1135,6 +2150,11 @@ function route(order):
     if is_query(parsed[0]["form"]):
         answered = []
         for r in parsed:
+            # Agent 10 (item 5): show questions / show orders are answered by the script's own table.
+            if is_help(r["form"]):
+                for part in help_answer(r["form"], r["names"]):
+                    append(answered, part)
+                continue
             reply = query(r["form"], with_numbers(r["refs"]))
             if reply["ok"]:
                 for part in split(reply["text"], "\n"):
@@ -1159,3 +2179,13 @@ function route(order):
         log("the order failed: " + join(reasons, " | "))
         return {"result": "failed", "reasons": reasons}
     return {"result": "plans", "lines": planned_lines}
+
+# The text already holds router sentences (written by an agent): they go to the parser as they are.
+# A line "ASK: ..." or "CANNOT: ..." is not special here: it is read like any sentence (the "ask" and "cannot"
+# forms), and the game side refuses to plan it.
+function route_raw(text):
+    vocabulary_text = vocabulary()
+    read_vocabulary(vocabulary_text)
+    log("raw sentences, no Haiku call")
+    lines = answer_lines(text)
+    return run_lines(lines, numbers_in(text))
