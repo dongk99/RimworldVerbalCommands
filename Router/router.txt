@@ -331,6 +331,14 @@ new_form("switch on", "switch on {TARGETS}[ in {ROOM}].", ["TARGETS"])
 new_form("switch off", "switch off {TARGETS}[ in {ROOM}].", ["TARGETS"])
 new_form("turret fire", "open fire with {TARGETS}[ in {ROOM}].", ["TARGETS"])
 new_form("turret hold fire", "hold fire with {TARGETS}[ in {ROOM}].", ["TARGETS"])
+# The windows that hold the game paused (AgentWindows.cs). Found 2026-10-04 in a live game played through the
+# inbox: a research-complete dialog held the pause and no sentence could show or close it. "close window."
+# closes the top one when it has one button; with several it is refused and lists them, and
+# "close window with option OPTION." names one. "show windows." is with the other questions, below. The two
+# "close window" forms come BEFORE "vent close" on purpose: that form also starts with "close" and the order
+# of the forms decides which one takes a sentence.
+new_form("window close", "close window with option {OPTION}.", [])
+new_form("window close", "close window.", [])
 new_form("vent open", "open {TARGETS}[ in {ROOM}].", ["TARGETS"])
 new_form("vent close", "close {TARGETS}[ in {ROOM}].", ["TARGETS"])
 new_form("temperature", "set temperature of {TARGETS}[ in {ROOM}] to {DEGREES}.", ["TARGETS"])
@@ -590,6 +598,7 @@ query_form("query interactable", "show interactable pawns for {PAWN}.", [])
 query_form("query interactable", "show interactable pawns.", [])
 query_form("query trade", "show trade for {WORD}.", [])
 query_form("query trade", "show trade.", [])
+query_form("query windows", "show windows.", [])
 
 # Agent 10 (item 5): "show questions." and "show orders." list every sentence with one line on what it
 # prints or changes. The answer is made from the table HELP below and nothing else, so it cannot drift from
@@ -644,6 +653,7 @@ help("query interactable", "show interactable pawns.", "traders, visitors, quest
 help("query interactable", "show interactable pawns for PAWN.", "the same, with the orders the game offers that colonist")
 help("query trade", "show trade.", "the open trade window: silver, what is set in the deal, each thing with counts and prices")
 help("query trade", "show trade for WORD.", "the same, only the things with WORD in their name")
+help("query windows", "show windows.", "the windows that hold the game paused (a research-complete box, a message, a trade window): type, text, buttons")
 help("query gear", "show gear of PAWN.", "what the pawn wears, holds and carries")
 help("query wearing", "who wears THINGS.", "the colonists wearing that apparel")
 help("query not wearing", "who does not wear THINGS.", "the colonists not wearing that apparel")
@@ -822,6 +832,8 @@ help("trade buy", "trade buy COUNT THING.", "sets the open trade deal to buy tha
 help("trade sell", "trade sell COUNT THING.", "sets the open trade deal to sell that many; nothing changes hands yet")
 help("trade accept", "accept trade.", "settles the deal as set and closes the trade window")
 help("trade cancel", "cancel trade.", "closes the trade window without trading")
+help("window close", "close window.", "presses the only button of the top window that holds the game paused; with several buttons it refuses and lists them")
+help("window close", "close window with option OPTION.", "presses the button or option of that top window whose text holds OPTION")
 help("run", "run HOURS hours[ at SPEED].", "runs the game that many hours (1 to 120), then pauses; earlier on a threat or emergency")
 help("run", "run DAYS days[ at SPEED].", "the same in days (1 to 5)")
 help("run", "run until event[ at SPEED].", "runs until a threat or emergency, at most 24 game hours, then pauses")
