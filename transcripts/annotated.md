@@ -2931,7 +2931,7 @@ No response requested.
 
 ### User
 
-Hmm. I wonder how I could use you (claude, on CC) so I dont need an API key to do this shit.
+Hmm. I wonder how I could use you (claude, on CC) so I dont need an API key to do this stuff.
 
 **Tool call: ToolSearch**
 
@@ -5313,7 +5313,7 @@ Nothing is written to the game in that path. The Apply button stays inert becaus
 
 ### User
 
-Weird. I dont get it. this *seems* straightforward that even haiku can do it, but it still fucks it up
+Weird. I dont get it. this *seems* straightforward that even haiku can do it, but it still messes it up
 
 ### Claude
 
@@ -5390,9 +5390,9 @@ KopaZ — 12:16 AM
 its a 4090 so 24gb. rimworld doesnt use much ram so i could just use local models for rimworld but if im playing something else i want to do something similar like ksp which takes up ~20gb vram on its own with mods i cant really load a large local model
 KopaZ — 12:16 AM
 and im not even sure if smaller models can do these tasks fine and im also not sure what kind of complex task ill throw at it
-bet i can write a damn essay on it
+bet i can write an essay on it
 
-this is the constraint im going under. Id rather want to use a model that can do easy shit fine so i dont have problem throwing harder shit
+this is the constraint im going under. Id rather want to use a model that can do easy stuff fine so i dont have problem throwing harder stuff
 
 ### User
 
@@ -5403,9 +5403,9 @@ KopaZ — 12:16 AM
 its a 4090 so 24gb. rimworld doesnt use much ram so i could just use local models for rimworld but if im playing something else i want to do something similar like ksp which takes up ~20gb vram on its own with mods i cant really load a large local model
 KopaZ — 12:16 AM
 and im not even sure if smaller models can do these tasks fine and im also not sure what kind of complex task ill throw at it
-bet i can write a damn essay on it
+bet i can write an essay on it
 
-this is the constraint im going under. Id rather want to use a model that can do easy shit fine so i dont have problem throwing harder shit. and testing/regexing those datasts efficiently all takes time and that's an optimization game
+this is the constraint im going under. Id rather want to use a model that can do easy stuff fine so i dont have problem throwing harder stuff. and testing/regexing those datasts efficiently all takes time and that's an optimization game
 
 <details><summary>Local command / slash-command bookkeeping</summary>
 
@@ -5443,9 +5443,9 @@ this is the constraint im going under. Id rather want to use a model that can do
   ksp which takes up ~20gb vram on its own with mods i cant really load a large local model
   KopaZ — 12:16 AM
   and im not even sure if smaller models can do these tasks fine and im also not sure what kind of complex task ill throw at it
-  bet i can write a damn essay on it
+  bet i can write an essay on it
 
-  this is the constraint im going under. Id rather want to use a model that can do easy shit fine so i dont have problem throwing harder shit. and testing/regexing
+  this is the constraint im going under. Id rather want to use a model that can do easy stuff fine so i dont have problem throwing harder stuff. and testing/regexing
   those datasts efficiently all takes time and that's an optimization game
 
 ### Claude
@@ -6724,8 +6724,8 @@ Project dir: `C:\Users\[user]\.claude\projects\RimWorld-LLM-Integration`. Deploy
    - "[Image] Haiku did a dummy"
    - "so. i dont read how the language works; without reading backend of code, I assume that the mod literally does the same action that the user would do when they click buttons/draw maps, which in turn what the user is doing is essentially an api call?"
    - "hmm. can you give me an example (any example is fine, as long as the structure is there), when i say 'give me list of pawn skills and priorities'? you can make up the skills and priorities (1~4 for priorities, not sure how 'not doing' is labeled so ill have you find out). let's say we have 3 pawns."
-   - "Weird. I dont get it. this *seems* straightforward that even haiku can do it, but it still fucks it up"
-   - (pasted Discord messages about 4090/VRAM/KSP/local models) "this is the constraint im going under. Id rather want to use a model that can do easy shit fine so i dont have problem throwing harder shit. and testing/regexing those datasts efficiently all takes time and that's an optimization game"
+   - "Weird. I dont get it. this *seems* straightforward that even haiku can do it, but it still messes it up"
+   - (pasted Discord messages about 4090/VRAM/KSP/local models) "this is the constraint im going under. Id rather want to use a model that can do easy stuff fine so i dont have problem throwing harder stuff. and testing/regexing those datasts efficiently all takes time and that's an optimization game"
    - "anyways, an idea, but unrelated/related to verbalcommands; Idk if mods already have this... assign pawns with specific weapons & weapon types and draft them with groups/hotkey binds. If there arent any then I think verbal commands can do this fairly trivially if the intent part doesnt dump skills/sleep cycle (its not related) and just give models with pawns/pawn names with weapons theyre holding"
    - "would this run independently without other mod listed here (esp. hotkey stuff) of conflict? Not sure how keybind define_group would work"
    - "rule-based seems better, and it can work off of 'Does this pawn that used to be in group currently hold that weapon or on allowed weapon list' or not"
@@ -10904,7 +10904,7 @@ You are powered by the model named Opus 5.5. The exact model ID is claude-opus-5
 
 ran build.ps1
 tested: ran with devmode on, ticked to X, popup shows as intended. 
-small problem: takes too long for mod folders readme to show, good 1~2s. unattentive ~~idiots~~ users will take way too fast to close it and not even get to see it. the popup needs to show up right away
+small problem: takes too long for mod folders readme to show, good 1~2s. unattentive users will take way too fast to close it and not even get to see it. the popup needs to show up right away
 
 <details><summary>System reminder: total_tokens_reminder</summary>
 
@@ -11284,7 +11284,7 @@ To test it, close RimWorld and run `build.ps1`. The deployed DLL's SHA256 should
 
 ### User
 
-thats better. it pops up instantly ~~so idiots can see readme.md is a thing~~
+thats better. it pops up instantly ~~so people can see readme.md is a thing~~
 
 <details><summary>System reminder: total_tokens_reminder</summary>
 
