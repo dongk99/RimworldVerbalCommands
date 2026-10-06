@@ -53,6 +53,41 @@ If you'd like to tweak around and see which model does initial routing best, you
 
 If the model name in that file doesn't work, the mod uses `claude-haiku-4-5` instead and says so in the order window.
 
+### Main model and fallback model
+
+Mod settings have two model fields. **Main model** is the router above (it reads every order first and turns it into short sentences; the field edits `router_model.txt`). **Fallback model** is used:
+
+- when the main model's call fails (error, timeout, refusal, cut-off or empty answer): the same prompt goes once to the fallback model, and the order window says so;
+- when the order window's "If the main model can't do it, try the fallback model" box is ticked and an order comes back as "cannot" or "not done": the order goes through the router once more with the fallback model in place of the main model. Orders sent as raw sentences call no model, so they are never sent again;
+- for the whole order when the sentence router is turned off (the older path).
+
+If both fields name the same model, the fallback is not asked.
+
+### Other providers (.env)
+
+Each of the two models can use its own provider, key and server, set in (next to `router_model.txt`):
+
+```
+%USERPROFILE%\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\.env
+```
+
+The mod makes this file on the first order with every line commented out, so nothing changes until a line is uncommented. Keys: `MAIN_PROVIDER`, `MAIN_MODEL`, `MAIN_API_KEY`, `MAIN_BASE_URL`, and the same with `FALLBACK_`. Providers: `anthropic`, `openai` (any server that speaks the OpenAI chat completions format), `claude_cli`, or the presets `ollama`, `lmstudio`, `openrouter`, `gemini`. A key left empty falls back to mod settings; the Anthropic key in mod settings is never sent to another provider. A line in `.env` wins over the matching field in mod settings.
+
+## Mod settings
+
+The settings page only names each setting. What they do:
+
+- **Use Claude Code CLI instead of an API key**: no key needed; uses your Claude Code login.
+- **Path to claude.exe**: blank = auto-detect (PATH, then `%USERPROFILE%\.local\bin\claude.exe`).
+- **Main model / Fallback model**: see "Main model and fallback model" above. A line in `.env` wins over these fields.
+- **Fallback model**: used when main model's call fails. [cannot] gate bypasses are found on verbal command chatbox ingame.
+- **Effort**: low/medium/high/xhigh/max. Not sent to non-Anthropic providers.
+- **Use the sentence router**: orders become short sentences the mod checks and carries out. On: your order is turned into short sentences by a small model, the mod checks each one and shows you what it will do. If the order is unclear, it asks you a question first and changes nothing. Off: the older way, where the main model plans the whole order.
+- **Save router log**: what was sent to Haiku, replies, and what was done.
+- **Agent inbox: run orders from text files in the inbox folder**: off by default. When on, each .txt file put in `%USERPROFILE%\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\inbox` is run as an order (oldest first) and its result is written to the outbox folder next to it. Only that folder is read; nothing listens on the network. The router log is always written while this is on.
+- **Save sent orders to transcripts.jsonl**: for checking voice accuracy.
+- **Collect voice debug data**: Turn this on if you're having transcription issues. Saves debug data you can attach to a bug report.
+
 
 
 Test condition: 1 colony worth of 11 pawns (275x275 map), 1 colony (2 map) of 33 pawns (300x300) and 11 pawns (SOS2 space map, no odyssey), 1 colony of 325x325 map (57 pawns, 33 pawns).

@@ -6,6 +6,8 @@
   <VerbalCommands_Cancel>Cancel</VerbalCommands_Cancel>
   <VerbalCommands_Close>Close</VerbalCommands_Close>
   <VerbalCommands_ClearConversation>Clear conversation</VerbalCommands_ClearConversation>
+  <VerbalCommands_FallbackOnCannot>If the main model can't do it, try the fallback model</VerbalCommands_FallbackOnCannot>
+  <VerbalCommands_FallbackOnCannotTip>When an order comes back as "cannot" or "not done", it is sent through the sentence router once more with the fallback model (Mod settings: Fallback model, or FALLBACK_ lines in .env) in place of the main model. Orders sent as raw sentences never call a model, so they are not sent again. This choice is saved.</VerbalCommands_FallbackOnCannotTip>
   <VerbalCommands_Placeholder>Type an order for the colony…</VerbalCommands_Placeholder>
   <VerbalCommands_NoApiKey>No API key set. Options > Mod settings > Verbal Commands.</VerbalCommands_NoApiKey>
   <VerbalCommands_Settings_ApiKey>Anthropic API key</VerbalCommands_Settings_ApiKey>
@@ -14,23 +16,25 @@
   <VerbalCommands_Settings_ApiKeyPaste>Paste key from clipboard</VerbalCommands_Settings_ApiKeyPaste>
   <VerbalCommands_Settings_ApiKeyClear>Clear</VerbalCommands_Settings_ApiKeyClear>
   <VerbalCommands_Settings_ApiKeyClipboardEmpty>Clipboard is empty</VerbalCommands_Settings_ApiKeyClipboardEmpty>
-  <VerbalCommands_Settings_Headless>Use Claude Code CLI instead of an API key (no key needed; uses your Claude Code login)</VerbalCommands_Settings_Headless>
-  <VerbalCommands_Settings_ClaudePath>Path to claude.exe (blank = auto-detect)</VerbalCommands_Settings_ClaudePath>
+  <VerbalCommands_Settings_Headless>Use Claude Code CLI instead of an API key</VerbalCommands_Settings_Headless>
+  <VerbalCommands_Settings_ClaudePath>Path to claude.exe</VerbalCommands_Settings_ClaudePath>
+  <VerbalCommands_Settings_ClaudePathTip>blank = auto-detect (PATH, then %USERPROFILE%\.local\bin\claude.exe).</VerbalCommands_Settings_ClaudePathTip>
   <VerbalCommands_Settings_HeadlessLocked>An order is running. You can change this when it has finished.</VerbalCommands_Settings_HeadlessLocked>
-  <VerbalCommands_Settings_Model>Model</VerbalCommands_Settings_Model>
-  <VerbalCommands_Settings_Effort>Effort (low/medium/high/xhigh/max; see README)</VerbalCommands_Settings_Effort>
+  <VerbalCommands_Settings_RouterModel>Main model</VerbalCommands_Settings_RouterModel>
+  <VerbalCommands_Settings_Model>Fallback model</VerbalCommands_Settings_Model>
+  <VerbalCommands_Settings_ModelTip>used when main model's call fails. [cannot] gate bypasses are found on verbal command chatbox ingame.</VerbalCommands_Settings_ModelTip>
+  <VerbalCommands_Settings_Effort>Effort</VerbalCommands_Settings_Effort>
   <VerbalCommands_Settings_MaxTokens>Max output tokens</VerbalCommands_Settings_MaxTokens>
   <VerbalCommands_Settings_Timeout>Request timeout (seconds)</VerbalCommands_Settings_Timeout>
-  <VerbalCommands_Settings_ScriptRouter>Use the sentence router (orders become short sentences the mod checks and carries out)</VerbalCommands_Settings_ScriptRouter>
-  <VerbalCommands_Settings_ScriptRouterTip>On: your order is turned into short sentences by a small model, the mod checks each one and shows you what it will do. If the order is unclear, it asks you a question first and changes nothing. Off: the older way, where the main model plans the whole order.</VerbalCommands_Settings_ScriptRouterTip>
+  <VerbalCommands_Settings_ScriptRouter>Use the sentence router</VerbalCommands_Settings_ScriptRouter>
   <VerbalCommands_Settings_Confirm>Show parsed intent and ask before applying</VerbalCommands_Settings_Confirm>
-  <VerbalCommands_Settings_ExplainErrors>Ask the LLM to explain faults (one extra request)</VerbalCommands_Settings_ExplainErrors>
+  <VerbalCommands_Settings_ExplainErrors>Ask the LLM to explain faults</VerbalCommands_Settings_ExplainErrors>
   <VerbalCommands_Settings_LogAnswers>Log the player's answer to a question in the game log</VerbalCommands_Settings_LogAnswers>
   <VerbalCommands_Settings_LogHaiku>Log the small model's raw reply in the game log</VerbalCommands_Settings_LogHaiku>
   <VerbalCommands_Settings_LogPlans>Log the planned changes of an order in the game log</VerbalCommands_Settings_LogPlans>
-  <VerbalCommands_Settings_SaveRouterLog>Save router log (what was sent to Haiku, replies, and what was done)</VerbalCommands_Settings_SaveRouterLog>
+  <VerbalCommands_Settings_SaveRouterLog>Save router log</VerbalCommands_Settings_SaveRouterLog>
+  <VerbalCommands_Settings_SaveRouterLogTip>what was sent to Haiku, replies, and what was done.</VerbalCommands_Settings_SaveRouterLogTip>
   <VerbalCommands_Settings_AgentInbox>Agent inbox: run orders from text files in the inbox folder</VerbalCommands_Settings_AgentInbox>
-  <VerbalCommands_Settings_AgentInboxTip>Off by default. When on, each .txt file put in {0} is run as an order (oldest first) and its result is written to the outbox folder next to it. Only that folder is read; nothing listens on the network. The router log is always written while this is on.</VerbalCommands_Settings_AgentInboxTip>
   <VerbalCommands_Settings_Extra>Extra system prompt text</VerbalCommands_Settings_Extra>
   <VerbalCommands_Settings_GroupLayout>Group hotkey layout</VerbalCommands_Settings_GroupLayout>
   <VerbalCommands_Settings_ChooseGroupKeys>Choose group hotkeys…</VerbalCommands_Settings_ChooseGroupKeys>
@@ -52,9 +56,9 @@
   <VerbalCommands_VoiceClickToChangeKey>Click to change key</VerbalCommands_VoiceClickToChangeKey>
   <VerbalCommands_Settings_VoiceEnabled>Voice dictation on by default</VerbalCommands_Settings_VoiceEnabled>
   <VerbalCommands_Settings_VoiceToggleEverywhere>Voice toggle key (~) works everywhere, not just in the dialog</VerbalCommands_Settings_VoiceToggleEverywhere>
-  <VerbalCommands_Settings_SaveTranscripts>Save sent orders to transcripts.jsonl (for checking voice accuracy)</VerbalCommands_Settings_SaveTranscripts>
+  <VerbalCommands_Settings_SaveTranscripts>Save sent orders to transcripts.jsonl</VerbalCommands_Settings_SaveTranscripts>
+  <VerbalCommands_Settings_SaveTranscriptsTip>for checking voice accuracy.</VerbalCommands_Settings_SaveTranscriptsTip>
   <VerbalCommands_Settings_CollectVoiceDebug>Collect voice debug data</VerbalCommands_Settings_CollectVoiceDebug>
-  <VerbalCommands_Settings_CollectVoiceDebugDesc>Turn this on if you're having transcription issues. Saves debug data you can attach to a bug report.</VerbalCommands_Settings_CollectVoiceDebugDesc>
   <VerbalCommands_Settings_VoiceToggleKey>Voice toggle key</VerbalCommands_Settings_VoiceToggleKey>
   <VerbalCommands_Settings_VoiceToggleKeyDev>Voice toggle key (dev mode)</VerbalCommands_Settings_VoiceToggleKeyDev>
   <VerbalCommands_Settings_ChangeKey>Change…</VerbalCommands_Settings_ChangeKey>
