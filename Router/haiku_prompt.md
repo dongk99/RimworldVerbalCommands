@@ -27,6 +27,9 @@ build BUILDING anywhere.
 build BUILDING at SPOT.
 build BUILDING near SPOT.
 build COUNT BUILDING near SPOT.
+place BUILDING at SPOT.
+place BUILDING near SPOT.
+place COUNT BUILDING near SPOT.
 build BUILDING from AREA.
 build floor FLOOR in area AREA.
 build room AREA.
@@ -188,6 +191,8 @@ show speed.
 show events.
 show events since day DAY.
 show pending.
+I need tips on NAME.
+I need tips for NAME.
 show gear of PAWN.
 show work of PAWN.
 show work.
@@ -254,6 +259,7 @@ SLOTS
 - Wave 1 slots: SPEED paused, normal, fast or superfast ("pause" = paused, "unpause" = normal). PROJECT, ANIMALS, MODE (prisoner), TRAINING: copy from "research", "animals", "prisoner modes", "trainings"; PAWNS of prisoner mode from "prisoners"; "nobody" clears a master. PAWN of operation, show needs, show health: a colonist, prisoner or animal. RECIPE of an operation: copy from "operations" for that PAWN; "on PART" only when the player named a part, else leave it out. FIELD: allow for joy, allow scheduled, take every, only if mood below, only if recreation below or take to inventory; VALUE: true or false for the two allow fields, else the number said (days, percent, count); DRUG from "drugs". KIND for create, rename, delete: clothing, food, drug or reading. LETTER: from "letters"; OPTION: one of the words in brackets after it.
 - Run: every run pauses by itself at the first threat or emergency. HOURS (1 to 120) and DAYS (1 to 5) only as the player said them. No number said ("until something happens", "for a day", "for a while", "keep going"): run until event. SPEED normal, fast or superfast; leave out "at SPEED" when the player named no speed. Less than an hour: CANNOT. DAY of show events: the day number the player said (day 1 = landing day); "what happened", "anything new", "since I last asked", "today": show events. Time, date, how fast, paused or not: show speed. What colonists still have to finish (blueprints, bills, research, jobs ordered earlier): show pending.
 - Questions (every line from "how much" down to "show orders for WORD") change nothing. In who wears / holds / carries, THINGS is the item as the player said it, not checked against VOCABULARY ("helmet", "recon helmet", "weapon", "medicine"); wears = apparel, holds = weapon in hand, carries = inventory; "unarmed" = "who does not hold weapon". RELATION: the player's word ("married", "engaged"). "show KIND group NAME": KIND is clothing, food, drug, reading, medicine (NAME is a medical care level) or weapon.
+- Tips: "I need tips on NAME." or "I need tips for NAME." NAME exactly as on the tips line, no other word for it.
 - What a question shows: show status = date, hour, season, weather, speed, threats, each colonist (where, job, mood and break risk, health, food, rest, drafted), days of food, power, research, alert and letter counts. show weather = date, hour, season, outdoor temperature. show colonists = each colonist's job, mood, drafted, downed, mental break. show threats = enemies, manhunting animals, predators, fires: count, weapons, distance, direction. show food = food by kind, days of food, crops and when they can be harvested, what will rot. show power = power made, used, stored, hours of battery left. show temperature = outdoor, each room, who is too cold or hot. show mood of PAWN = mood, break thresholds, all thoughts.
 - PAWN of show mood: a colonist or prisoner. ROOM of show temperature: from "rooms" only; with no such room write show temperature.
 - Read-back questions: "show work" = work priorities; "show settings" = drafted, fire at will, threat response, medical care; "show building" = on/off, fuel, power, door, turret, bed state of buildings that stand; "show blueprints" = what is not built yet. In show building, TARGETS is the player's word for the building ("campfire", "doors", "stove"), not checked against VOCABULARY. PROJECT in show research path: any project the player names, also one not in "research". ZONE: copy from "zones". SPOT: as in the other "at SPOT" lines.
@@ -272,6 +278,7 @@ SLOTS
 - Material: write "made of STUFF" right after BUILDING, only when the player named one ("build 2 shelf made of steel in storeroom.").
 - A whole room: "build room like ROOM", where ROOM is an existing room from "rooms" or a room type from "layouts". It only draws plan options; the player then says which, and that is "build option N".
 - No room on the map fits: build at or near a SPOT, never ASK which room. "at SPOT" is exactly that tile; "near SPOT" lets the game pick the nearest free tiles (use it when the player named no exact tile). No place said at all: ASK where.
+- Spots (sleeping spot, animal sleeping spot, butcher spot, any building named "spot") are placed, never built: "place BUILDING at SPOT." / "place BUILDING near SPOT.", also when the player says "build". Everything else is built.
 - "build BUILDING anywhere.": for a building that fits only one kind of spot, so the place needs no asking: a geothermal generator goes on a steam geyser and the mod takes the nearest free one. Write it for a geothermal generator with no place said, and when the player says "anywhere it can go" / "wherever it fits". Never ASK which room for a geothermal generator. For other buildings with no place said: ASK where.
 - "near" + a colonist, landmark or zone is a SPOT; "near ANCHOR in ROOM" is only for a building that stands in a room. "north of Bob" is no place: write "at N tiles north of Bob" (the number said) or "near Bob".
 - Add "facing SIDE" (north, south, east or west) at the end of an "at" or "near" line only when the player said which way it faces.

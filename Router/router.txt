@@ -269,6 +269,13 @@ build_place_form("build anywhere", "build {BUILDING}[ made of {STUFF}] anywhere.
 build_place_form("build at", "build {BUILDING}[ made of {STUFF}] at {SPOT}[ facing {FACING}].")
 build_place_form("build near", "build {COUNT} {BUILDING}[ made of {STUFF}] near {SPOT}[ facing {FACING}].")
 build_place_form("build near", "build {BUILDING}[ made of {STUFF}] near {SPOT}[ facing {FACING}].")
+# Spots are placed, not built (user 2026-10-04: "you cant "BUILD" something like animal sleeping spots or bed
+# spots. you have to PLACE them."; 2026-10-06: "build sleeping spots need to be blocked with "you can only place
+# them". same for other SPOTS"). The mod puts one down at once, as the game's build tool does for anything with
+# no work to build, and refuses "build" for those and "place" for everything else.
+build_place_form("place at", "place {BUILDING} at {SPOT}[ facing {FACING}].")
+build_place_form("place near", "place {COUNT} {BUILDING} near {SPOT}[ facing {FACING}].")
+build_place_form("place near", "place {BUILDING} near {SPOT}[ facing {FACING}].")
 build_place_form("cancel blueprint at", "cancel blueprint at {SPOT}.")
 build_place_form("cancel blueprint at", "cancel blueprint {BUILDING} at {SPOT}.")
 build_place_form("cancel blueprint area", "cancel blueprint in area {AREA}.")
@@ -507,6 +514,12 @@ query_form("query speed", "show time.", [])
 query_form("query events", "show events since day {DAY}.", [])
 query_form("query events", "show events.", [])
 query_form("query pending", "show pending.", [])
+# Tips (user 2026-10-06: "that tip has to come from the interpreter parsing it. so you need to add relevant vocab
+# lines. since its exact, no synynome for filenames. and since its more or less exact phrase "I" "need" "tips" "for
+# (for probably exist, and so do on)" [filename]."). NAME is an entry of the "tips" vocabulary line, as it is.
+# The mod answers with that know-how file (TipInjector.cs).
+query_form("query tips", "i need tips on {NAME}.", [])
+query_form("query tips", "i need tips for {NAME}.", [])
 
 # Brief 30: what pawns wear, hold and carry (colonists only; nothing here changes). THINGS is the player's word and is
 # not checked against a vocabulary line: the mod matches it against every item def of that kind (apparel for wear,
@@ -648,6 +661,7 @@ help("query speed", "show speed.", "game speed, paused or not, date and hour, a 
 help("query speed", "show time.", "the same as show speed")
 help("query events", "show events.", "letters, messages and events since this was last asked")
 help("query events", "show events since day DAY.", "letters, messages and events since that day (day 1 = landing day)")
+help("query tips", "I need tips on NAME.", "the know-how file NAME in full (NAME from the tips line); also: I need tips for NAME")
 help("query pending", "show pending.", "what orders started that colonists have not finished yet")
 help("query interactable", "show interactable pawns.", "traders, visitors, quest givers, prisoners and enemies in view, with the right-click orders the game offers on each")
 help("query interactable", "show interactable pawns for PAWN.", "the same, with the orders the game offers that colonist")
@@ -700,6 +714,8 @@ help("build option", "build option N.", "blueprints for plan option N drawn by b
 help("build at", "build BUILDING made of STUFF at SPOT facing SIDE.", "one blueprint exactly on that cell; made of STUFF and facing SIDE may be left out")
 help("build anywhere", "build BUILDING anywhere.", "for a building that fits one kind of spot only: a geothermal generator on the nearest free steam geyser in view")
 help("build near", "build COUNT BUILDING made of STUFF near SPOT facing SIDE.", "blueprints on the nearest free cells to SPOT; COUNT, made of STUFF and facing SIDE may be left out")
+help("place at", "place BUILDING at SPOT facing SIDE.", "a spot (sleeping spot, butcher spot, ...) put down at once on that cell; spots are placed, never built")
+help("place near", "place COUNT BUILDING near SPOT facing SIDE.", "spots put down at once on the nearest free cells to SPOT; COUNT and facing SIDE may be left out")
 help("build line", "build BUILDING made of STUFF from AREA.", "a straight line one cell wide: wall, fence, sandbags, conduit")
 help("build floor", "build floor FLOOR in area AREA.", "floor blueprints over AREA")
 help("build room new", "build room AREA made of STUFF door SIDE.", "walls round the edge of AREA and one door; colonists roof the closed box themselves")
@@ -1597,6 +1613,9 @@ function check_agent02(name, slots):
 
 # The checks of the forms of brief 23: numbers, then names against the vocabulary, then the form's own.
 function check_new(name, slots):
+    # Tips: the file name exactly as on the "tips" line, no other word for it (user 2026-10-06).
+    if name == "query tips" and not listed("tips", slots["NAME"]):
+        return "'" + slots["NAME"] + "' is not on the tips line; the tips are: " + join_list(get(VOCAB, "tips", []))
     wrong = check_place(name, slots)
     if wrong != "":
         return wrong

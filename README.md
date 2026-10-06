@@ -38,8 +38,6 @@ Since the interpreter accepts natural language (e.g. "build shelves that only ac
 End goal is to have easily typable language that is natural enough so people can simply verbally speak without having to use an LLM at all, and also an interpreter/harness so one day LLMs could play rimworld by reading game states and verbally typing (and receiving game state) from/to interpreter.
 
 
-Both calls go through the same backend: the Anthropic API if you set an API key, or `claude -p` if you use the Claude Code CLI. The two are never mixed.
-
 Older router did not use haiku for regex routing and went straight from user intent (prompt) to model. this caused too many tokens being used since model has to load tooling/data for everything. This albeit brute-force approach led to token waste and LLMs sometimes (model dependent) did not have enough attention to make all of the changes. Many tables were flipped as of result.
 
 
@@ -50,8 +48,6 @@ If you'd like to tweak around and see which model does initial routing best, you
 ```
 %USERPROFILE%\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\router_model.txt
 ```
-
-If the model name in that file doesn't work, the mod uses `claude-haiku-4-5` instead and says so in the order window.
 
 ### Main model and fallback model
 
@@ -87,6 +83,16 @@ The settings page only names each setting. What they do:
 - **Agent inbox: run orders from text files in the inbox folder**: off by default. When on, each .txt file put in `%USERPROFILE%\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\inbox` is run as an order (oldest first) and its result is written to the outbox folder next to it. Only that folder is read; nothing listens on the network. The router log is always written while this is on.
 - **Save sent orders to transcripts.jsonl**: for checking voice accuracy.
 - **Collect voice debug data**: Turn this on if you're having transcription issues. Saves debug data you can attach to a bug report.
+
+## Token meter
+
+Turns on whenever agent inbox is on.
+
+## Tip injection
+
+Turns on whenever agent inbox is on. When an order or event matches a tip, its result also gets a short tip from the files in `Tips\`. `I need tips on NAME.` (or `for NAME`) gives the whole file.
+
+You can find the injection settings for each tip inside files of `Tips\summary\`.
 
 
 
