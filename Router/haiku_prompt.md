@@ -206,6 +206,7 @@ show bills at BENCH in ROOM.
 show bills at BENCH at SPOT.
 show storage PLACE.
 show storage of zone ZONE.
+show places that store THINGS.
 show building TARGETS in ROOM.
 show building TARGETS at SPOT.
 show blueprints.
@@ -241,7 +242,8 @@ ASK: one short question.
 CANNOT: one short reason.
 
 SLOTS
-- PLACE: "near BENCH", "in ROOM", "near BENCH in ROOM", or a direction from a door: "DIRECTION of door to ROOM in ROOM" / "DISTANCE tiles DIRECTION of door to ROOM in ROOM" (the first ROOM is where the door leads, from "doors" in VOCABULARY).
+- PLACE: "near BENCH", "in ROOM", "near BENCH in ROOM", or a direction from a door: "DIRECTION of door to ROOM in ROOM" / "DISTANCE tiles DIRECTION of door to ROOM in ROOM" (the first ROOM is where the door leads, from "doors" in VOCABULARY). One storage building: "at X, Z" (a cell the player said) or its ID copied from "storage ids" ("put only steel in storage Shelf12345.").
+- "show places that store THINGS.": which stockpiles and shelves accept THINGS (also "only store"); THINGS: the player's words, a category, or an item's ID.
 - SPOT, one tile: "X, Z" (x grows east, z grows north, only numbers the player said or an answer printed), a name from colonists, prisoners, animals, landmarks or zones ("bob", "ship chunk 1", "map centre"), or "N tiles DIRECTION of NAME". "here", "us", "our camp", "where we landed": a colonist's name. No rooms on the map: use SPOT, never ASK which room.
 - AREA, a rectangle: "X, Z to X, Z" (two corners) or "W by H around SPOT".
 - LAYER: terrain, resources, buildings, roof or creatures; leave it out for everything at once. "show map ..." and "where/list ..." are questions; THING, THINGS: the player's own words ("steel", "compacted machinery", "berries", "rich soil", "ship chunks", "mountains"; a rock face, cliff or hill of rock = "mountain"). "closest" = "nearest"; "how far is X from Y" = where is nearest X to Y (the answer gives the distance).
@@ -405,6 +407,18 @@ put wood in storage near electric smithy in workshop. put steel in those. keep c
 
 ORDER: two new shelves in the workshop and only steel on them
 build 2 shelf in workshop. put only steel in those.
+
+ORDER: which shelves and stockpiles take steel
+show places that store steel.
+
+ORDER: which stockpiles only take meals
+show places that only store meals.
+
+ORDER: only steel on shelf Shelf12345, and make it critical
+put only steel in storage Shelf12345. set those to critical priority.
+
+ORDER: no wood on the shelf at 112, 87
+keep wood out of storage at 112, 87.
 
 ORDER: go with option 2
 build option 2.

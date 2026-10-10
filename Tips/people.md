@@ -21,8 +21,7 @@
 
 ## Who does what
 `show skills of NAME.` for each colonist, `show work.` for the priority grid, then
-`set WORKTYPE priority N for NAME.` (1 is highest). Research to Fabrication needs someone on Research
-every day; construction and mining come first in the first days.
+`set WORKTYPE priority N for NAME.` (1 is highest). Research needs someone on Research every day; construction and mining come first in the first days.
 
 ## What to make clothes from (user)
 - **Cloth is the worst.** Use it only until you have something else.

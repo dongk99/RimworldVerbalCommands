@@ -80,8 +80,8 @@ they do not pause a run.
   not in the rain.
 - (unchecked) Heaters, coolers and benches draw only while they work; the excess moves with what the
   colonists are doing.
-- The research benches for Microelectronics and Fabrication need power all day (see `furniture.md`): size
-  the batteries for the night before you start.
+- The hi-tech research bench needs power all day (see `furniture.md`): size the batteries for the night
+  before you start.
 
 ## Heat from a steam geyser instead of heaters (user)
 - (user, live game 2026-10-04, day 7: "you built your main area over geyser (smart), but your indoor farm
@@ -89,3 +89,12 @@ they do not pause a run.
   a roofed room heats it for nothing; the geyser must be walled in (user, 2026-10-06). Join the rooms that
   need heat to that room (an opening or a vent in a shared wall) before building heaters; each heater that
   can go is power for something else.
+
+## Vents lose heat between rooms (user)
+- (user, 2026-10-09: "vents have lower thermal conduction over rooms resulting in some temperature loss. removing
+  doors can remove the inefficiency but it might be undesirable if you want to separate rooms to get room-specific
+  bonus.") A vent passes heat between two rooms more slowly than an open doorway, so the far room runs a little
+  colder (or warmer) than the heated one. Taking the door out joins the two into one room and removes that loss,
+  but one room is one room: separate rooms get their own room bonuses (bedroom, dining room, research room
+  impressiveness), and a joined room loses those. Keep the door and the vent when the room bonus matters; take
+  the door out when the temperature matters more.

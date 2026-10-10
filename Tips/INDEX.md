@@ -9,7 +9,7 @@ player knows that the mod does not tell you. Open the one that fits the question
 | "how do I defend my pawns", a raid letter, where to build walls, what is cover, a killbox | `defense.md` (picture: `killbox_example.jpg`) |
 | "a threat letter / a choice letter / someone is down / fire / disease / a trader came": what to ask, what to order, in what order | `events.md` |
 | power, excess, batteries, how long they last, something has no power | `power.md` |
-| where furniture goes, room sizes, what makes work faster, tool cabinets, the way to Fabrication | `furniture.md` |
+| where furniture goes, room sizes, what makes work faster, tool cabinets, research benches and unlocks | `furniture.md` |
 | a trader or caravan came, who to trade with, a quest giver, visitors, buying components | `trade.md` |
 | prisoners, recruiting, which skills to want, what clothes are worth, who is too cold | `people.md` |
 | digging into a mountain, mining ore, roofs falling in, columns | `mining.md` |

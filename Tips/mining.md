@@ -37,7 +37,7 @@ plan for it being hit: keep it apart from anything that burns, and be ready to r
 - Deep under a mountain, insects can appear. Fresh rooms under overhead mountain are where.
 - Mining leaves stone chunks: haul them to a dumping zone, or use them in the killbox corridor
   (`defense.md`). A bill at a stonecutter's table turns them into stone blocks, for walls that do not burn.
-- Compacted machinery gives components: the way to them before Fabrication.
+- Compacted machinery gives components, one of the few early ways to get them.
 
 ## Ice or permanent-winter maps: the user's plan, and the numbers (user)
 The user's Shivalbard run, from the same start as the agent's run:

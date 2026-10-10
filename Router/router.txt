@@ -166,11 +166,20 @@ function first_word(text):
 # check() makes sure at least one is there), or a direction from a door (brief 18): "north of door
 # to kitchen in storeroom", "3 tiles west of door to kitchen in storeroom". Each storage form is
 # tried with each PLACE, in this order.
+#
+# User 2026-10-07 ("also takes in game ID"; asked whether that meant the storage forms take a shelf's ID or X of
+# "show places that store X" is an item's ID, the user picked "Both"; "That should also have a corresponding mod
+# change that would take accept those commands"): one storage building by its cell ("storage at 112, 87") or by
+# its game ID ("storage shelf12345", or the ID alone: "put only steel in shelf12345."). An ID must be on the
+# "storage ids" vocabulary line. These come last, so the older places are tried first and keep their messages.
 PLACES = [
     "storage {DISTANCE} {UNIT} {DIRECTION} of door to {DOOR}[ in {ROOM}]",
     "storage {DIRECTION} of door to {DOOR}[ in {ROOM}]",
     "storage[ near {BENCH}][ in {ROOM}]",
-    "zone {ZONE}"
+    "zone {ZONE}",
+    "storage at {SPOT}",
+    "storage {STORAGE_ID}",
+    "{STORAGE_ID}"
 ]
 
 forms = []
@@ -568,7 +577,16 @@ query_form("query bills", "show bills at {BENCH} at {SPOT}.", [])
 query_form("query bills", "show bills at {BENCH}[ in {ROOM}].", [])
 query_form("query storage", "show storage of zone {ZONE}.", [])
 for place in PLACES:
-    query_form("query storage", "show " + place + ".", [])
+    # The bare "{STORAGE_ID}" place would read every "show ..." question as an ID: the question says "storage".
+    if place != "{STORAGE_ID}":
+        query_form("query storage", "show " + place + ".", [])
+# User 2026-10-07: "Show places that only store X" (X = vocabulary of item, or category, also takes in game ID).
+# Output would be "Here are places that store X" (stockpile zone 1....n, Shelf (gameID, coordinate)." Asked which
+# places to list, the user picked "Both, marked": every storage that accepts X, the ones that take only X marked.
+# THINGS is an item or category name, matched by the mod like the THINGS of the storage forms, or an item's game ID.
+# "only" first, so it is never read as part of THINGS; both forms give the same answer.
+query_form("query stores", "show places that only store {THINGS}.", ["THINGS"])
+query_form("query stores", "show places that store {THINGS}.", ["THINGS"])
 query_form("query blueprints", "show blueprints.", [])
 query_form("query research path", "show research path to {PROJECT}.", [])
 
@@ -693,7 +711,8 @@ help("query area of", "show area of PAWN.", "the allowed area the pawn is restri
 help("query bed of", "show bed of PAWN.", "the bed the pawn owns, where it is and what kind")
 help("query settings of", "show settings of PAWN.", "whether the pawn is drafted, fire at will, threat response, medical care and self-tend")
 help("query bills", "show bills at BENCH in ROOM.", "each bill at that bench: repeat, paused, who may do it, skill range, radius, where products go, ingredients; in ROOM may be left out, or write at SPOT")
-help("query storage", "show storage of zone ZONE.", "what that storage accepts, its priority and what is in it; also near BENCH, in ROOM, or a direction from a door")
+help("query storage", "show storage of zone ZONE.", "what that storage accepts, its priority and what is in it; also near BENCH, in ROOM, a direction from a door, at X, Z, or storage ID")
+help("query stores", "show places that store THINGS.", "every storage that accepts THINGS (an item, a category or an item's ID): zones by name, buildings with ID and cell; the ones that take only THINGS are marked")
 help("query building", "show building TARGETS in ROOM.", "the state of those built buildings: on or off, power, fuel, temperature, door, forbidden, turret, bed")
 help("query blueprints", "show blueprints.", "what is not built yet, what material it lacks, and what blocks it")
 help("query research path", "show research path to PROJECT.", "the unfinished projects before that project, with cost, bench and progress")
@@ -703,6 +722,7 @@ help("storage holds only", "put only THINGS in storage PLACE.", "that storage ta
 help("storage also holds", "put THINGS in storage PLACE.", "that storage also takes those things")
 help("storage no longer holds", "keep THINGS out of storage PLACE.", "that storage no longer takes those things")
 help("storage priority", "set storage PLACE to PRIORITY priority.", "that storage's priority, low to critical")
+help("storage holds only", "put only THINGS in storage ID.", "one storage building by its ID (or the ID alone, or storage at X, Z); the same for put, keep out of and set priority")
 help("storage holds only (those)", "put only THINGS in those.", "the storage of the sentence before takes only those things")
 help("storage also holds (those)", "put THINGS in those.", "the storage of the sentence before also takes those things")
 help("storage no longer holds (those)", "keep THINGS out of those.", "the storage of the sentence before no longer takes them")
@@ -1068,6 +1088,30 @@ function is_storage_place(text):
         if s != none and (has(s, "DOOR") or has(s, "BENCH") or has(s, "ROOM") or has(s, "ZONE")):
             return true
     return false
+
+# A check() answer meaning "this form does not fit at all": read_sentence() tries the next form and keeps the
+# problem an earlier form gave, so a place added last does not hide it.
+NOT_THIS_FORM = "(not this form)"
+
+# One storage building by its cell or its game ID (user 2026-10-07, see PLACES); "" when fine. The cell is two
+# numbers only (no name: a name says no single building), rewritten in its one form; an ID is one word from the
+# "storage ids" line. A game ID is one word ending in its number (Thing.ThingID = defName + number); a slot that
+# is not like that is NOT_THIS_FORM, so the older form's message is kept.
+function check_storage_one(slots):
+    if has(slots, "STORAGE_ID"):
+        sid = slots["STORAGE_ID"]
+        if contains(sid, " ") or find_pattern("[0-9]$", sid) == none:
+            return NOT_THIS_FORM
+        if not listed("storage ids", sid):
+            return "'" + sid + "' is not the ID of a storage building on the map; 'show places that store THINGS.' lists them"
+    if has(slots, "SPOT"):
+        r = read_spot(slots["SPOT"])
+        if r["why"] != "":
+            return r["why"]
+        if find_pattern("^[0-9]+, [0-9]+$", r["text"]) == none:
+            return "'storage at' takes a cell, x then z: 'storage at 112, 87'"
+        slots["SPOT"] = r["text"]
+    return ""
 
 # ---- Agent 03: places without rooms (SPOT, AREA) ----
 # A fresh map has no rooms, so a place is said with these two slots (agent_player\opus\00_SHARED.md 6.1).
@@ -1443,6 +1487,8 @@ function check_readback(name, slots):
         if has(VOCAB, "zones") and not listed("zones", slots["ZONE"]):
             return "'" + slots["ZONE"] + "' is not a zone on the map"
         return ""
+    if has(slots, "SPOT") or has(slots, "STORAGE_ID"):
+        return check_storage_one(slots)
     if not has(slots, "BENCH") and not has(slots, "ROOM") and not has(slots, "DOOR"):
         return "name the storage: near a bench, in a room, or of zone NAME"
     if has(slots, "DIRECTION"):
@@ -1727,8 +1773,12 @@ function check(name, slots):
         return check_zones(name, slots)
     if has(NEW_NAMES, name):
         return check_new(name, slots)
-    if starts_with(name, "storage") and not ends_with(name, "(those)") and not has(slots, "BENCH") and not has(slots, "ROOM") and not has(slots, "ZONE"):
+    if starts_with(name, "storage") and not ends_with(name, "(those)") and not has(slots, "BENCH") and not has(slots, "ROOM") and not has(slots, "ZONE") and not has(slots, "SPOT") and not has(slots, "STORAGE_ID"):
         return "storage needs a room, a bench or a zone"
+    if starts_with(name, "storage"):
+        why = check_storage_one(slots)
+        if why != "":
+            return why
     if has(slots, "ZONE") and not listed("zones", slots["ZONE"]):
         return "'" + slots["ZONE"] + "' is not a zone on the map"
     if has(slots, "DIRECTION"):
@@ -2067,6 +2117,8 @@ function read_sentence(line, said):
             if key in f["lists"]:
                 slots[key] = split_list(slots[key])
         wrong = check(f["name"], slots)
+        if wrong == NOT_THIS_FORM:
+            continue
         if wrong != "":
             problem_form = f["name"]
             problem = wrong

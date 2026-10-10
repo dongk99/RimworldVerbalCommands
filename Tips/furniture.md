@@ -57,7 +57,7 @@ code does; (unchecked) is neither.
   - Tool cabinet (wiki, Tool_cabinet): +6% work speed to a linked workbench; a bench uses at most 2, for 12%.
     One cabinet between two benches serves both (the user's example workshop does this).
   - Multi-analyzer (saved wiki `goal\Multi-analyzer.txt:54, 64`): links to hi-tech research benches only,
-    +10% research speed, and Fabrication needs it linked.
+    +10% research speed, and some projects need it linked.
   - End table (wiki, End_table): must stand directly next to the head of the bed; a second one does nothing.
     Dresser: a small comfort bonus to nearby beds; one counts.
 - Cleanliness and research (saved wiki `goal\Research.txt:83`): x0.75 in a very dirty room, x1.0 clean,
@@ -87,11 +87,12 @@ code does; (unchecked) is neither.
 - `show storage of zone NAME.` says what a zone holds; it does not say whether it is roofed or what is
   wearing down.
 
-## The way to Fabrication (source: saved wiki pages in `agent_player\wiki\goal\`)
-Electricity (simple research bench) -> Microelectronics (hi-tech research bench, needs power) ->
-Multi-analyzer -> Fabrication (hi-tech bench with a multi-analyzer linked within 8 tiles) -> fabrication
-bench (steel 200, components 12, advanced components 2). `show research path to fabrication.` gives what is
-still open.
+## Research benches and unlocks (source: saved wiki pages in `agent_player\wiki\goal\`)
+- A project names the bench it needs: the simple research bench, or the hi-tech research bench (needs
+  power). Some projects also need a multi-analyzer linked within 8 tiles. `show research path to PROJECT.`
+  gives this for each project still open.
+- Researching a project does not give you what it unlocks: each building it unlocks still costs its
+  materials.
 
 ## Research through the mod (mod)
 - `show research.` : the current project with its progress and what it gives, and the projects that can be

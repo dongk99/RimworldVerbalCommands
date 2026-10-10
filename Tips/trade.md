@@ -52,6 +52,6 @@ one to go to. So ask broadly first, then act on the one the answer points at.
 ## More things to know
 - A trader leaves after a while (unchecked how long). A trader caravan does not pause a run: watch
   `show events.` for the arrival letter.
-- Components before Fabrication: buy them, or mine compacted machinery, or take ship chunks apart.
+- Components early on: buy them, or mine compacted machinery, or take ship chunks apart.
 - What sells: see `people.md` (human skin sells well if your people can stand it; cloth is worth little).
 - A trader with a quest hands it over when the trade window closes: look at `show letters.` afterwards.

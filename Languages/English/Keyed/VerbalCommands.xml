@@ -35,6 +35,7 @@
   <VerbalCommands_Settings_SaveRouterLog>Save router log</VerbalCommands_Settings_SaveRouterLog>
   <VerbalCommands_Settings_SaveRouterLogTip>what was sent to Haiku, replies, and what was done.</VerbalCommands_Settings_SaveRouterLogTip>
   <VerbalCommands_Settings_AgentInbox>Agent inbox: run orders from text files in the inbox folder</VerbalCommands_Settings_AgentInbox>
+  <VerbalCommands_Settings_RecordHumanPlay>Record human gameplay (log-based) for training</VerbalCommands_Settings_RecordHumanPlay>
   <VerbalCommands_Settings_Extra>Extra system prompt text</VerbalCommands_Settings_Extra>
   <VerbalCommands_Settings_GroupLayout>Group hotkey layout</VerbalCommands_Settings_GroupLayout>
   <VerbalCommands_Settings_ChooseGroupKeys>Choose group hotkeys…</VerbalCommands_Settings_ChooseGroupKeys>
