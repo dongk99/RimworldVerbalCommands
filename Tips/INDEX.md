@@ -14,6 +14,7 @@ player knows that the mod does not tell you. Open the one that fits the question
 | prisoners, recruiting, which skills to want, what clothes are worth, who is too cold | `people.md` |
 | digging into a mountain, mining ore, roofs falling in, columns | `mining.md` |
 | babies, crying, where the nursery goes, baby food and food poisoning | `babies.md` |
+| "what did the human do on day N", what a real 54-day play of this start looks like, why they built what where | `..\reference_play\REFERENCE_HUMAN_PLAY-Autosave-5.analysis.md` (required reading before the first order, every session) |
 
 Where each line comes from is marked: **(user)** = the human who owns this project said it, in their own
 play; **(mod)** = checked in the mod's code; **(unchecked)** = believed, not checked in the game's code or
