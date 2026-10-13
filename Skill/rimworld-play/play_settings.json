@@ -1,0 +1,7 @@
+{
+  "disableBundledSkills": true,
+  "disableClaudeAiConnectors": true,
+  "autoMemoryEnabled": false,
+  "skillOverrides": {
+  }
+}

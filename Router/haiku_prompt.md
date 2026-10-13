@@ -71,6 +71,14 @@ accept trade.
 cancel trade.
 make weapon group NAME holding RULE.
 clear weapon group SLOT.
+put everyone with SKILL at least MIN in control group SLOT.
+put everyone with SKILL at most MAX in control group SLOT.
+put everyone with SKILL over MIN in control group SLOT.
+put everyone with SKILL under MAX in control group SLOT.
+put everyone with SKILL from MIN to MAX in control group SLOT.
+put PAWNS in control group SLOT.
+take PAWNS out of control group SLOT.
+clear control group SLOT.
 add bill to make COUNT RECIPE at BENCH in ROOM.
 add bill to make RECIPE until you have COUNT at BENCH in ROOM.
 add bill to make RECIPE forever at BENCH in ROOM.
@@ -169,6 +177,7 @@ is PAWN RELATION.
 list relations of PAWN.
 show KIND group NAME.
 show groups of PAWN.
+show control group SLOT.
 show alerts.
 show letters.
 show needs of PAWN.
@@ -275,7 +284,8 @@ SLOTS
 - "them"/"they" = the pawns selected earlier in the same order, never objects. "those" = the storage or buildings an earlier sentence in the same order acted on, never a room or pawns.
 - Priority is either work priority for pawns (set WORKTYPE priority N for PAWNS), or storage priority (low to critical) for stockpile zones and the buildings on "storage buildings" in VOCABULARY. Nothing else has a priority: no bed, door, table, bench, blueprint, plan, growing zone or area. Asked for one there: ASK.
 - WORD in show questions / show orders: the first word of the sentences the player asks about (build, set, who).
-- "group X" spoken as a verb means select (write "select"). A group as a thing always has its kind in front of it: weapon group, clothing group, food group, drug group, reading group, medicine group. "group" with no kind in front: ASK which kind.
+- "group X" spoken as a verb means select (write "select"). A group as a thing always has its kind in front of it: weapon group, clothing group, food group, drug group, reading group, medicine group, control group. A numbered group ("group 9", "F9", "hotkey group 2", "control group 3", "selection group 1") is a control group, SLOT that number (1 to 9). "group" with no kind and no number: ASK which kind.
+- Control groups: the hotkey groups 1 to 9 (F1 to F9 or the number keys); the slot keeps a rule or a list of colonists, and the key selects them. By skill: "put everyone with SKILL at least MIN / at most MAX / over MIN / under MAX / from MIN to MAX in control group SLOT", SKILL copied from "skills" in VOCABULARY ("miners" = Mining, "shooters" = Shooting, "doctors" = Medical), the level only as the player said it ("8 or higher", "8+", "greater or equal to 8" = at least 8; "more than 8", "above 8" = over 8; "below 5" = under 5). By name: "put PAWNS in control group SLOT" adds them, "take PAWNS out of control group SLOT" removes them; a part of a name the player said ("hick") stays as said when no colonist in VOCABULARY fits it exactly. A weapon group holds weapons, never a skill or a list of names.
 - ANCHOR: a BENCH or BUILDING from VOCABULARY that already stands in that room. The game picks the exact tile; use DIRECTION of ANCHOR (north, south, east or west only) only when the player said which side.
 - Material: write "made of STUFF" right after BUILDING, only when the player named one ("build 2 shelf made of steel in storeroom.").
 - A whole room: "build room like ROOM", where ROOM is an existing room from "rooms" or a room type from "layouts". It only draws plan options; the player then says which, and that is "build option N".
@@ -906,6 +916,26 @@ build geothermal generator anywhere.
 ORDER: put a geothermal generator on the geyser, wherever it can be placed
 build geothermal generator anywhere.
 
+ORDER: everyone with mining 8 or higher goes in group 9
+put everyone with Mining at least 8 in control group 9.
+
+ORDER: put the three best shooters, bob, carl and dana, into F3
+put Bob, Carl and Dana in control group 3.
+
+ORDER: take dana out of control group 3 and then clear group 9
+take Dana out of control group 3.
+clear control group 9.
+
+ORDER: anyone with medical above 10 is hotkey group 2
+put everyone with Medical over 10 in control group 2.
+
+ORDER: who is in group 3
+show control group 3.
+
+ORDER: shooting 5 to 10 as group 4, and al goes in group 1
+put everyone with Shooting from 5 to 10 in control group 4.
+put al in control group 1.
+
 BAD -> why
 select everyone who have ranged weapons and move them to location hospital.   -> "and" never joins actions. Write: select everyone who have ranged weapons. move them to location hospital.
 build 3 shelf in storeroom.   -> the player said "some shelves"; 3 is made up. Write: ASK: How many shelves?
@@ -988,3 +1018,7 @@ use option trade on Zara with Alice. trade buy 20 components.   -> the trade win
 CANNOT: No line trades with a caravan.   -> trading is "show interactable pawns", then "use option trade on NAME with PAWN", then the trade lines. Write: show interactable pawns.
 ASK: Which room, or near which bench?   -> the player said "build geothermal generator"; it can only stand on a steam geyser, so no room is needed. Write: build geothermal generator anywhere.
 build campfire anywhere.   -> a campfire can stand in many places; "anywhere" is only for a building tied to one kind of spot. Write: ASK: Where should the campfire go?
+make weapon group F9 holding mining skill greater or equal to 8.   -> a weapon group holds weapons; a group by skill is a control group. Write: put everyone with Mining at least 8 in control group 9.
+CANNOT: No line puts colonists into a group by skill.   -> the control group lines do. Write: put everyone with Mining at least 8 in control group 9.
+ASK: Which kind of group 9 do you mean (weapon, clothing, food, drug, reading)?   -> a numbered group is a control group. Write: put Alice and Bob in control group 9.
+put everyone with Mining at least 9 in control group 9.   -> the player said "over 8"; 9 is made up. Write: put everyone with Mining over 8 in control group 9.

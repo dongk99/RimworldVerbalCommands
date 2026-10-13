@@ -89,7 +89,10 @@ PHRASES = [
     ["all my pawns", "everyone"],
     ["wield", "have"],
     ["closest", "nearest"],
-    ["map center", "map centre"]
+    ["map center", "map centre"],
+    # User 2026-10-13: the hotkey groups 1-9 are "control group" in the sentences.
+    ["hotkey group", "control group"],
+    ["selection group", "control group"]
 ]
 
 function without_filler(line):
@@ -307,6 +310,17 @@ form("move", "move {PAWNS} to location {NAME}.", ["PAWNS"])
 # Brief 20: only "weapon group" makes a shortcut group; plain "group" is a select word (section 2).
 form("weapon group", "make weapon group {NAME} holding {RULE}.", [])
 form("weapon group cleared", "clear weapon group {SLOT}.", [])
+# User 2026-10-13: control groups: the same hotkey slots 1-9 as the weapon groups, filled by skill level (a rule the
+# key checks live) or by named colonists (a list kept in the slot). The skill forms come first, so "put everyone with
+# mining at least 8 in ..." is never read as a list of names. "over" / "under" leave that level out (over 8 = 9 and up).
+new_form("control group skill between", "put everyone with {SKILL} from {MIN} to {MAX} in control group {SLOT}.", [])
+new_form("control group skill min", "put everyone with {SKILL} at least {MIN} in control group {SLOT}.", [])
+new_form("control group skill max", "put everyone with {SKILL} at most {MAX} in control group {SLOT}.", [])
+new_form("control group skill over", "put everyone with {SKILL} over {MIN} in control group {SLOT}.", [])
+new_form("control group skill under", "put everyone with {SKILL} under {MAX} in control group {SLOT}.", [])
+new_form("control group members", "put {PAWNS} in control group {SLOT}.", ["PAWNS"])
+new_form("control group remove", "take {PAWNS} out of control group {SLOT}.", ["PAWNS"])
+new_form("control group cleared", "clear control group {SLOT}.", [])
 form("ask", "ASK: {QUESTION}", [])
 form("cannot", "CANNOT: {REASON}", [])
 
@@ -489,6 +503,8 @@ query_form("query count", "how much {THINGS} do i have.", ["THINGS"])
 query_form("query relations", "is {PAWN} {RELATION}.", [])
 query_form("query relations", "list relations of {PAWN}.", [])
 query_form("query pawn groups", "show groups of {PAWN}.", [])
+# User 2026-10-13: what a control group (hotkey slot) holds and who is in it now.
+query_form("query control group", "show control group {SLOT}.", [])
 # Agent 05: the building question. TARGETS is the player's words, matched by the mod against the colony's
 # built buildings. These forms come before "query group", so "show building group worker." is refused by
 # the last form that fits it, "query group" (as before), after check_readback refused it as a building.
@@ -755,6 +771,15 @@ help("select pawns", "select PAWNS who have CONDITION.", "picks pawns for them /
 help("move", "move PAWNS to location NAME.", "sends drafted pawns to a room")
 help("weapon group", "make weapon group NAME holding RULE.", "a weapon shortcut group")
 help("weapon group cleared", "clear weapon group SLOT.", "empties a weapon shortcut group")
+help("control group skill min", "put everyone with SKILL at least MIN in control group SLOT.", "hotkey group SLOT (1 to 9) selects every colonist with that skill at MIN or more; the plan lists who")
+help("control group skill max", "put everyone with SKILL at most MAX in control group SLOT.", "the same, at MAX or less")
+help("control group skill over", "put everyone with SKILL over MIN in control group SLOT.", "the same, above MIN")
+help("control group skill under", "put everyone with SKILL under MAX in control group SLOT.", "the same, below MAX")
+help("control group skill between", "put everyone with SKILL from MIN to MAX in control group SLOT.", "the same, from MIN to MAX")
+help("control group members", "put PAWNS in control group SLOT.", "adds those colonists to hotkey group SLOT; part of a name is enough when one colonist fits; the plan lists who")
+help("control group remove", "take PAWNS out of control group SLOT.", "takes those colonists out of hotkey group SLOT")
+help("control group cleared", "clear control group SLOT.", "empties hotkey group SLOT")
+help("query control group", "show control group SLOT.", "the rule of hotkey group SLOT and who is in it now")
 help("bill add count", "add bill to make COUNT RECIPE at BENCH in ROOM.", "a bill that makes COUNT")
 help("bill add until", "add bill to make RECIPE until you have COUNT at BENCH in ROOM.", "a bill that keeps COUNT in stock")
 help("bill add forever", "add bill to make RECIPE forever at BENCH in ROOM.", "a bill that never stops")
@@ -1577,6 +1602,28 @@ function fix_pawn_name(name, slots):
             return none
     return none
 
+# User 2026-10-13: in the control group forms a colonist may be named by part of the name ("hick" for Hicklin) when
+# exactly one colonist on the "colonists" line contains it; the full name goes on, so the plan lists who. "" when fine.
+function fix_control_group_names(slots):
+    if not has(VOCAB, "colonists"):
+        return ""
+    fixed = []
+    for p in slots["PAWNS"]:
+        if p in ["everyone", "them", "they"] or listed("colonists", p):
+            append(fixed, p)
+            continue
+        found = []
+        for c in VOCAB["colonists"]:
+            if contains(c, p):
+                append(found, c)
+        if len(found) == 0:
+            return "'" + p + "' is not a colonist"
+        if len(found) > 1:
+            return "'" + p + "' fits " + join_list(found) + "; say which"
+        append(fixed, found[0])
+    slots["PAWNS"] = fixed
+    return ""
+
 # "" when fine: the value of a drug group entry must fit its field.
 function check_drug_entry(slots):
     if not has(DRUG_FIELDS, slots["FIELD"]):
@@ -1672,8 +1719,19 @@ function check_new(name, slots):
         return "COUNT must be a whole number"
     if bad_number(slots, "MIN", 0, 20) or bad_number(slots, "MAX", 0, 20):
         return "the skill range must be two whole numbers from 0 to 20"
-    if has(slots, "MIN") and number(slots["MIN"]) > number(slots["MAX"]):
+    if has(slots, "MIN") and has(slots, "MAX") and number(slots["MIN"]) > number(slots["MAX"]):
         return "the lowest skill must not be above the highest"
+    # User 2026-10-13: control groups. SLOT is a hotkey slot, SKILL is on the "skills" line, and a colonist may be
+    # named by part of the name when exactly one colonist fits.
+    if contains(name, "control group"):
+        if bad_number(slots, "SLOT", 1, 9):
+            return "SLOT must be 1 to 9"
+        if has(slots, "SKILL") and has(VOCAB, "skills") and not listed("skills", slots["SKILL"]):
+            return "'" + slots["SKILL"] + "' is not a skill; the skills are " + join_list(VOCAB["skills"])
+        if has(slots, "PAWNS"):
+            wrong = fix_control_group_names(slots)
+            if wrong != "":
+                return wrong
     if name == "bill radius" and bad_number(slots, "N", 1, 999):
         return "N must be a whole number of tiles, 1 to 999"
     if name == "fuel level" and bad_number(slots, "N", 0, 100000):

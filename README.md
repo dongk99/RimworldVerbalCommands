@@ -95,6 +95,16 @@ Turns on whenever agent inbox is on. When an order or event matches a tip, its r
 
 You can find the injection settings for each tip inside files of `Tips\summary\`.
 
+## Letting a Claude Code agent play (the `Skill\` folder)
+
+`Skill\` ships what an agent needs to play the colony through the agent inbox:
+
+- `Skillimworld-play\`: a Claude Code skill. `send.ps1` writes one order to the inbox and prints the outbox result; `play.ps1` does a whole step; `watch.ps1` turns new game events in `inbox_state.json` into chat notifications (armed with the Monitor tool); `launch_game.ps1` starts the game on a save; `launch_play.ps1` starts Claude Code with only the tools play needs; `resume_hook.ps1` prints the newest day note back after a compaction.
+- `Skill\PLAYBOOK.md`: how the inbox, time, places and sentences work. `Skill\DIFFICULTY.md`: what Randy Random / Losing is Fun means in numbers.
+- `Skilleference_play\`: a 54-day human play of the same start, read day by day, which every playing agent reads first.
+
+Install: copy `Skillimworld-play` to `%USERPROFILE%\.claude\skillsimworld-play` (`Skill\README.md` has the steps and the optional hook line for `settings.json`). Then tick "Agent inbox" in the mod settings, load a colony, and ask Claude Code to play RimWorld. The agent's day notes go to `play_log\` inside its skill folder. Nothing in `Skill\` touches the game's `Config` or saves.
+
 
 
 Test condition: 1 colony worth of 11 pawns (275x275 map), 1 colony (2 map) of 33 pawns (300x300) and 11 pawns (SOS2 space map, no odyssey), 1 colony of 325x325 map (57 pawns, 33 pawns).
