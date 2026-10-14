@@ -21,6 +21,7 @@ First two questions after any stop: `show events.` (what happened, short lines) 
 | Cold snap, heat wave, toxic fallout and the like (unchecked whether they pause) | `show weather.`, `show temperature.` | heat or cool a closed room (`build campfire ...`, heater, cooler), parkas, keep people indoors with an allowed area |
 | Trader caravan or orbital trader (mod: does NOT pause; it is in `show events.`) | `show interactable pawns.` | `trade.md`: send one colonist to the one pawn that trades, then the trade lines |
 | Visitors, travellers, a quest giver (mod: does not pause) | `show interactable pawns.` | `use option WORDS on NAME with PAWN.` for what the list offers; else nothing needed |
+| Hospitality box "Visitors ... are afraid to enter: No guest beds" (pauses; options Assure safety / Send away / Refuse visitors until I have guest beds / Always let them come) (user, 2026-10-13) | `show windows.` | without proper guest beds do NOT let them in: `close window with option Refuse visitors until I have guest beds.` (or `Send away`). Guests with no bed are unhappy and relations suffer; the trade they offer is not worth it. Let them in only once guest beds exist. |
 | Animals join, cargo pods, a good event (mod: does not pause) | `show events.` | `unforbid items near SPOT.` for dropped cargo; `haul ...` |
 | The run ended with nothing | `show pending.` | give the next orders, run again |
 

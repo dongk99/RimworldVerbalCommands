@@ -24,6 +24,9 @@ one to go to. So ask broadly first, then act on the one the answer points at.
    `cancel trade.` closes it without trading. The game stays paused after either: send a run.
 
 ## Things to know
+- Hospitality visitors marked `TRADER: guest` are not a reason to let a visitor group in. Without proper
+  guest beds answer the arrival box with `Refuse visitors until I have guest beds` (user, 2026-10-13); see
+  `events.md`.
 - Who talks matters: prices depend on the negotiator (unchecked: on their social skill). Send the best one.
 - What you can sell depends on who you trade with (source: the game's code, files named):
   - **A caravan trader on the map:** items in the home area or in any storage, not under fog, that the

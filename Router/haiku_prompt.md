@@ -232,6 +232,8 @@ show map around SPOT.
 show LAYER map around SPOT.
 show map of AREA.
 show LAYER map of AREA.
+show picture around SPOT.
+show picture of AREA.
 where is NAME.
 where is nearest THING.
 where is nearest THING to SPOT.
@@ -255,6 +257,7 @@ SLOTS
 - "show places that store THINGS.": which stockpiles and shelves accept THINGS (also "only store"); THINGS: the player's words, a category, or an item's ID.
 - SPOT, one tile: "X, Z" (x grows east, z grows north, only numbers the player said or an answer printed), a name from colonists, prisoners, animals, landmarks or zones ("bob", "ship chunk 1", "map centre"), or "N tiles DIRECTION of NAME". "here", "us", "our camp", "where we landed": a colonist's name. No rooms on the map: use SPOT, never ASK which room.
 - AREA, a rectangle: "X, Z to X, Z" (two corners) or "W by H around SPOT".
+- "show picture ...": a picture file of the game's own view (a screenshot), not text; "show map ..." is the text map. "screenshot", "picture", "image", "photo", "what does it look like" = picture.
 - LAYER: terrain, resources, buildings, roof or creatures; leave it out for everything at once. "show map ..." and "where/list ..." are questions; THING, THINGS: the player's own words ("steel", "compacted machinery", "berries", "rich soil", "ship chunks", "mountains"; a rock face, cliff or hill of rock = "mountain"). "closest" = "nearest"; "how far is X from Y" = where is nearest X to Y (the answer gives the distance).
 - Zones: a stockpile zone is storage by its own lines ("put only THINGS in zone ZONE.", "set zone ZONE to PRIORITY priority."; no word "storage"). a field, farm, plot or growing area is "zone growing"; a stockpile or storage spot outside is "zone stockpile"; a dump is "zone dumping". A zone is never built: never "build" for a zone. ZONE: copy from "zones" exactly. CROP: copy from "crops" ("rice field" = rice). WORK: sowing or cutting (planting = sowing, harvesting = cutting). THINGS of a stockpile: the player's words; no THINGS said = the plain stockpile line.
 - Area NAME: home, roof (build roof), no roof (remove roof, keep open to the sky), snow clear, or an allowed area from "areas". "area roof remove" and "area no roof remove" clear the roof marks ("ignore roofs"). Colonists roof a closed box of walls by themselves: write "area roof add" only when the player asks for a roof. A new allowed area: "create area NAME over AREA", NAME the player's word.
@@ -743,6 +746,15 @@ show map around 6 tiles north of Carl.
 
 ORDER: show me the area from 100, 80 to 140, 110
 show map of 100, 80 to 140, 110.
+
+ORDER: screenshot around the geyser
+show picture around steam geyser 1.
+
+ORDER: take a picture of 100, 80 to 140, 110
+show picture of 100, 80 to 140, 110.
+
+ORDER: show me a picture of the 30 by 30 around bob
+show picture of 30 by 30 around Bob.
 
 ORDER: list every steam geyser and compacted machinery we can see
 list steam geysers and compacted machinery on map.

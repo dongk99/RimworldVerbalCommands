@@ -105,6 +105,8 @@ You can find the injection settings for each tip inside files of `Tips\summary\`
 
 Install: copy `Skillimworld-play` to `%USERPROFILE%\.claude\skillsimworld-play` (`Skill\README.md` has the steps and the optional hook line for `settings.json`). Then tick "Agent inbox" in the mod settings, load a colony, and ask Claude Code to play RimWorld. The agent's day notes go to `play_log\` inside its skill folder. Nothing in `Skill\` touches the game's `Config` or saves.
 
+The skill can split colony tasks across subagents (schedule, work priorities, drafting, equipment, bills, storage). The per-agent brief is in `Skill\delegates\`. This does, however, mean that in Claude Code the environment needs to have the `Agent`, `SendMessage` and `TaskStop` tools enabled (`launch_play.ps1` does); another harness needs its own equivalents.
+
 
 
 Test condition: 1 colony worth of 11 pawns (275x275 map), 1 colony (2 map) of 33 pawns (300x300) and 11 pawns (SOS2 space map, no odyssey), 1 colony of 325x325 map (57 pawns, 33 pawns).

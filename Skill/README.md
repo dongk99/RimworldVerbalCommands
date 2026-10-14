@@ -13,6 +13,9 @@ What is here:
 2. In the mod settings tick "Agent inbox: run orders from text files in the inbox folder" and load a colony.
 3. Start Claude Code and ask it to play RimWorld (or run `rimworld-play\launch_play.ps1`, which starts Claude
    Code with only the tools play needs and the other skills off).
+4. Optional, specialist subagents: the skill can split colony tasks across subagents; the per-agent brief is in
+   `delegates\`. In Claude Code the session then needs the `Agent`, `SendMessage` and `TaskStop` tools enabled
+   (`launch_play.ps1` lists them).
 
 The skill reads `PLAYBOOK.md`, `Tips\INDEX.md` and `reference_play\...analysis.md` from the installed mod
 folder, so the mod must stay where RimWorld loads it from. The agent writes its own notes to
