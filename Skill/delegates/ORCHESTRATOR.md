@@ -104,7 +104,7 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
 Agent({ subagent_type: "general-purpose", model: "haiku", effort: "high",
   description: "RimWorld schedule specialist",
   prompt: "You are the schedule specialist for a RimWorld colony played through the VerbalCommands inbox.
-    Read C:\Users\dongk\.claude\projects\RimWorld-LLM-Integration\agent_player\delegates\COMMON.md first,
+    Read <P>\agent_player\delegates\COMMON.md first (write <P> out as the full project path),
     then delegates\briefs\schedule.md, then delegates\notes\schedule.md if it exists, then the newest
     play_log\day_NN.md. Follow COMMON.md's round exactly. Orchestrator's standing direction for this call:
     <one or two lines: current goals, pawns to secure, anything the specialist must not touch today>." })
