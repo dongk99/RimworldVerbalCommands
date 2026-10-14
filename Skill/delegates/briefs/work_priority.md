@@ -1,9 +1,9 @@
 # Specialist: work_priority (name `work_priority`, cadence 6 game hours)
 
 ## Owns
-The Work tab: `set WORKTYPE priority N for PAWNS.` (1 highest to 4), `stop PAWNS doing WORKTYPE.`, and
-`prioritize WORK at X, Z with PAWN.` for WORK in hauling, constructing, repairing, mining, sowing, harvesting,
-cutting, cleaning, when the target cell is inside the base (see gated).
+The Work tab: `set WORKTYPE priority N for PAWNS.` (1 highest to 4), `stop PAWNS doing WORKTYPE.`.
+Since 2026-10-13 the `prioritize WORK at X, Z with PAWN.` lines belong to the `expediter` specialist
+(`briefs\expediter.md`); do not send them.
 
 ## Must not touch
 Bills and who does them (bills), schedules (schedule), areas and draft (drafter_mover), medical care levels

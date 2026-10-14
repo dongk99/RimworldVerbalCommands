@@ -96,6 +96,7 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
 | equipment_config | equip, wear, medicine level, food/clothing groups, fire at will, self-tend | 12 h | `briefs\equipment_config.md` |
 | bills | proposes bills (food, clothing, manufacturing); sends approved ones; pauses / resumes | 6 h | `briefs\bills.md` |
 | storage_zones | filters and priorities of existing storage; proposes new zones | 12 h | `briefs\storage_zones.md` |
+| expediter | `prioritize WORK at X, Z with PAWN` inside the base: material to blueprints, builders to frames, miners to marks (user, 2026-10-13) | 2 h | `briefs\expediter.md` |
 
 ## 6. Spawning (what the orchestrator types)
 
