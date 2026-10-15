@@ -128,6 +128,12 @@ Tldr: the mid-lategame long horizon stuff that even many people don't understand
 Run the colony to death to n+ days and make more reminders/tips that a top percentile human player would do. Expect midgame/lategame stuff (namely, making caravan, multitasking across 2 maps, trading on caravan) to be janky/nonexistent. Expect questionable moves making killboxes/killzones. It Barely makes tolderable rooms for indoors right now. Killbox would likely have to use pathfinder logic, probably not something id let LLM to to create blueprint unless it's off of a reference.
 
 
+## If you're a researcher/engineer trying to get idea from the mod:
+Consider looking into verbalizer/interpreter if you want MCP replacement. Expect long development time because the verbalizer here (and id expect yours too, unless theres already some logging function for most macro-able task) fires based on specific action. they are *not* meant to be drop-replaceable to other softwares.
+
+If you are AI/Harness engineer/researcher: consider looking at workflow between verbalizer > DLL > Reminder/tip injects. the reminder/tip *only* fires whenever the LLM sends a router command and is about to do something (or has already done) suboptimal. Tips usually fire between x amount of token for an event/action, reminders fire based on specific events, regardless of in-between. they're essentially guardrails, because most reminders require confirmation from an agent. A good example is turbine-reminder, which *only* fires if turbine excursion zone (basically, the area where turbine takes air in/out) and sees tall blocks in that area, *OR* a steam geyser when it places blueprint. previous agents without this reminder loved to double-stack turbines and needed user input. Alternatively, you can look at vent/heater logic which only fires reminder when it's safe to place HVAC tiles across a room.
+
+
 
 
 Users are welcome to fork mod as needed and test with different models/add feature as necessary.
