@@ -416,6 +416,12 @@ for group_kind in ["clothing", "food", "drug", "reading"]:
     new_form(group_kind + " group", "assign {PAWNS} to " + group_kind + " group {NAME}.", ["PAWNS"])
 new_form("medical care", "assign {PAWNS} to medicine group {LEVEL}.", ["PAWNS"])
 new_form("threat response", "set threat response of {PAWNS} to {RESPONSE}.", ["PAWNS"])
+# User 2026-10-14 ("see if mod has sentence so that doctors can carry medicine manually" / "add sentence, make new
+# vocabs to router as needed, and change dll as necessary"): the Assign tab's Carry column (the pawn's inventory
+# stock, group Medicine): N from 0 to 3 (the game's limit), MEDICINE from the vocabulary line "carry medicines";
+# without MEDICINE the kind stays. N, not COUNT: COUNT must be 1 or more, and 0 stops the carrying. Longer form first.
+new_form("carry medicine", "set carry medicine of {PAWNS} to {N} {MEDICINE}.", ["PAWNS"])
+new_form("carry medicine", "set carry medicine of {PAWNS} to {N}.", ["PAWNS"])
 new_form("undraft", "undraft {PAWNS}.", ["PAWNS"])
 new_form("area", "restrict {PAWNS} to area {NAME}.", ["PAWNS"])
 # What a clothing or food group allows. "put only" before "put", like the storage forms.
@@ -845,6 +851,7 @@ help("drug group", "assign PAWNS to drug group NAME.", "the pawns' drug group")
 help("reading group", "assign PAWNS to reading group NAME.", "the pawns' reading group")
 help("medical care", "assign PAWNS to medicine group LEVEL.", "the pawns' medical care level")
 help("threat response", "set threat response of PAWNS to RESPONSE.", "flee, attack or ignore")
+help("carry medicine", "set carry medicine of PAWNS to N MEDICINE.", "the pawns keep N (0 to 3) of that medicine in their inventory and refill it, to tend away from storage; MEDICINE may be left out")
 help("area", "restrict PAWNS to area NAME.", "the pawns' allowed area; anywhere lifts it")
 help("group things only", "put only THINGS in KIND group NAME.", "a clothing or food group allows only those")
 help("group things allow", "put THINGS in KIND group NAME.", "a clothing or food group also allows those")
@@ -1773,6 +1780,14 @@ function check_new(name, slots):
         return "'" + slots["DOOR"] + "' is not a door on the map"
     if name == "medical care" and not listed("medical care", slots["LEVEL"]):
         return "'" + slots["LEVEL"] + "' is not a medical care level"
+    if name == "carry medicine":
+        # "to 2 aspirin" reaches the short form as N = "2 aspirin": not this form, so the long form's message stays.
+        if not has(slots, "MEDICINE") and contains(slots["N"], " "):
+            return NOT_THIS_FORM
+        if bad_number(slots, "N", 0, 3):
+            return "N must be a whole number from 0 to 3 (the game's limit for carried medicine)"
+        if has(slots, "MEDICINE") and not listed("carry medicines", slots["MEDICINE"]):
+            return "'" + slots["MEDICINE"] + "' is not a medicine a pawn can carry; they are " + join_list(get(VOCAB, "carry medicines", []))
     if name == "threat response" and not (slots["RESPONSE"] in ["flee", "attack", "ignore"]):
         return "RESPONSE must be flee, attack or ignore"
     if name == "area" and slots["NAME"] != "anywhere" and not listed("areas", slots["NAME"]):

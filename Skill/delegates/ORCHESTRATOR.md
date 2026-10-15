@@ -90,14 +90,23 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
   on the map (forbidden, outside storage, compacted rock to mine, ship chunks to deconstruct, ancient wrecks to shoot
   for steel slag, slag to smelt) while that count is 0 or below what your bills and blueprints still need (none on
   the map: trade, strip-mine into mountains, or research a scanner / deep drill), and a stove while only a campfire
-  cooks (better meals; on a map with no trees it saves wood), too few usable benches (fuel, power) for the colonists
+  cooks (better meals; on a map with no trees it saves wood), a stove or campfire with a simple meal bill but no
+  "cook simple meal x4" bill (bulk saves trips; the line gives the bill to add), too few usable benches (fuel, power) for the colonists
   set to a work at the same hours (cooking, research, art, tailoring, crafting, smithing: add a bench or move a
   schedule), stone chunks in a stockpile with no stonecutter's table, and two or more blueprints / frames waiting
-  (`prioritize constructing at X, Z with NAME.` puts a pawn on the one that matters first); once a game day also doors that
+  (`prioritize constructing at X, Z with NAME.` puts a pawn on the one that matters first), and colonists with
+  Construct / Grow / Plant cut on who fail 10% or more of builds or harvests by the game's own chance (skill, health),
+  with who does it better (`set WORKTYPE priority 1 for NAME.`, `stop NAME doing WORKTYPE.`). Every 3 game hours
+  (joining the 6-hour block, or alone as "[REMINDER] 3-hour check"): growing zones or hydroponics basins with cells
+  growing nothing or plants not growing, with the reason per cell (sowing off, no power, too cold, blocked, waiting
+  to be sown: `prioritize sowing at X, Z with NAME.`; mature plants waiting for harvest count too). Once a game day
+  also doors that
   make the colonists walk far ("I noticed your pawns spend N tiles ... placing the door on (x, z) instead should
   save about M tiles", measured from their own walks; it is an estimate, weigh it against the wall and door work),
   and after you moved such a door, whether trips through the new one run slower than its path should ("Maybe you
-  have things slowing pawns down": look for furniture, rough floor or a slow door on the way).
+  have things slowing pawns down": look for furniture, rough floor or a slow door on the way). At once, not at the
+  6-hour mark, a colonist on a mental break that you could arrest while no prisoner bed exists ("Mental break
+  check": place a sleeping spot in a closed room, `set every bed in ROOM to prisoner.`, then `arrest NAME with DOER.`).
   It gives the list once, on your next speed, run, letter, window, trade or build result (user, 2026-10-14). Act on
   them or say why not in the day note; never filter them.
 - Each specialist's `status\<name>.md` is one glance; read them at each day turn and put a line per specialist

@@ -129,6 +129,7 @@ assign PAWNS to food group NAME.
 assign PAWNS to drug group NAME.
 assign PAWNS to reading group NAME.
 assign PAWNS to medicine group LEVEL.
+set carry medicine of PAWNS to N MEDICINE.
 set threat response of PAWNS to RESPONSE.
 restrict PAWNS to area NAME.
 put only THINGS in KIND group NAME.
@@ -268,6 +269,7 @@ SLOTS
 - Power: a "power switch" is a building on the conduit line that cuts everything behind it off when switched off (to save power, mostly for defenses). One of several: "switch off power switch at SPOT." with the cell the player said; all of them: "switch off power switch." How much power, excess or battery charge: show power.
 - RECIPE: copy from the "recipes" for that BENCH in VOCABULARY, else the player's words. A bill always needs its BENCH.
 - NAME for a group or area: copy from VOCABULARY (clothing groups, food groups, drug groups, reading groups, areas); "anywhere" lifts an area. KIND: clothing or food. LEVEL: from "medical care".
+- Carry medicine: N is how many the pawn keeps in its inventory, 0 to 3 (0 = carry none); MEDICINE from "carry medicines", or left out to keep the kind set ("set carry medicine of PAWNS to N."). "Medicine group" is the care level, not this.
 - WHERE: floor, best storage, or storage PLACE. RESPONSE: flee, attack or ignore. TYPE: medical, prisoner or colonist.
 - THINGS, NAME for weapon groups, RULE: the player's own words.
 - Wave 1 slots: SPEED paused, normal, fast or superfast ("pause" = paused, "unpause" = normal). PROJECT, ANIMALS, MODE (prisoner), TRAINING: copy from "research", "animals", "prisoner modes", "trainings"; PAWNS of prisoner mode from "prisoners"; "nobody" clears a master. PAWN of operation, show needs, show health: a colonist, prisoner or animal. RECIPE of an operation: copy from "operations" for that PAWN; "on PART" only when the player named a part, else leave it out. FIELD: allow for joy, allow scheduled, take every, only if mood below, only if recreation below or take to inventory; VALUE: true or false for the two allow fields, else the number said (days, percent, count); DRUG from "drugs". KIND for create, rename, delete: clothing, food, drug or reading. LETTER: from "letters"; OPTION: one of the words in brackets after it.
@@ -579,6 +581,9 @@ ORDER: dana takes no drugs, alice reads nothing and bob gets the best medicine
 assign Dana to drug group No drugs.
 assign Alice to reading group Nothing.
 assign Bob to medicine group best available.
+
+ORDER: our doctors alice and bob should carry two herbal meds each
+set carry medicine of Alice and Bob to 2 herbal medicine.
 
 ORDER: alice runs away from threats, carl stays in the home area, and alice and bob hold fire
 set threat response of Alice to flee.
