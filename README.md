@@ -137,7 +137,7 @@ Consider looking into verbalizer/interpreter if you want MCP replacement. Expect
 
 If you are AI/Harness engineer/researcher: consider looking at workflow between verbalizer > DLL > Reminder/tip injects. The reminder/tip *only* fires whenever the LLM sends a router command and is about to do something (or has already done) suboptimal. Tips usually fire between x amount of token for an event/action, reminders fire based on specific events, regardless of in-between. They're essentially guardrails, because most reminders require confirmation from an agent. 
 
-A good example is turbine-reminder, which *only* fires if turbine exclusion zone (basically, the area where turbine takes air in/out) and sees tall blocks in that area, *OR* a steam geyser when it places blueprint. previous agents without this reminder loved to double-stack turbines and needed user input. Alternatively, you can look at vent/heater logic which only fires reminder when it's safe to place HVAC tiles across a room.
+A good example is turbine-reminder, which *only* fires if turbine exclusion zone (basically, the area where turbine takes air in/out) and sees tall blocks in that area, *OR* a steam geyser when it places blueprint. previous agents without this reminder loved to double-stack turbines and needed user input. Alternatively, you can look at vent/heater logic which only fires reminder when it's safe to place HVAC tiles across a room. Can also be used to inject context typically unethical (namely, the game allows players to harvest organs, and I've personally seen opus 5.5 high harvest a kidney & lung on a downed prisoner after 1 reminder injection, after having context of initially trying to arrest the pawn and recruit them (this injection/reminder is also live).
 
 
 
