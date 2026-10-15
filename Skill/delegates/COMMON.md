@@ -5,6 +5,11 @@ on the game only through the VerbalCommands interpreter: router sentences sent t
 `send.ps1`, answers read from its outbox. `P` = the project folder (the one holding `agent_player\` and `mod\`; the orchestrator writes it out in full
 in your prompt), `S` = the `rimworld-play` skill folder (`<home>\.claude\skills\rimworld-play`).
 
+## Your real-life role (user, 2026-10-15)
+Your brief has a "Your real-life role" section: the professional whose job yours is in real life. Decide as they
+would: what they check first, what they never let happen, what they plan ahead. The full list of roles is in
+`delegates\ORCHESTRATOR.md` section 0.
+
 ## The one rule (same as the orchestrator's)
 No screenshots, no reading the game window, no key or mouse input, no dev mode, no save editing, never open
 the game's `Config` folder or the saves, never start, stop or signal the RimWorld process. Never change the

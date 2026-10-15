@@ -388,6 +388,9 @@ DESIGNATE_VERBS = ["chop", "cut", "harvest", "mine", "deconstruct", "uninstall",
 for verb in DESIGNATE_VERBS:
     fixed_form("designate " + verb, verb + " {THINGS}.", ["THINGS"], {"MODE": "all"})
     fixed_form("designate " + verb, verb + " {THINGS} in area {AREA}.", ["THINGS"], {"MODE": "area"})
+    # User 2026-10-15: "deconstruct butcher spot in kitchen." took "in kitchen" as part of the name. A room after
+    # "in", after the area form so "in area ..." never reads as a room.
+    fixed_form("designate " + verb, verb + " {THINGS} in {ROOM}.", ["THINGS"], {"MODE": "room"})
     fixed_form("designate " + verb, verb + " nearest {COUNT} {THINGS} near {SPOT}.", ["THINGS"], {"MODE": "nearest"})
     fixed_form("designate " + verb, verb + " nearest {THINGS} near {SPOT}.", ["THINGS"], {"MODE": "nearest"})
     fixed_form("designate " + verb, verb + " {THINGS} near {SPOT}.", ["THINGS"], {"MODE": "near"})
@@ -521,6 +524,9 @@ query_form("query group", "show {KIND} group {NAME}.", [])
 
 query_form("query alerts", "show alerts.", [])
 query_form("query letters", "show letters.", [])
+# User 2026-10-15: "show letter New lovers." was refused, so the orchestrator closed a letter it could not read.
+# One letter's text (open or closed), LETTER as the letter list names it.
+query_form("query letter", "show letter {LETTER}.", [])
 query_form("query needs", "show needs of {PAWN}.", [])
 query_form("query health", "show health of {PAWN}.", [])
 query_form("query research", "show research.", [])
@@ -684,6 +690,7 @@ help("query group", "show KIND group NAME.", "what that clothing, food, drug, re
 help("query pawn groups", "show groups of PAWN.", "the clothing, food, drug, reading and medicine groups the pawn is in")
 help("query alerts", "show alerts.", "the alerts the game shows now, with who or what they are about")
 help("query letters", "show letters.", "open letters with their choices, and the last messages")
+help("query letter", "show letter LETTER.", "one letter's full text, who it is about and its choices; also a closed one")
 help("query needs", "show needs of PAWN.", "mood with its biggest thoughts, and each need in percent")
 help("query health", "show health of PAWN.", "injuries, diseases, missing parts, implants, pain, queued operations")
 help("query research", "show research.", "the current research project and its progress")
@@ -836,7 +843,7 @@ DESIGNATE_HELP = {
     "smooth": "marks rough stone walls or floors to be smoothed"
 }
 for verb in DESIGNATE_VERBS:
-    help("designate " + verb, verb + " THINGS in area AREA.", DESIGNATE_HELP[verb] + "; also: " + verb + " THINGS. / " + verb + " nearest COUNT THINGS near SPOT. / " + verb + " THINGS near SPOT.")
+    help("designate " + verb, verb + " THINGS in area AREA.", DESIGNATE_HELP[verb] + "; also: " + verb + " THINGS. / " + verb + " THINGS in ROOM. / " + verb + " nearest COUNT THINGS near SPOT. / " + verb + " THINGS near SPOT.")
 help("items forbid", "forbid items of THINGS in area AREA.", "items lying there are forbidden; of THINGS and in area AREA may be left out; also: near SPOT")
 help("items unforbid", "unforbid items of THINGS in area AREA.", "items lying there may be used again; of THINGS and in area AREA may be left out; also: near SPOT")
 help("designate cancel", "cancel KIND in area AREA.", "removes marks of one kind (mining, chopping, hunting, ..., designations = all); also: cancel all KIND")
@@ -849,7 +856,7 @@ help("clothing group", "assign PAWNS to clothing group NAME.", "the pawns' cloth
 help("food group", "assign PAWNS to food group NAME.", "the pawns' food group")
 help("drug group", "assign PAWNS to drug group NAME.", "the pawns' drug group")
 help("reading group", "assign PAWNS to reading group NAME.", "the pawns' reading group")
-help("medical care", "assign PAWNS to medicine group LEVEL.", "the pawns' medical care level")
+help("medical care", "assign PAWNS to medicine group LEVEL.", "the medical care level of colonists, prisoners or colony animals")
 help("threat response", "set threat response of PAWNS to RESPONSE.", "flee, attack or ignore")
 help("carry medicine", "set carry medicine of PAWNS to N MEDICINE.", "the pawns keep N (0 to 3) of that medicine in their inventory and refill it, to tend away from storage; MEDICINE may be left out")
 help("area", "restrict PAWNS to area NAME.", "the pawns' allowed area; anywhere lifts it")
@@ -1499,8 +1506,8 @@ function check_designate(name, slots):
             return "THINGS must say what to mark, like trees, steel or deer"
         if starts_with(item, "nearest ") or find_pattern("^[0-9]", item) != none:
             return "a count goes after 'nearest': '... nearest N THINGS near SPOT'"
-        if contains(item, " near ") or contains(item, " in area ") or ends_with(item, " near") or contains(item, " at ") or starts_with(item, "items "):
-            return "THINGS is only what to mark; the place goes after 'near' or 'in area'"
+        if contains(item, " near ") or contains(item, " in ") or ends_with(item, " near") or contains(item, " at ") or starts_with(item, "items "):
+            return "THINGS is only what to mark; the place goes after 'near', 'in area' or 'in ROOM'"
         if on_line("landmarks", item):
             return "'" + item + "' is a landmark, a place: say what to mark near it, like '... nearest ship chunks near " + item + "'"
     return ""
@@ -1575,6 +1582,9 @@ PAWN_RULES = {
 # Agent 04: the mood question; agent 09: who can be tended.
 PAWN_RULES["query mood"] = [["colonists", "prisoners"], "colonist or prisoner"]
 PAWN_RULES["tend"] = [["colonists", "prisoners", "animals"], "colonist, prisoner or animal"]
+# User 2026-10-15: "Make that happen so you can change prisoner medicine group" (a prisoner's medical care, as the
+# Health tab sets it; colony animals have the same setting).
+PAWN_RULES["medical care"] = [["colonists", "prisoners", "animals"], "colonist, prisoner or animal"]
 
 function pawn_lines(name):
     if has(PAWN_RULES, name):

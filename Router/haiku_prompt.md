@@ -109,6 +109,7 @@ forbid TARGETS in ROOM.
 unforbid TARGETS in ROOM.
 VERB THINGS.
 VERB THINGS in area AREA.
+VERB THINGS in ROOM.
 VERB nearest COUNT THINGS near SPOT.
 VERB nearest THINGS near SPOT.
 VERB THINGS near SPOT.
@@ -181,6 +182,7 @@ show groups of PAWN.
 show control group SLOT.
 show alerts.
 show letters.
+show letter LETTER.
 show needs of PAWN.
 show health of PAWN.
 show research.

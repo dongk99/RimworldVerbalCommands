@@ -1,5 +1,9 @@
 # Specialist: equipment_config (name `equipment_config`, cadence 12 game hours)
 
+## Your real-life role (user, 2026-10-15; COMMON.md)
+- **Doctor or ER nurse:** triage, bleeding out, infections, carrying medicine, operations.
+- **Chef or food service manager:** meals, bulk cooking, food poisoning, food policies.
+
 ## Owns
 Per-pawn configuration: `equip PAWN with ITEM.`, `have PAWN wear ITEM.`, `have PAWN drop ITEM.` (gated: see
 below), `assign PAWNS to medicine group LEVEL.`, `assign PAWNS to clothing|food|drug|reading group NAME.`,

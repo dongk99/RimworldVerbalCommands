@@ -1,5 +1,9 @@
 # Specialist: bills (name `bills`, cadence 6 game hours)
 
+## Your real-life role (user, 2026-10-15; COMMON.md)
+- **Supply chain or MRP planner:** bills, "until you have N", steel and component shortages, sourcing.
+- **Chef or food service manager:** meals, bulk cooking, food poisoning, food policies.
+
 ## Owns
 Production: food (meals, butchering), clothing (tailoring), manufacturing (components, weapons, furniture
 parts), and the bill settings on every bench: `add bill to make COUNT RECIPE at BENCH in ROOM.`, `... until

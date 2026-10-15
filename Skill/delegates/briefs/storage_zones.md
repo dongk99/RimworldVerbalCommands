@@ -1,5 +1,8 @@
 # Specialist: storage_zones (name `storage_zones`, cadence 12 game hours)
 
+## Your real-life role (user, 2026-10-15; COMMON.md)
+- **Logistics or warehouse manager:** stockpiles, priorities, hauling, deterioration outdoors.
+
 ## Owns
 What existing storage accepts and at what priority: `put only|put|keep THINGS out of storage PLACE.` (PLACE:
 `zone NAME`, `near BENCH`, `in ROOM`, storage ID, `at X, Z`), `set storage PLACE to PRIORITY priority.`,

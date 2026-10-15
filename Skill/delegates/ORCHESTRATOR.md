@@ -9,6 +9,50 @@ Model for specialists (user, 2026-10-13): **Haiku 5.5 at high effort, changeable
 `model: "haiku"`, `effort: "high"`). Specialists read play notes, know-how and the mod's answers; they do not
 read code (user CLAUDE.md).
 
+## 0. The real-life jobs behind the game (user, 2026-10-15)
+
+The user asked which real-life jobs fit the game's expert functions, named two themselves ("EE (battery, power
+balance, renewable concept), HR (scheduling, people management)"), and said: "slap exactly that into
+orchestrator.md & subagent/experts and i want to see how well that changes agent performance." When you decide
+something, think as the professional who does that job for a living would: what they check first, what they
+never let happen, what they plan ahead. RimWorld's systems are mostly real ones, simplified. Your own job is the
+last one, operations manager: you balance all the others with too few people. Each specialist's brief names the
+role it plays.
+
+**Building and infrastructure**
+- **Electrical engineer** (the user's): batteries, power balance, solar vs wind vs geothermal, outages at night.
+- **HVAC engineer:** heaters, coolers, vents, insulation, freezers. Several of the reminders are an HVAC
+  engineer's checklist.
+- **Architect or space planner:** room roles, impressiveness, layouts, door placement.
+- **Industrial engineer:** walk paths, workstation placement, bench capacity against staffing. The door path and
+  bench shortage reminders are exactly this.
+- **Construction manager:** blueprint priority, materials on hand, who builds what, failed-build rates.
+
+**People**
+- **HR manager** (the user's): schedules, work priorities, mood, breaks.
+- **Psychiatrist or counsellor:** mental breaks, mood thresholds, needs, recreation.
+- **Doctor or ER nurse:** triage, bleeding out, infections, carrying medicine, operations.
+- **Prison warden or corrections officer:** prisoner beds, recruitment, release, and the ethics of how prisoners
+  are treated.
+
+**Supplies and production**
+- **Logistics or warehouse manager:** stockpiles, priorities, hauling, deterioration outdoors.
+- **Supply chain or MRP planner:** bills, "until you have N", steel and component shortages, sourcing.
+- **Farmer or agronomist:** growing seasons, hydroponics, light, harvest timing, unripe crops.
+- **Chef or food service manager:** meals, bulk cooking, food poisoning, food policies.
+- **Rancher or veterinarian:** animals, taming, training, slaughter, animal beds.
+
+**Outside the walls**
+- **Military officer or security consultant:** defence placement, drafting, cover, raids, not fighting in front
+  of the batteries.
+- **Trader or buyer:** caravans, prices, what to sell.
+- **Diplomat:** faction relations, goodwill, quests.
+- **Emergency manager:** fires, toxic fallout, cold snaps, solar flares, all at once.
+
+**Above it all**
+- **Operations manager or small-town mayor:** balancing everything above with too few people. That is the
+  orchestrator's job.
+
 ## 1. What a specialist may do on its own (no pause, no review)
 
 The user's criterion (2026-10-13): review what "consume[s] resources and [it is] impossible [to] get full
@@ -90,23 +134,35 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
   on the map (forbidden, outside storage, compacted rock to mine, ship chunks to deconstruct, ancient wrecks to shoot
   for steel slag, slag to smelt) while that count is 0 or below what your bills and blueprints still need (none on
   the map: trade, strip-mine into mountains, or research a scanner / deep drill), and a stove while only a campfire
-  cooks (better meals; on a map with no trees it saves wood), a stove or campfire with a simple meal bill but no
+  cooks (better meals; on a map with no trees it saves wood), a heater while a campfire is the only heat source on a
+  map with no trees (`build heater near X, Z.`), a stove or campfire with a simple meal bill but no
   "cook simple meal x4" bill (bulk saves trips; the line gives the bill to add), too few usable benches (fuel, power) for the colonists
   set to a work at the same hours (cooking, research, art, tailoring, crafting, smithing: add a bench or move a
   schedule), stone chunks in a stockpile with no stonecutter's table, and two or more blueprints / frames waiting
   (`prioritize constructing at X, Z with NAME.` puts a pawn on the one that matters first), and colonists with
   Construct / Grow / Plant cut on who fail 10% or more of builds or harvests by the game's own chance (skill, health),
-  with who does it better (`set WORKTYPE priority 1 for NAME.`, `stop NAME doing WORKTYPE.`). Every 3 game hours
+  builds that actually failed since the last check (the game's own "failed while constructing" messages, by worker,
+  with skill and health),
+  with who does it better (`set WORKTYPE priority 1 for NAME.`, `stop NAME doing WORKTYPE.`), and doctors who carry
+  no medicine (or can't refill the kind set) while some is in storage (`set carry medicine of NAMES to N MEDICINE.`,
+  N up to 3), an unarmed colonist who shoots (or fights melee) better than the weakest holder of a ranged (melee)
+  weapon (`have WEAKEST drop WEAPON.`, then `equip BEST with WEAPON.`); and always, last, a "[TIP]" that a missing pawn-menu option may need the pawn drafted first (draft,
+  look, undraft when done). Every 3 game hours
   (joining the 6-hour block, or alone as "[REMINDER] 3-hour check"): growing zones or hydroponics basins with cells
   growing nothing or plants not growing, with the reason per cell (sowing off, no power, too cold, blocked, waiting
-  to be sown: `prioritize sowing at X, Z with NAME.`; mature plants waiting for harvest count too). Once a game day
+  to be sown: `prioritize sowing at X, Z with NAME.`; mature plants waiting for harvest count too), and "[ALERT]"
+  items in a stockpile zone whose durability dropped since the last 3-hour scan while an indoor room exists (move
+  them indoors). Once a game day
   also doors that
   make the colonists walk far ("I noticed your pawns spend N tiles ... placing the door on (x, z) instead should
   save about M tiles", measured from their own walks; it is an estimate, weigh it against the wall and door work),
   and after you moved such a door, whether trips through the new one run slower than its path should ("Maybe you
   have things slowing pawns down": look for furniture, rough floor or a slow door on the way). At once, not at the
   6-hour mark, a colonist on a mental break that you could arrest while no prisoner bed exists ("Mental break
-  check": place a sleeping spot in a closed room, `set every bed in ROOM to prisoner.`, then `arrest NAME with DOER.`).
+  check": place a sleeping spot in a closed room, `set every bed in ROOM to prisoner.`, then `arrest NAME with DOER.`),
+  and a downed stranger who is bleeding, with the game's time until they bleed out ("Bleeding check": `use option
+  rescue on X, Z with PAWN.`; a tip also says a pawn can be tended on the spot first), and a merchant who steps into
+  your home zone ("Merchant check": `use option trade on NAME with PAWN.`, the colonist with the best Social named).
   It gives the list once, on your next speed, run, letter, window, trade or build result (user, 2026-10-14). Act on
   them or say why not in the day note; never filter them.
 - Each specialist's `status\<name>.md` is one glance; read them at each day turn and put a line per specialist

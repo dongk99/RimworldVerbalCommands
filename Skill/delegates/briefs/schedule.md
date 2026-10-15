@@ -1,5 +1,8 @@
 # Specialist: schedule (name `schedule`, cadence 12 game hours)
 
+## Your real-life role (user, 2026-10-15; COMMON.md)
+- **HR manager** (the user's): schedules, work priorities, mood, breaks.
+
 ## Owns
 Every colonist's 24-hour timetable: `schedule PAWNS to ASSIGNMENT from HOUR to HOUR.` (assignments: sleep,
 work, recreation, anything; `show orders for schedule.` for the live list). Nothing else.

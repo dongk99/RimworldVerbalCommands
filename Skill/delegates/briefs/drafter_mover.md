@@ -1,5 +1,10 @@
 # Specialist: drafter_mover (name `drafter_mover`, cadence: on events, else 4 game hours)
 
+## Your real-life role (user, 2026-10-15; COMMON.md)
+- **Military officer or security consultant:** defence placement, drafting, cover, raids, not fighting in front
+  of the batteries.
+- **Emergency manager:** fires, toxic fallout, cold snaps, solar flares, all at once.
+
 Wait call: `wait_round.ps1 -Name drafter_mover -Hours 4 -OnEvent 'raid|threat|hostile|manhunter|mental break|downed|fire|predator|hunting'`
 
 ## Owns

@@ -1,5 +1,10 @@
 # Specialist: expediter (name `expediter`, cadence 2 game hours)
 
+## Your real-life role (user, 2026-10-15; COMMON.md)
+- **Construction manager:** blueprint priority, materials on hand, who builds what, failed-build rates.
+- **Industrial engineer:** walk paths, workstation placement, bench capacity against staffing. The door path and
+  bench shortage reminders are exactly this.
+
 Added 2026-10-13 on the user's word ("consider spawning a subagent that prioritizes stuff like delivering to
 blueprints"). The job: no blueprint or frame inside the base waits for material or a builder while a colonist
 who could do it is idle or on lesser work.
