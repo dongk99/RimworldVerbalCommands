@@ -79,6 +79,27 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
 - Your plan/apply pairs still pause while the plan waits; `send.ps1` makes a specialist that collides with it
   wait and retry (up to 120 s), so finish a pair promptly.
 - Speed, windows and letters stay yours. Specialists never touch them.
+- Play decisions are yours too: never put one to the user as a question. Asked "hunt the megasloth with Zimmerman?"
+  with options, the user answered "[cannot] I cannot make decision for the orchestrator." (2026-10-14). Weigh it,
+  choose, act, and write the choice and why in the day note.
+- The `[REMINDER] 6-hour check` block in `answers` / `reasons` (and the `reminders` field; one entry, the reminders
+  numbered inside it) is yours: every 6 game hours the mod
+  lists work spots and benches whose place costs work speed (outdoors, cold, wrong room), benches whose interaction
+  spot has under 50% light (build a lamp), labeled rooms under 10C or over 30C (heater / cooler, or a vent to a
+  better room next door), stone chunks lying indoors with no stockpile for them, and steel / components / plasteel
+  on the map (forbidden, outside storage, compacted rock to mine, ship chunks to deconstruct, ancient wrecks to shoot
+  for steel slag, slag to smelt) while that count is 0 or below what your bills and blueprints still need (none on
+  the map: trade, strip-mine into mountains, or research a scanner / deep drill), and a stove while only a campfire
+  cooks (better meals; on a map with no trees it saves wood), too few usable benches (fuel, power) for the colonists
+  set to a work at the same hours (cooking, research, art, tailoring, crafting, smithing: add a bench or move a
+  schedule), stone chunks in a stockpile with no stonecutter's table, and two or more blueprints / frames waiting
+  (`prioritize constructing at X, Z with NAME.` puts a pawn on the one that matters first); once a game day also doors that
+  make the colonists walk far ("I noticed your pawns spend N tiles ... placing the door on (x, z) instead should
+  save about M tiles", measured from their own walks; it is an estimate, weigh it against the wall and door work),
+  and after you moved such a door, whether trips through the new one run slower than its path should ("Maybe you
+  have things slowing pawns down": look for furniture, rough floor or a slow door on the way).
+  It gives the list once, on your next speed, run, letter, window, trade or build result (user, 2026-10-14). Act on
+  them or say why not in the day note; never filter them.
 - Each specialist's `status\<name>.md` is one glance; read them at each day turn and put a line per specialist
   in the day note. Delete stale `msg\` files you wrote before they were read if the plan changed.
 - Ownership conflicts are settled by you, in the briefs, not in the game: bills (crafter time, materials) vs

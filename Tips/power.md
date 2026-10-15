@@ -98,3 +98,8 @@ they do not pause a run.
   but one room is one room: separate rooms get their own room bonuses (bedroom, dining room, research room
   impressiveness), and a joined room loses those. Keep the door and the vent when the room bonus matters; take
   the door out when the temperature matters more.
+
+## Cooler exhaust as a heater (user)
+- (user, 2026-10-14: "putting exhaust into other room that are colder can save on power bill since ac will double
+  as a heater.") A cooler moves heat from its cold side to its hot side; face the hot side into a colder room that
+  needs heat instead of outdoors, and that room needs less (or no) heater power.

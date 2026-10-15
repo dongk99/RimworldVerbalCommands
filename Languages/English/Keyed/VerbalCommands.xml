@@ -36,6 +36,7 @@
   <VerbalCommands_Settings_SaveRouterLogTip>what was sent to Haiku, replies, and what was done.</VerbalCommands_Settings_SaveRouterLogTip>
   <VerbalCommands_Settings_AgentInbox>Agent inbox: run orders from text files in the inbox folder</VerbalCommands_Settings_AgentInbox>
   <VerbalCommands_Settings_AgentTips>Agent tips: add know-how tips (TIP: lines) to agent inbox results</VerbalCommands_Settings_AgentTips>
+  <VerbalCommands_Settings_PathfindCost>Pathfind cost: record colonists' walks through doors and remind the agent of better door spots</VerbalCommands_Settings_PathfindCost>
   <VerbalCommands_Settings_RecordHumanPlay>Record human gameplay (log-based) for training</VerbalCommands_Settings_RecordHumanPlay>
   <VerbalCommands_Settings_Extra>Extra system prompt text</VerbalCommands_Settings_Extra>
   <VerbalCommands_Settings_GroupLayout>Group hotkey layout</VerbalCommands_Settings_GroupLayout>

@@ -116,3 +116,11 @@ code does; (unchecked) is neither.
 - (user, live game 2026-10-04, day 7: "you have your wooden wall being wasted and you dont have a lot of
   wood.") On a map without trees every wall that closes nothing is wood standing idle: take it down
   (`deconstruct`) and use the wood. Look at the buildings map for such walls before spending any wood.
+
+## Look at a picture before making a room (user)
+- (user, 2026-10-14, after an agent's room blueprint closed off the pocket the barracks door opened into, left the
+  storeroom reachable only through the new room and put the butcher spot inside it: "just give them a reminder them
+  to do "show picture of area" whenever they are making a room.") Before a room order is applied, ask
+  `show picture of AREA.` over the room with a few cells of margin (`show picture of 110, 115 to 130, 135.`) or
+  `show picture around SPOT.`, and check that the new walls close nothing off: a pocket a door opens into, a room
+  or stockpile that would only be reachable through the new room, a bench or spot that would end up inside it.

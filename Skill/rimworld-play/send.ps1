@@ -6,7 +6,7 @@
 #   send.ps1 -Text "show status." -Model claude-opus-5-5   first order of a session: your model id
 # The file is written as .tmp and renamed to .txt (the inbox takes only complete .txt files); the result is
 # outbox\<same name>.json. Touches nothing but the mod's own VerbalCommands folder: never Config, never saves.
-# File name (mod author's rule): <model>-<harness>-<mm-hh-dd-mm-yyyy>-<session id, 8>_<number>.txt, e.g.
+# File name (user, 2026-10-05): <model>-<harness>-<mm-hh-dd-mm-yyyy>-<session id, 8>_<number>.txt, e.g.
 # claude-opus-5-5-claudecode-48-22-05-10-2026-90dc0f13_00013.txt. The time is minute-hour-day-month-year of the
 # session's first order; later orders of the same session reuse that name start (found from its earlier files), so
 # -Model is only needed on the first one. The mod's token counter opens that session's transcript from the id.
@@ -17,13 +17,14 @@ param(
     [string]$Session = "",
     [string]$Mode = "raw",
     [ValidateSet("", "apply", "cancel")][string]$Reply = "",
-    [int]$TimeoutSec = 180
+    [int]$TimeoutSec = 180,
+    [int]$RetryWaitingSec = 120
 )
 $ErrorActionPreference = "Stop"
 $root = Join-Path $env:USERPROFILE "AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands"
 $inbox = Join-Path $root "inbox"
 $outbox = Join-Path $root "outbox"
-# Sends only while RimWorld is running (mod author: "get rid of that useless "every 5s" detect" / "doesnt write
+# Sends only while RimWorld is running (user, 2026-10-05: "get rid of that useless "every 5s" detect" / "doesnt write
 # if rimworld isnt running"): nothing is written when the game is closed. A loaded colony with "Agent inbox" ticked is
 # taken as given while an agent plays.
 if (-not (Get-Process -Name "RimWorldWin64" -ErrorAction SilentlyContinue)) {
@@ -49,6 +50,10 @@ function Clean([string]$s, [string]$empty) {
     $c = ($s.ToLowerInvariant() -replace '[^a-z0-9]+', '-').Trim('-')
     if ($c -eq "") { return $empty } else { return $c }
 }
+# Several senders at once (orchestrator + specialist subagents, user 2026-10-13): one machine-wide mutex from here
+# until the file is in the inbox, so two senders never pick the same number or rename over each other's file.
+$mutex = New-Object System.Threading.Mutex($false, "Global\VerbalCommandsAgentInbox")
+try { [void]$mutex.WaitOne(60000) } catch [System.Threading.AbandonedMutexException] { }
 # A number above every file sent before (old names 00012_cc, new names ..._00013), so names keep sorting.
 $n = 0
 $prefix = $null
@@ -67,7 +72,7 @@ if ($null -eq $prefix) {
     $prefix = (Clean $Model "unknown-model") + "-" + (Clean $Harness "unknown") + "-" + (Get-Date -Format "mm-HH-dd-MM-yyyy") + "-" + $sid
 }
 $base = ("{0}_{1:D5}" -f $prefix, ($n + 1))
-# Tip-filter detection (mod author: "write a detection into ps1 but dont also inject into agent itself, just
+# Tip-filter detection (user, 2026-10-08: "write a detection into ps1 but dont also inject into agent itself, just
 # have it write silently into transcripts (the mod log transcript, not in-game transcript)"). The caller's whole
 # command is read from the call stack; when it drops TIP lines (`-notmatch '^TIP'`, `-notlike 'TIP*'`, ...) or the
 # Write-Host tips below (`6>$null`, `*>$null`, -InformationAction Ignore), one "agent_tip_filter" record goes into
@@ -97,6 +102,9 @@ $tmp = Join-Path $inbox "$base.tmp"
 $txt = Join-Path $inbox "$base.txt"
 [IO.File]::WriteAllText($tmp, $body, (New-Object Text.UTF8Encoding $false))
 Rename-Item $tmp $txt
+# The number is taken and the mod works files in order: another sender may queue its own file now.
+try { $mutex.ReleaseMutex() } catch { }
+$mutex.Dispose()
 
 $result = Join-Path $outbox "$base.json"
 $deadline = (Get-Date).AddSeconds($TimeoutSec)
@@ -109,10 +117,38 @@ while (-not (Test-Path $result)) {
 }
 Start-Sleep -Milliseconds 100
 $json = Get-Content $result -Raw
+# The mod holds one plan at a time and rejects any order sent while it waits ("A plan is waiting: send apply or
+# cancel."). With several senders that is another agent's plan/apply pair in flight: wait for the inbox to be free
+# (inbox_state.json waiting = none) and send once more, up to -RetryWaitingSec in all, instead of failing the caller.
+if ($Reply -eq "" -and $RetryWaitingSec -gt 0 -and $json -match '"result"\s*:\s*"rejected"' -and $json -match 'A plan is waiting') {
+    $state = Join-Path $root "inbox_state.json"
+    $until = (Get-Date).AddSeconds($RetryWaitingSec)
+    while ((Get-Date) -lt $until) {
+        Start-Sleep -Seconds 3
+        $w = "confirm"
+        try { $w = "$((Get-Content $state -Raw | ConvertFrom-Json).waiting)" } catch { }
+        if ($w -eq "none") {
+            & $PSCommandPath -Text $Text -Model $Model -Harness $Harness -Session $Session -Mode $Mode -TimeoutSec $TimeoutSec -RetryWaitingSec 0
+            exit $LASTEXITCODE
+        }
+    }
+    Write-Output "STILL WAITING: another agent's plan has waited for apply/cancel for $RetryWaitingSec s; this order was not re-sent."
+    $json
+    exit 4
+}
 # The tips go to the console with Write-Host, outside the output stream: `$r = (& send.ps1 ...) | ConvertFrom-Json`
-# and a `Where-Object { $_ -notmatch '^TIP' }` on answers/reasons do not reach them (an earlier agent session filtered every
-# TIP line from its third order on; mod author: "edit that .ps1"). The JSON below still carries them.
+# and a `Where-Object { $_ -notmatch '^TIP' }` on answers/reasons do not reach them (session 23dffa7c filtered every
+# TIP line from its third order on; user, 2026-10-08: "edit that .ps1"). The JSON below still carries them.
 try {
     foreach ($t in @((ConvertFrom-Json $json).tips)) { if ($t) { Write-Host "TIP: $t" } }
+} catch { }
+# The orchestrator's work spot reminder (AgentWorkspotScan.cs, user 2026-10-14) goes to the console the same way.
+try {
+    foreach ($r in @((ConvertFrom-Json $json).reminders)) { if ($r) { Write-Host $r } }
+} catch { }
+# A PICTURE note (AgentLightCheck.cs, user 2026-10-14: the sun lamp / hydroponics layout picture) goes to the console
+# too: it names a .png to open with the Read tool.
+try {
+    foreach ($n in @((ConvertFrom-Json $json).notes)) { if ("$n" -like 'PICTURE:*') { Write-Host $n } }
 } catch { }
 $json
