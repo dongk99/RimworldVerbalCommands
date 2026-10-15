@@ -129,7 +129,7 @@ Longest survived colony is ~12 days on an arctic map with stable growth.
 ## Tests needing to be done:
 Tldr: the mid-lategame long horizon stuff that even many people don't understand/play well, mostly because colonies havent been able to progress that far.
 
-Run the colony to death to n+ days and make more reminders/tips that a top percentile human player would do. Expect midgame/lategame stuff (namely, making caravan, multitasking across 2 maps, trading on caravan) to be janky/nonexistent. Expect questionable moves making killboxes/killzones. It Barely makes tolderable rooms for indoors right now. Killbox would likely have to use pathfinder logic, probably not something id let LLM to to create blueprint unless it's off of a reference.
+Run the colony to death to n+ days and make more reminders/tips that a top percentile human player would do. Expect midgame/lategame stuff (namely, making caravan, multitasking across 2 maps, trading on caravan) to be janky/nonexistent. Expect questionable moves making killboxes/killzones. It Barely makes tolerable rooms for indoors right now. Killbox would likely have to use pathfinder logic, probably not something id let LLM to to create blueprint unless it's off of a reference.
 
 
 ## If you're a researcher/engineer trying to get idea from the mod:
