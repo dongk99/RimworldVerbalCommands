@@ -99,11 +99,15 @@ You can find the injection settings for each tip inside files of `Tips\summary\`
 
 `Skill\` ships what an agent needs to play the colony through the agent inbox:
 
-- `Skillimworld-play\`: a Claude Code skill. `send.ps1` writes one order to the inbox and prints the outbox result; `play.ps1` does a whole step; `watch.ps1` turns new game events in `inbox_state.json` into chat notifications (armed with the Monitor tool); `launch_game.ps1` starts the game on a save; `launch_play.ps1` starts Claude Code with only the tools play needs; `resume_hook.ps1` prints the newest day note back after a compaction.
+- `Skill
+imworld-play\`: a Claude Code skill. `send.ps1` writes one order to the inbox and prints the outbox result; `play.ps1` does a whole step; `watch.ps1` turns new game events in `inbox_state.json` into chat notifications (armed with the Monitor tool); `launch_game.ps1` starts the game on a save; `launch_play.ps1` starts Claude Code with only the tools play needs; `resume_hook.ps1` prints the newest day note back after a compaction.
 - `Skill\PLAYBOOK.md`: how the inbox, time, places and sentences work. `Skill\DIFFICULTY.md`: what Randy Random / Losing is Fun means in numbers.
-- `Skilleference_play\`: a 54-day human play of the same start, read day by day, which every playing agent reads first.
+- `Skill
+eference_play\`: a 54-day human play of the same start, read day by day, which every playing agent reads first.
 
-Install: copy `Skillimworld-play` to `%USERPROFILE%\.claude\skillsimworld-play` (`Skill\README.md` has the steps and the optional hook line for `settings.json`). Then tick "Agent inbox" in the mod settings, load a colony, and ask Claude Code to play RimWorld. The agent's day notes go to `play_log\` inside its skill folder. Nothing in `Skill\` touches the game's `Config` or saves.
+Install: copy `Skill
+imworld-play` to `%USERPROFILE%\.claude\skills
+imworld-play` (`Skill\README.md` has the steps and the optional hook line for `settings.json`). Then tick "Agent inbox" in the mod settings, load a colony, and ask Claude Code to play RimWorld. The agent's day notes go to `play_log\` inside its skill folder. Nothing in `Skill\` touches the game's `Config` or saves.
 
 The skill can split colony tasks across subagents (schedule, work priorities, drafting, equipment, bills, storage). The per-agent brief is in `Skill\delegates\`. This does, however, mean that in Claude Code the environment needs to have the `Agent`, `SendMessage` and `TaskStop` tools enabled (`launch_play.ps1` does); another harness needs its own equivalents.
 
@@ -112,11 +116,18 @@ The skill can split colony tasks across subagents (schedule, work priorities, dr
 Test condition: 1 colony worth of 11 pawns (275x275 map), 1 colony (2 map) of 33 pawns (300x300) and 11 pawns (SOS2 space map, no odyssey), 1 colony of 325x325 map (57 pawns, 33 pawns).
 
 ## Current testing done: 
-Weapon groups, Work priority, Item/gear query, rudimentary blueprint/plan placement (still needs to be worked on), storage settings, draft/move pawn.
+Whatever poor opus 5.5 high needs to do not die on an arctic map. Some of that includes:
+Stockpile priority/settings, deterioration checks (mostly software, fires reminder. the model will try to build indoor stockpile as soon as it can), anti-hypothermia measures (subagents will force-draft and drag pawns indoors, and then un-draft when they're safe), turbine blocker logic (fires if placed turbine blueprint has tall block infront of excursion zone, or a geothermal vent that can be used), sleeping spot/bed handling (including creating spots, configuring it, and putting end tables). production logic (reminder fires if combined total of prod table is less than total # pawns assigned to that work type, again, software-baased), scheduler/work priority (mostly .md and LLM subagents handling it). prisoner handling (including harvests - yes, I've seen opus5.5 do it), handling research. Currently it's biased to speedrun towards battery, hydroponics/solar > geothermal, though ive seen orchestrators research stuff like smithing as well. Hydroponic basin placement (and reminder/tips showing how placement gets done), wall layout/optimization (it used to double-wall between rooms which drove me insane). It will try to put vents/heaters if it's safe to do so. if it would result in dangerous temperature, it won't do it (this is mostly software at core and reminder-based as output). Zone creation/edits, trading (triggers reminder if a trader walks into home area), pathfinder optimization reminder (tick based diff event, fires/records whenever pawn is moving from A/B, compares distance if a door is placed in diff direction of that room).
+
+Longest survived colony is ~12 days on an arctic map with stable growth. 
+
 
 ## Tests needing to be done:
+Tldr: the mid-lategame long horizon stuff that even many people don't understand/play well, mostly because colonies havent been able to progress that far.
 
-zoning based on pawn stats (so they dont waste time wandering around outside their jobsites), and eval metrics.
-Verbal command itself (Currently all of the test was done with text input for fewer variability) based on Voice-to-text models. reasonable promises.
+Run the colony to death to n+ days and make more reminders/tips that a top percentile human player would do. Expect midgame/lategame stuff (namely, making caravan, multitasking across 2 maps, trading on caravan) to be janky/nonexistent. Expect questionable moves making killboxes/killzones. It Barely makes tolderable rooms for indoors right now. Killbox would likely have to use pathfinder logic, probably not something id let LLM to to create blueprint unless it's off of a reference.
+
+
+
 
 Users are welcome to fork mod as needed and test with different models/add feature as necessary.
