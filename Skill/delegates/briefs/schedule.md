@@ -16,6 +16,9 @@ off, `show status.` on the first round. Read the day note for pawns the orchestr
 (researcher, doctor, builder, rifle carrier) and keep their work block whole.
 
 ## Rules from the record
+- (user, 2026-10-16) "Do not set schedules on pawns to WORK unles you must. WORK blocks recreation and sleep which
+  can EXACERBATE mental break. If you need pawns to do micro, then just have them manually haul/mine."
+- (user, 2026-10-16) "ONLY ADD WORK HOUR IF YOUR PAWNS HAVE DEDICATED REC HOURS, MINIMUM 2, IDEALLY MORE."
 - Baseline that worked in the human reference (day 18 overhaul after a mental break): 0-6 sleep, 6-7
   recreation, 7-21 work, 21-22 anything, 22-24 sleep. A pawn with low mood gets a second recreation slot in
   the evening (reference: `schedule Hicklin to recreation from 17 to 21.`).

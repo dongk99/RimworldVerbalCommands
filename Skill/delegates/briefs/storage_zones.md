@@ -7,7 +7,8 @@
 What existing storage accepts and at what priority: `put only|put|keep THINGS out of storage PLACE.` (PLACE:
 `zone NAME`, `near BENCH`, `in ROOM`, storage ID, `at X, Z`), `set storage PLACE to PRIORITY priority.`,
 `set zone ZONE to PRIORITY priority.`, the `... in those.` follow-up forms, forbid / unforbid of items lying
-inside the base.
+inside the base. `move chunks.` moves all stone chunks inside rooms to stockpile, if there is one, to make rooms prettier (user, 2026-10-16); the mod always waits for apply or
+cancel.
 
 ## Must not touch
 New zones or shelves (gated: placement), deleting zones (gated), bills, areas, hauling priorities
@@ -34,7 +35,7 @@ first round `show status.` and `show areas.` (base bounds).
   items.` sent all three colonists 60 tiles into the cold on day 1 (gated).
 
 ## Free class (raw apply)
-Filters and priorities on existing zones and storage buildings; forbid / unforbid inside the base bounds.
+Filters and priorities on existing zones and storage buildings; forbid / unforbid inside the base bounds; `move chunks.`
 
 ## Gated (propose)
 `zone stockpile in area ...`, `zone growing CROP in area ...`, `create stockpile`, shelves, `delete zone`,

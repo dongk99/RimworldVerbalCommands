@@ -35,6 +35,7 @@ build floor FLOOR in area AREA.
 build room AREA.
 build ROOMTYPE AREA.
 build barracks AREA with COUNT beds.
+build roof at AREA using PAWN.
 dig room AREA.
 cancel blueprint at SPOT.
 cancel blueprint BUILDING at SPOT.
@@ -57,6 +58,18 @@ capture TARGET with DOER.
 arrest PAWN with DOER.
 extinguish fire at SPOT with PAWNS.
 prioritize WORK at SPOT with DOER.
+mine near SPOT with PAWNS.
+mine near SPOT.
+mine in area AREA with PAWNS.
+mine in area AREA.
+haul from SPOT with PAWNS.
+haul from SPOT.
+mine nearest COUNT THINGS near SPOT with PAWNS.
+mine nearest THINGS near SPOT with PAWNS.
+mine THINGS near SPOT with PAWNS.
+mine THINGS in area AREA with PAWNS.
+haul THINGS near SPOT with PAWNS.
+move chunks.
 equip PAWN with WEAPON at SPOT.
 have PAWN wear APPAREL at SPOT.
 have PAWN pick up COUNT ITEM at SPOT.
@@ -205,6 +218,8 @@ show events since day DAY.
 show pending.
 I need tips on NAME.
 I need tips for NAME.
+what does BREAK do.
+list breaks.
 show gear of PAWN.
 show work of PAWN.
 show work.
@@ -274,10 +289,11 @@ SLOTS
 - Carry medicine: N is how many the pawn keeps in its inventory, 0 to 3 (0 = carry none); MEDICINE from "carry medicines", or left out to keep the kind set ("set carry medicine of PAWNS to N."). "Medicine group" is the care level, not this.
 - WHERE: floor, best storage, or storage PLACE. RESPONSE: flee, attack or ignore. TYPE: medical, prisoner or colonist.
 - THINGS, NAME for weapon groups, RULE: the player's own words.
-- Wave 1 slots: SPEED paused, normal, fast or superfast ("pause" = paused, "unpause" = normal). PROJECT, ANIMALS, MODE (prisoner), TRAINING: copy from "research", "animals", "prisoner modes", "trainings"; PAWNS of prisoner mode from "prisoners"; "nobody" clears a master. PAWN of operation, show needs, show health: a colonist, prisoner or animal. RECIPE of an operation: copy from "operations" for that PAWN; "on PART" only when the player named a part, else leave it out. FIELD: allow for joy, allow scheduled, take every, only if mood below, only if recreation below or take to inventory; VALUE: true or false for the two allow fields, else the number said (days, percent, count); DRUG from "drugs". KIND for create, rename, delete: clothing, food, drug or reading. LETTER: from "letters"; OPTION: one of the words in brackets after it.
+- Wave 1 slots: SPEED paused, normal, fast or superfast ("pause" = paused, "unpause" = normal). PROJECT, ANIMALS, MODE (prisoner), TRAINING: copy from "research", "animals", "prisoner modes", "trainings"; PAWNS of prisoner mode from "prisoners"; "nobody" clears a master. PAWN of operation, show needs: a colonist, prisoner or animal. PAWN of show health: any pawn in view, also a guest, a stranger, a wild animal or an enemy ("raider 1"). RECIPE of an operation: copy from "operations" for that PAWN; "on PART" only when the player named a part, else leave it out. FIELD: allow for joy, allow scheduled, take every, only if mood below, only if recreation below or take to inventory; VALUE: true or false for the two allow fields, else the number said (days, percent, count); DRUG from "drugs". KIND for create, rename, delete: clothing, food, drug or reading. LETTER: from "letters"; OPTION: one of the words in brackets after it.
 - Run: every run pauses by itself at the first threat or emergency. HOURS (1 to 120) and DAYS (1 to 5) only as the player said them. No number said ("until something happens", "for a day", "for a while", "keep going"): run until event. SPEED normal, fast or superfast; leave out "at SPEED" when the player named no speed. Less than an hour: CANNOT. DAY of show events: the day number the player said (day 1 = landing day); "what happened", "anything new", "since I last asked", "today": show events. Time, date, how fast, paused or not: show speed. What colonists still have to finish (blueprints, bills, research, jobs ordered earlier): show pending.
 - Questions (every line from "how much" down to "show orders for WORD") change nothing. In who wears / holds / carries, THINGS is the item as the player said it, not checked against VOCABULARY ("helmet", "recon helmet", "weapon", "medicine"); wears = apparel, holds = weapon in hand, carries = inventory; "unarmed" = "who does not hold weapon". RELATION: the player's word ("married", "engaged"). "show KIND group NAME": KIND is clothing, food, drug, reading, medicine (NAME is a medical care level) or weapon.
 - Tips: "I need tips on NAME." or "I need tips for NAME." NAME exactly as on the tips line, no other word for it.
+- Mental breaks: "what does BREAK do." = what that mental break does and how it ends; BREAK the break's name as one word with underscores, never a space ("targeted_tantrum", "sad_wander", "berserk"). "list breaks." = every mental break's name. Only for mental breaks; what something looks like is still show picture.
 - What a question shows: show status = date, hour, season, weather, speed, threats, each colonist (where, job, mood and break risk, health, food, rest, drafted), days of food, power, research, alert and letter counts. show weather = date, hour, season, outdoor temperature. show colonists = each colonist's job, mood, drafted, downed, mental break. show threats = enemies, manhunting animals, predators, fires: count, weapons, distance, direction. show food = food by kind, days of food, crops and when they can be harvested, what will rot. show power = power made, used, stored, hours of battery left. show temperature = outdoor, each room, who is too cold or hot. show mood of PAWN = mood, break thresholds, all thoughts.
 - PAWN of show mood: a colonist or prisoner. ROOM of show temperature: from "rooms" only; with no such room write show temperature.
 - Read-back questions: "show work" = work priorities; "show settings" = drafted, fire at will, threat response, medical care; "show building" = on/off, fuel, power, door, turret, bed state of buildings that stand; "show blueprints" = what is not built yet. In show building, TARGETS is the player's word for the building ("campfire", "doors", "stove"), not checked against VOCABULARY. PROJECT in show research path: any project the player names, also one not in "research". ZONE: copy from "zones". SPOT: as in the other "at SPOT" lines.
@@ -304,10 +320,13 @@ SLOTS
 - "build room AREA": an empty room, walls and one door. AREA is the outside, walls included ("7 by 7 around Bob" is 5 by 5 inside). Then "made of STUFF", then "door SIDE" only when the player said which side. The colonists roof it themselves. Furniture goes in its own lines.
 - "build BUILDING from AREA": a straight line one tile wide ("from 10, 20 to 10, 30"): wall, fence, sandbags, barricade, conduit.
 - ROOMTYPE: bedroom, barracks, kitchen, dining room or research room: the room of "build room AREA" with its furniture laid out by the mod. Same "made of STUFF" and "door SIDE" endings. Barracks: "with COUNT beds" only when the player said how many.
+- "build roof at AREA using PAWN": PAWN builds only roofs in AREA and does no other construction work until it is done. Write it when the player names who roofs; without a name write "area roof add AREA".
 - "dig room AREA": a room dug into rock: rock inside is mined, rock at the edge stays as wall, one door; furnish it later with "build ROOMTYPE AREA" on the same AREA.
 - FLOOR: from "floors" in VOCABULARY.
 - "cancel blueprint" removes plans not built yet, never a standing building.
-- VERB: chop (trees for wood), cut (any plant), harvest (ripe plants: berries, crops, healroot), mine (rock, ore, compacted machinery), deconstruct (ship chunks, ruins, buildings), uninstall, haul (items to storage), hunt, tame, slaughter (own animals), strip (corpses), claim (ruins), smooth (stone floor or walls). THINGS: the player's words for what ("trees", "steel", "compacted machinery", "ship chunks", "deer", "corpses"), not checked against VOCABULARY. No place: everything in view. "nearest THINGS near SPOT" is one (for mine: its whole vein); "THINGS near SPOT" is all within 10 tiles. COUNT only with "nearest". To clear rock out of a rectangle: "mine everything in area AREA" (a room with walls and a door dug into rock is "dig room AREA"). A landmark is a place, never THINGS: "nearest ship chunks near ship chunk 1".
+- Mining: "mine near SPOT", "mine in area AREA", "mine nearest COUNT THINGS near SPOT", "mine nearest THINGS near SPOT", "mine THINGS near SPOT" and "mine THINGS in area AREA" send colonists to mine ore there (never plain rock) and bring back what drops. THINGS names the ore; COUNT is how many tiles each colonist mines at most. Hauling: "haul from SPOT" and "haul THINGS near SPOT" send colonists to bring back what lies there; THINGS names what. Write "with PAWNS" only when the player named who; without it the mod asks. Rock is dug out only with "dig room AREA".
+- "move chunks": moves all stone chunks inside rooms to stockpile, if there is one, to make rooms prettier.
+- VERB: chop (trees for wood), cut (any plant), harvest (ripe plants: berries, crops, healroot), mine (rock, ore, compacted machinery), deconstruct (ship chunks, ruins, buildings), uninstall, haul (items to storage), hunt, tame, slaughter (own animals), strip (corpses), claim (ruins), smooth (stone floor or walls). THINGS: the player's words for what ("trees", "steel", "compacted machinery", "ship chunks", "deer", "corpses"), not checked against VOCABULARY. No place: everything in view. "nearest THINGS near SPOT" is one; "THINGS near SPOT" is all within 10 tiles. COUNT only with "nearest". For mine and haul, the nearest / in area / haul near forms are the orders of the line above. A landmark is a place, never THINGS: "nearest ship chunks near ship chunk 1".
 - forbid / unforbid items: "of THINGS" only when the player named what; leave it out for every item ("unforbid items near ship chunk 1."). Buildings and doors keep "forbid TARGETS".
 - KIND: mining, chopping, cutting, harvesting, deconstructing, uninstalling, hauling, hunting, taming, slaughtering, stripping, smoothing, or designations (all). Stop / cancel marked work = cancel (a named pawn's work stays "stop PAWNS doing WORKTYPE", a growing zone's "zone ZONE stop WORK"). Blueprints are not a KIND.
 - "show designations" = what is still marked; "show wildlife" = wild animals in view (for hunting or taming).
@@ -452,6 +471,9 @@ build campfire near Bob.
 
 ORDER: put a campfire at 120, 88
 build campfire at 120, 88.
+
+ORDER: bob, roof 100, 120 to 110, 128 and nothing else
+build roof at 100, 120 to 110, 128 using Bob.
 
 ORDER: a 7 by 7 wooden room at 120, 88 with the door on the south
 build room 7 by 7 around 120, 88 made of wood door south.
@@ -697,6 +719,19 @@ ORDER: what can i ask you, and which build orders are there
 show questions.
 show orders for build.
 
+ORDER: what does a targeted tantrum do
+what does targeted_tantrum do.
+
+ORDER: bob is on a sad wander, what is that and how does it end
+what does sad_wander do.
+
+ORDER: which mental breaks are there
+list breaks.
+
+ORDER: what breaks can my colonists have, and what does berserk do
+list breaks.
+what does berserk do.
+
 ORDER: let it run for six hours on fast
 run 6 hours at fast.
 
@@ -872,6 +907,24 @@ chop nearest 20 trees near Bob.
 
 ORDER: mine the compacted machinery by the first ship chunk
 mine nearest compacted machinery near ship chunk 1.
+
+ORDER: bob and ann go mine the ore at 112, 87 and bring it back
+mine near 112, 87 with Bob and Ann.
+
+ORDER: send someone to dig out the steel by ship chunk 1 and bring it home
+mine near ship chunk 1.
+
+ORDER: carl, go pick up everything lying at 120, 90
+haul from 120, 90 with Carl.
+
+ORDER: dana, mine 2 tiles of the nearest gold by ship chunk 1
+mine nearest 2 gold near ship chunk 1 with Dana.
+
+ORDER: get the steel lying near bob back home
+haul steel near Bob.
+
+ORDER: get the rock chunks out of the rooms
+move chunks.
 
 ORDER: take the ship chunks apart
 deconstruct ship chunks.

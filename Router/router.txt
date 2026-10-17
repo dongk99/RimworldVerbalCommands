@@ -242,6 +242,9 @@ those_form("storage priority (those)", "set ", " to {PRIORITY} priority.", [])
 #                          "made of STUFF" names the material. The mod picks the tile.
 # The narrow forms first, so "option 2" and "room like kitchen" are never read as a BUILDING. In each
 # pair the COUNT form is first; check() sends a COUNT that isn't a number on to the form without it.
+# User 2026-10-16 ("new feature because agents are fucking dumb"): PAWN builds only roofs in AREA, no other
+# construction work until it is done (AgentRoofOnly.cs). Before the build forms, so "roof" is never read as a BUILDING.
+new_form("roof only", "build roof at {AREA} using {PAWN}.", [])
 form("build option", "build option {OPTION}.", [])
 form("build room", "build room like {ROOM}.", [])
 # Agent 08 (items 19, 22): build at a place with no room, lines, floors, a walled room from nothing, and
@@ -378,6 +381,23 @@ new_form("fuel level", "set fuel level to {N} for {TARGETS}[ in {ROOM}].", ["TAR
 new_form("door hold open", "hold door {DOOR} open.", [])
 new_form("door let close", "let door {DOOR} close.", [])
 
+# User 2026-10-16: manual mining and hauling ("micros"; "this will be core component so agents can micromange pawns
+# to haul manually"). Changes; the mod's own code (AgentMicro.cs) designates, prioritizes and watches. SPOT and AREA as
+# agent 03 reads them (a zone name is a SPOT). PAWNS left out: the mod asks which colonists go and waits for the names
+# (the "with PAWNS" form is then sent for the answer). Before the designation forms: "mine near 1, 2." would otherwise
+# reach "mine {THINGS}." and "haul from 1, 2." "haul {THINGS}.". In each pair the "with" form is first, so the names
+# are never read as part of SPOT / AREA.
+new_form("micro mine", "mine near {SPOT} with {PAWNS}.", ["PAWNS"])
+new_form("micro mine", "mine near {SPOT}.", [])
+new_form("micro mine", "mine in area {AREA} with {PAWNS}.", ["PAWNS"])
+new_form("micro mine", "mine in area {AREA}.", [])
+new_form("micro haul", "haul from {SPOT} with {PAWNS}.", ["PAWNS"])
+new_form("micro haul", "haul from {SPOT}.", [])
+
+# User 2026-10-16: "Offers: "move chunks" command. agent can say "apply" or "cancel". when apply: every chunk indoor is
+# marked for "haul things"." (AgentChunks.cs; the mod's 6-hour reminder names it). No slots: every stone chunk indoors.
+new_form("move chunks", "move chunks.", [])
+
 # Agent 07: designations (item 21). Changes; the mod places the game's own designation and colonists do the
 # work. THINGS is the player's words (not checked against the vocabulary: the mod matches them against what the
 # game's own designator accepts in view). MODE is fixed by the template: all = everything in view, area = in
@@ -385,15 +405,41 @@ new_form("door let close", "let door {DOOR} close.", [])
 # is first: its check refuses a THINGS that holds a place or "nearest", so the place forms after it are tried.
 # In the nearest pair the COUNT form is first; check_new sends a COUNT that is not a number on to the next form.
 DESIGNATE_VERBS = ["chop", "cut", "harvest", "mine", "deconstruct", "uninstall", "haul", "hunt", "tame", "slaughter", "strip", "claim", "smooth"]
+# User 2026-10-16 ("Merge all 3. new replace old. delete old logic as needed"): "mine THINGS in area AREA", "mine nearest
+# [COUNT] THINGS near SPOT" and "haul THINGS near SPOT" are micro orders now (forms "micro mine" / "micro haul", above):
+# THINGS limits what is mined or picked up, COUNT caps each pawn's tiles. Each has a "with PAWNS" form first (the
+# answer to the mod's pawn question is sent as that form). The other designation forms are as they were.
+# User 2026-10-16 ("AUTOMINING VEIN. WITHOUT. SHELL. BECAUSE. PAWN SCHEDULER DUMB AND AGENTS CANNOT FUCKING MICRO ORDER
+# WITHOUT SCRIPT."): no mine sentence only marks any more. "mine THINGS near SPOT" is a micro order too; "mine THINGS."
+# and "mine THINGS in ROOM." have no site for one and are gone.
 for verb in DESIGNATE_VERBS:
-    fixed_form("designate " + verb, verb + " {THINGS}.", ["THINGS"], {"MODE": "all"})
-    fixed_form("designate " + verb, verb + " {THINGS} in area {AREA}.", ["THINGS"], {"MODE": "area"})
+    if verb != "mine":
+        fixed_form("designate " + verb, verb + " {THINGS}.", ["THINGS"], {"MODE": "all"})
+    if verb == "mine":
+        new_form("micro mine", "mine {THINGS} in area {AREA} with {PAWNS}.", ["THINGS", "PAWNS"])
+        new_form("micro mine", "mine {THINGS} in area {AREA}.", ["THINGS"])
+    else:
+        fixed_form("designate " + verb, verb + " {THINGS} in area {AREA}.", ["THINGS"], {"MODE": "area"})
     # User 2026-10-15: "deconstruct butcher spot in kitchen." took "in kitchen" as part of the name. A room after
     # "in", after the area form so "in area ..." never reads as a room.
-    fixed_form("designate " + verb, verb + " {THINGS} in {ROOM}.", ["THINGS"], {"MODE": "room"})
-    fixed_form("designate " + verb, verb + " nearest {COUNT} {THINGS} near {SPOT}.", ["THINGS"], {"MODE": "nearest"})
-    fixed_form("designate " + verb, verb + " nearest {THINGS} near {SPOT}.", ["THINGS"], {"MODE": "nearest"})
-    fixed_form("designate " + verb, verb + " {THINGS} near {SPOT}.", ["THINGS"], {"MODE": "near"})
+    if verb != "mine":
+        fixed_form("designate " + verb, verb + " {THINGS} in {ROOM}.", ["THINGS"], {"MODE": "room"})
+    if verb == "mine":
+        new_form("micro mine", "mine nearest {COUNT} {THINGS} near {SPOT} with {PAWNS}.", ["THINGS", "PAWNS"])
+        new_form("micro mine", "mine nearest {COUNT} {THINGS} near {SPOT}.", ["THINGS"])
+        new_form("micro mine", "mine nearest {THINGS} near {SPOT} with {PAWNS}.", ["THINGS", "PAWNS"])
+        new_form("micro mine", "mine nearest {THINGS} near {SPOT}.", ["THINGS"])
+    else:
+        fixed_form("designate " + verb, verb + " nearest {COUNT} {THINGS} near {SPOT}.", ["THINGS"], {"MODE": "nearest"})
+        fixed_form("designate " + verb, verb + " nearest {THINGS} near {SPOT}.", ["THINGS"], {"MODE": "nearest"})
+    if verb == "haul":
+        new_form("micro haul", "haul {THINGS} near {SPOT} with {PAWNS}.", ["THINGS", "PAWNS"])
+        new_form("micro haul", "haul {THINGS} near {SPOT}.", ["THINGS"])
+    elif verb == "mine":
+        new_form("micro mine", "mine {THINGS} near {SPOT} with {PAWNS}.", ["THINGS", "PAWNS"])
+        new_form("micro mine", "mine {THINGS} near {SPOT}.", ["THINGS"])
+    else:
+        fixed_form("designate " + verb, verb + " {THINGS} near {SPOT}.", ["THINGS"], {"MODE": "near"})
 # Items lying on the map (the older "forbid TARGETS" is for buildings). No "of THINGS" = every item.
 for verb in ["forbid", "unforbid"]:
     fixed_form("items " + verb, verb + " items[ of {THINGS}].", ["THINGS"], {"MODE": "all"})
@@ -557,6 +603,13 @@ query_form("query pending", "show pending.", [])
 # The mod answers with that know-how file (TipInjector.cs).
 query_form("query tips", "i need tips on {NAME}.", [])
 query_form("query tips", "i need tips for {NAME}.", [])
+# Mental breaks (user 2026-10-15, cloud session: "[TIP] You can query each mental events and what they do by saying
+# "what does {mental_event} do"."; "Probably new verbalizer "list breaks""). BREAK is the break's name as the watch
+# alert prints it (targeted_tantrum) or as the game says it, always with underscores (a space becomes "_"); the mod
+# finds its file
+# (MentalBreakTips.cs) and says the names when there is none. No vocabulary line: "list breaks." gives the names.
+query_form("query mental break", "what does {BREAK} do.", [])
+query_form("query mental breaks", "list breaks.", [])
 
 # Brief 30: what pawns wear, hold and carry (colonists only; nothing here changes). THINGS is the player's word and is
 # not checked against a vocabulary line: the mod matches it against every item def of that kind (apparel for wear,
@@ -712,6 +765,8 @@ help("query speed", "show time.", "the same as show speed")
 help("query events", "show events.", "letters, messages and events since this was last asked")
 help("query events", "show events since day DAY.", "letters, messages and events since that day (day 1 = landing day)")
 help("query tips", "I need tips on NAME.", "the know-how file NAME in full (NAME from the tips line); also: I need tips for NAME")
+help("query mental break", "what does BREAK do.", "what that mental break does and how it ends (BREAK as the alert or list breaks says it)")
+help("query mental breaks", "list breaks.", "every mental break this game can have, by severity")
 help("query pending", "show pending.", "what orders started that colonists have not finished yet")
 help("query interactable", "show interactable pawns.", "traders, visitors, quest givers, prisoners and enemies in view, with the right-click orders the game offers on each")
 help("query interactable", "show interactable pawns for PAWN.", "the same, with the orders the game offers that colonist")
@@ -773,6 +828,7 @@ help("place near", "place COUNT BUILDING near SPOT facing SIDE.", "spots put dow
 help("build line", "build BUILDING made of STUFF from AREA.", "a straight line one cell wide: wall, fence, sandbags, conduit")
 help("build floor", "build floor FLOOR in area AREA.", "floor blueprints over AREA")
 help("build room new", "build room AREA made of STUFF door SIDE.", "walls round the edge of AREA and one door; colonists roof the closed box themselves")
+help("roof only", "build roof at AREA using PAWN.", "PAWN builds only roofs in AREA; their other construction work waits until it is done")
 help("dig room", "dig room AREA made of STUFF door SIDE.", "a room dug into rock: mines the inside, keeps rock as wall, walls the open edge, one door")
 help("build furnished room", "build TYPE AREA made of STUFF door SIDE.", "a walled room with its furniture; TYPE is bedroom, barracks (with COUNT beds), kitchen, dining room or research room")
 help("cancel blueprint at", "cancel blueprint BUILDING at SPOT.", "cancels the blueprints and frames on that cell; BUILDING may be left out")
@@ -831,7 +887,7 @@ DESIGNATE_HELP = {
     "chop": "marks trees to be chopped for wood",
     "cut": "marks plants to be cut down",
     "harvest": "marks ripe plants (berries, crops, healroot) to be harvested",
-    "mine": "marks rock, ore or compacted machinery to be mined; in area digs out a room",
+    "mine": "marks rock, ore or compacted machinery to be mined",
     "deconstruct": "marks buildings to be taken apart (ship chunks, ruins, own buildings: risky)",
     "uninstall": "marks buildings to be uninstalled and carried as items",
     "haul": "marks items not in storage to be hauled",
@@ -843,7 +899,10 @@ DESIGNATE_HELP = {
     "smooth": "marks rough stone walls or floors to be smoothed"
 }
 for verb in DESIGNATE_VERBS:
-    help("designate " + verb, verb + " THINGS in area AREA.", DESIGNATE_HELP[verb] + "; also: " + verb + " THINGS. / " + verb + " THINGS in ROOM. / " + verb + " nearest COUNT THINGS near SPOT. / " + verb + " THINGS near SPOT.")
+    if verb == "haul":
+        help("designate haul", "haul THINGS in area AREA.", DESIGNATE_HELP[verb] + "; also: haul THINGS. / haul THINGS in ROOM. / haul nearest COUNT THINGS near SPOT.")
+    elif verb != "mine":
+        help("designate " + verb, verb + " THINGS in area AREA.", DESIGNATE_HELP[verb] + "; also: " + verb + " THINGS. / " + verb + " THINGS in ROOM. / " + verb + " nearest COUNT THINGS near SPOT. / " + verb + " THINGS near SPOT.")
 help("items forbid", "forbid items of THINGS in area AREA.", "items lying there are forbidden; of THINGS and in area AREA may be left out; also: near SPOT")
 help("items unforbid", "unforbid items of THINGS in area AREA.", "items lying there may be used again; of THINGS and in area AREA may be left out; also: near SPOT")
 help("designate cancel", "cancel KIND in area AREA.", "removes marks of one kind (mining, chopping, hunting, ..., designations = all); also: cancel all KIND")
@@ -900,6 +959,9 @@ help("capture", "capture TARGET with DOER.", "carries a downed enemy to a prison
 help("arrest", "arrest PAWN with DOER.", "arrests a colonist in a mental break; with DOER may be left out; risky")
 help("extinguish", "extinguish fire at SPOT with PAWNS.", "puts out a fire; at SPOT and with PAWNS may be left out")
 help("prioritize", "prioritize WORK at SPOT with DOER.", "WORK is hauling, constructing, repairing, mining, sowing, harvesting, cutting or cleaning")
+help("micro mine", "mine near SPOT with PAWNS.", "HELP_MINE")
+help("micro haul", "haul from SPOT with PAWNS.", "HELP_HAUL")
+help("move chunks", "move chunks.", "marks every stone chunk indoors for hauling")
 help("equip", "equip PAWN with WEAPON at SPOT.", "the pawn picks up and wields the weapon; at SPOT may be left out")
 help("wear", "have PAWN wear APPAREL at SPOT.", "the pawn puts on the clothing; at SPOT may be left out")
 help("pick up", "have PAWN pick up COUNT ITEM at SPOT.", "the pawn carries the item in its inventory; COUNT and at SPOT may be left out")
@@ -1501,6 +1563,12 @@ function check_designate(name, slots):
         return ""
     if not has(slots, "THINGS"):
         return ""
+    # User 2026-10-16: "mine near SPOT" and "haul from SPOT" are the micro forms. A THINGS that starts with "near" or
+    # "from" is one of those that did not pass, not things to mark: this form steps aside, so the micro form's reason
+    # is the one the player reads.
+    if name in ["designate mine", "designate haul"]:
+        if starts_with(slots["THINGS"][0], "near ") or starts_with(slots["THINGS"][0], "from "):
+            return NOT_THIS_FORM
     for item in slots["THINGS"]:
         if item in ["those", "it", "there", "here"]:
             return "THINGS must say what to mark, like trees, steel or deer"
@@ -1731,6 +1799,18 @@ function check_new(name, slots):
     # Tips: the file name exactly as on the "tips" line, no other word for it (user 2026-10-06).
     if name == "query tips" and not listed("tips", slots["NAME"]):
         return "'" + slots["NAME"] + "' is not on the tips line; the tips are: " + join_list(get(VOCAB, "tips", []))
+    if name == "query mental break" and slots["BREAK"] in ["it", "that", "this", "those", "them", "they"]:
+        return "name the mental break; list breaks gives the names"
+    # Mental break names are one word with underscores (user 2026-10-15, cloud session: "the event itself inside watcher
+    # should have underscores and not spacebar."; "anything you put a spacebar on mentalbreak wording gets an underscore").
+    if name == "query mental break":
+        slots["BREAK"] = join(split(trim(slots["BREAK"]), " "), "_")
+    # A micro form without PAWNS never takes a place holding " with ": that is the "with PAWNS" form before it, which
+    # did not pass, and its reason is the one to keep.
+    if starts_with(name, "micro ") and not has(slots, "PAWNS"):
+        for key in ["SPOT", "AREA"]:
+            if has(slots, key) and contains(slots[key], " with "):
+                return NOT_THIS_FORM
     wrong = check_place(name, slots)
     if wrong != "":
         return wrong
@@ -1768,7 +1848,11 @@ function check_new(name, slots):
         return "'" + slots["BENCH"] + "' is not a bench on the map"
     if has(slots, "ROOM") and slots["ROOM"] != "those" and not listed("rooms", slots["ROOM"]):
         return "'" + slots["ROOM"] + "' is not a room on the map"
-    if has(slots, "PAWN") and not pawn_word(name, slots["PAWN"]) and not listed_any(pawn_lines(name), slots["PAWN"]):
+    # User 2026-10-16: "EVERY pawn should have show health of [x] available." Guests, strangers, wild animals and enemies
+    # are on no vocabulary line: the mod matches the name against every pawn in view (FormWave1Queries.QueryHealth).
+    # User 2026-10-16: "THE MOD BLOCKS SKILL SHOWING FOR SOMEONE NOT COLONIST EVEN WHEN AGENT QUERIES": skills likewise
+    # (FormWave1Queries.PawnInView).
+    if has(slots, "PAWN") and not (name in ["query health", "query skills"]) and not pawn_word(name, slots["PAWN"]) and not listed_any(pawn_lines(name), slots["PAWN"]):
         return "'" + slots["PAWN"] + "' is not a " + pawn_label(name)
     if has(slots, "PAWNS"):
         for p in slots["PAWNS"]:
@@ -1817,7 +1901,7 @@ function check_new(name, slots):
     wrong = check_pawn_actions(name, slots)
     if wrong != "":
         return wrong
-    if starts_with(name, "designate ") or starts_with(name, "items "):
+    if starts_with(name, "designate ") or starts_with(name, "items ") or (starts_with(name, "micro ") and has(slots, "THINGS")):
         return check_designate(name, slots)
     if starts_with(name, "query "):
         return check_query(name, slots)

@@ -9,6 +9,9 @@ Model for specialists (user, 2026-10-13): **Haiku 5.5 at high effort, changeable
 `model: "haiku"`, `effort: "high"`). Specialists read play notes, know-how and the mod's answers; they do not
 read code (user CLAUDE.md).
 
+Grading (user, 2026-10-16): "YOU ARE BEING ACTIVELY GRADED ON HOW WELL YOU MANAGE PAWNS, WHETHER YOU KILLED ONE DUE
+TO A SCREWUP, HOW OFTEN YOU LET THEM SIT BELOW A MENTAL BREAK THRESSHOLD, HOW OFTEN THEY BOTCHED CONSTRUCTION."
+
 ## 0. The real-life jobs behind the game (user, 2026-10-15)
 
 The user asked which real-life jobs fit the game's expert functions, named two themselves ("EE (battery, power
@@ -79,11 +82,11 @@ wait mode, reads the mod's plan, then applies or cancels. The game is paused onl
 
 | Gated | Why (from the record) |
 |---|---|
-| Any build, room, floor, furniture, spot placement | every user hand-correction in the notes was a placement; materials are not fully returned. "planning/building should also be accepted by orchestrator after making a plan layout & where it wants to build (probably direction given by orchestrator)" |
+| Any build, room, floor, furniture, spot placement, `build roof at AREA using PAWN.` | every user hand-correction in the notes was a placement; materials are not fully returned. "planning/building should also be accepted by orchestrator after making a plan layout & where it wants to build (probably direction given by orchestrator)" |
 | Bills (add, change count, ingredients) | user: "specialists relay bills (e.g. im making 5 clothes because...) to orchestrator and orchestrator can accept/deny/edit". Relay first, then the specialist sends it `raw apply` (user chose this over holding a plan). |
 | Slaughter, hunt, attack, capture, arrest, surgery, prisoner mode | irreversible or a pawn fight; the mod marks them RISKY |
 | Deconstruct own building, cancel someone else's blueprint, delete zone | materials or work lost |
-| Widen an area restriction (`anywhere`, `unrestricted`), hauling or mining far from base, map-wide unforbid | every recorded hypothermia case came from one of these |
+| Widen an area restriction (`anywhere`, `unrestricted`), hauling or mining far from base (`prioritize`, `mine near`, `mine nearest`, `mine ... near`, `mine ... in area`, `haul from`, `haul ... near` outside the base), map-wide unforbid | every recorded hypothermia case came from one of these |
 | Bed role (medical, prisoner) | drops the bed's owner; user stopped one on day 11 |
 | `accept trade`, caravan or aid requests, quest and letter choices beyond Close | **orchestrator only, never proposed by a specialist** (user: "3 can only be done by orchestrator") |
 
@@ -94,7 +97,7 @@ Draft and move are the drafter's own (section 5) but **attack** is gated.
 A specialist is one `Agent` call that loops:
 
 1. Read `delegates\COMMON.md`, its own brief `delegates\briefs\<name>.md`, its notes
-   `delegates\notes\<name>.md` (its own memory across rounds and calls), and the newest `play_log\day_NN.md`.
+   `delegates\notes\<name>.md` (its own memory across rounds and calls), and the newest `play_sessions\day_NN.md`.
 2. Observe with questions (its brief says which).
 3. Apply what section 1 allows, with `-Mode "raw apply"`, one dependent change per order.
 4. Anything in section 2: append a proposal to `delegates\proposals\<name>.md`:
@@ -108,29 +111,37 @@ A specialist is one `Agent` call that loops:
    notified at once. Do not wait in the loop with a proposal pending.
 5. Otherwise write a two-line status to `delegates\status\<name>.md`, append to its notes, and block on
    `wait_round.ps1 -Name <name> -Hours <its cadence>` (drafter: `-OnEvent`). `STOP` or `NOT RUNNING` → return.
-   `MESSAGE` → read `delegates\msg\<name>.md`, delete it, act. `HOURS` / `EVENT` / `TIMEOUT` → next round.
+   `MESSAGE` → read `delegates\msg\<name>.md`, delete it (`clear.ps1 -Msg <name>`), act. `HOURS` / `EVENT` / `TIMEOUT` → next round.
+   `[REMINDER] Hourly check N` → read the batch, act, then `vote.ps1 -Name <name> -Check N` (every check).
 6. After at most 8 rounds in one call, return with a report anyway (context).
 
 The orchestrator answers a proposal by resuming the specialist with `SendMessage` (the same agent, its context
 kept): `P3 approved, send it`, `P3 denied: <why>`, or `P3 edited: <sentence>; send that`. For a build the
 orchestrator sends the order itself and tells the specialist what now stands where. The orchestrator stops a
-specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
+specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`. Lift a stop with
+`powershell -File "<skill folder>\clear.ps1" -Stop <name>` (or `-Stop ALL`): the hooks allow no Remove-Item.
 
 ## 4. The orchestrator's own loop with specialists running
 
+- Launch subagents before unpausing (user, 2026-10-16): at the start of a session and after a compaction,
+  spawn the roster (starting order at the end of this section) while the game is paused; set the speed only
+  after the last one is spawned.
 - Keep the game running. Specialists' free-class orders no longer pause it. Pause for your own tasks only
   (notes, reviewing proposals that need thought), and unpause after.
 - Your plan/apply pairs still pause while the plan waits; `send.ps1` makes a specialist that collides with it
   wait and retry (up to 120 s), so finish a pair promptly.
 - Speed, windows and letters stay yours. Specialists never touch them.
+- Hourly check (user, 2026-10-16: "Every goddamn subagent AND ORCHESTRAOR votes to UNPAUSE."): the game stays
+  paused until you and every running specialist have voted. On `Hourly check N` (watcher or a result): read the
+  batch, act, then `powershell -File "<skill folder>\vote.ps1" -Name orchestrator -Check N`.
 - Play decisions are yours too: never put one to the user as a question. Asked "hunt the megasloth with Zimmerman?"
   with options, the user answered "[cannot] I cannot make decision for the orchestrator." (2026-10-14). Weigh it,
   choose, act, and write the choice and why in the day note.
 - The `[REMINDER] 6-hour check` block in `answers` / `reasons` (and the `reminders` field; one entry, the reminders
   numbered inside it) is yours: every 6 game hours the mod
   lists work spots and benches whose place costs work speed (outdoors, cold, wrong room), benches whose interaction
-  spot has under 50% light (build a lamp), labeled rooms under 10C or over 30C (heater / cooler, or a vent to a
-  better room next door), stone chunks lying indoors with no stockpile for them, and steel / components / plasteel
+  spot has under 50% light (build a lamp), labeled rooms under 10C or over 35C (heater / cooler, or a vent to a
+  better room next door), stone chunks lying indoors (`move chunks.` moves all stone chunks inside rooms to stockpile, if there is one, to make rooms prettier), and steel / components / plasteel
   on the map (forbidden, outside storage, compacted rock to mine, ship chunks to deconstruct, ancient wrecks to shoot
   for steel slag, slag to smelt) while that count is 0 or below what your bills and blueprints still need (none on
   the map: trade, strip-mine into mountains, or research a scanner / deep drill), and a stove while only a campfire
@@ -146,7 +157,9 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
   with who does it better (`set WORKTYPE priority 1 for NAME.`, `stop NAME doing WORKTYPE.`), and doctors who carry
   no medicine (or can't refill the kind set) while some is in storage (`set carry medicine of NAMES to N MEDICINE.`,
   N up to 3), an unarmed colonist who shoots (or fights melee) better than the weakest holder of a ranged (melee)
-  weapon (`have WEAKEST drop WEAPON.`, then `equip BEST with WEAPON.`); and always, last, a "[TIP]" that a missing pawn-menu option may need the pawn drafted first (draft,
+  weapon (`have WEAKEST drop WEAPON.`, then `equip BEST with WEAPON.`), places a micro order left resources at
+  ("X, Z has ... from mining. say "haul from X, Z"": `haul from X, Z with PAWNS.`, the expediter's inside the base,
+  gated outside it); and always, last, a "[TIP]" that a missing pawn-menu option may need the pawn drafted first (draft,
   look, undraft when done). Every 3 game hours
   (joining the 6-hour block, or alone as "[REMINDER] 3-hour check"): growing zones or hydroponics basins with cells
   growing nothing or plants not growing, with the reason per cell (sowing off, no power, too cold, blocked, waiting
@@ -165,8 +178,12 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
   your home zone ("Merchant check": `use option trade on NAME with PAWN.`, the colonist with the best Social named).
   It gives the list once, on your next speed, run, letter, window, trade or build result (user, 2026-10-14). Act on
   them or say why not in the day note; never filter them.
+- Micro orders (`mine near`, `haul from`; `briefs\expediter.md`) give their news with the next result of any order:
+  `task finished, pawns coming back, est. N hr with ...`, `hauling done, pawns coming back with ...`, `More ... is
+  left at ...`, `roofing done at AREA by PAWN: ...` (`build roof at AREA using PAWN.`), and `X, Z also has ... Reply mine to mine it too, or cancel to haul.` (the game is paused until
+  `mine` or `cancel`; answer it yourself when a specialist returns with it).
 - Each specialist's `status\<name>.md` is one glance; read them at each day turn and put a line per specialist
-  in the day note. Delete stale `msg\` files you wrote before they were read if the plan changed.
+  in the day note. Delete stale `msg\` files you wrote before they were read if the plan changed (`clear.ps1 -Msg <name>`).
 - Ownership conflicts are settled by you, in the briefs, not in the game: bills (crafter time, materials) vs
   work priorities (who crafts) vs schedule (when). The briefs say what each one owns and must not touch.
 - Starting order on a new session: schedule → work_priority → equipment_config → storage_zones → bills →
@@ -181,8 +198,8 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
 | drafter_mover | draft, move, undraft, rescue; proposes attacks | on events | `briefs\drafter_mover.md` |
 | equipment_config | equip, wear, medicine level, food/clothing groups, fire at will, self-tend | 12 h | `briefs\equipment_config.md` |
 | bills | proposes bills (food, clothing, manufacturing); sends approved ones; pauses / resumes | 6 h | `briefs\bills.md` |
-| storage_zones | filters and priorities of existing storage; proposes new zones | 12 h | `briefs\storage_zones.md` |
-| expediter | `prioritize WORK at X, Z with PAWN` inside the base: material to blueprints, builders to frames, miners to marks (user, 2026-10-13) | 2 h | `briefs\expediter.md` |
+| storage_zones | filters and priorities of existing storage; `move chunks.` (moves all stone chunks inside rooms to stockpile, if there is one, to make rooms prettier); proposes new zones | 12 h | `briefs\storage_zones.md` |
+| expediter | `prioritize WORK at X, Z with PAWN` inside the base: material to blueprints, builders to frames, miners to marks (user, 2026-10-13); the micro orders `mine near X, Z with PAWNS.`, `mine in area AREA with PAWNS.`, `haul from X, Z with PAWNS.`, `mine nearest [COUNT] THINGS near X, Z with PAWNS.`, `mine THINGS near X, Z with PAWNS.`, `mine THINGS in area AREA with PAWNS.`, `haul THINGS near X, Z with PAWNS.` inside the base (user, 2026-10-16) | 2 h | `briefs\expediter.md` |
 
 ## 6. Spawning (what the orchestrator types)
 
@@ -192,7 +209,7 @@ Agent({ subagent_type: "general-purpose", model: "haiku", effort: "high",
   prompt: "You are the schedule specialist for a RimWorld colony played through the VerbalCommands inbox.
     Read <P>\agent_player\delegates\COMMON.md first (write <P> out as the full project path),
     then delegates\briefs\schedule.md, then delegates\notes\schedule.md if it exists, then the newest
-    play_log\day_NN.md. Follow COMMON.md's round exactly. Orchestrator's standing direction for this call:
+    play_sessions\day_NN.md. Follow COMMON.md's round exactly. Orchestrator's standing direction for this call:
     <one or two lines: current goals, pawns to secure, anything the specialist must not touch today>." })
 ```
 The same for each name. Keep the direction line current: it is the only thing the specialist knows about

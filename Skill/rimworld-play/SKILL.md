@@ -34,9 +34,7 @@ interpreter falls short". That is a change to the mod, never a way round it.
 1b. Read `<mod folder>\Skill\reference_play\REFERENCE_HUMAN_PLAY-Autosave-5.analysis.md` in full, every
    session. It is the mod author's own 54-day play of the same kind of start, day by day with reasoning,
    and it carries the end-of-day note rule (loop step 6).
-1c. Read the previous days' notes in `<skill folder>\play_log\day_NN.md` (the newest two at least, all
-   of them if the colony is new to you) before the first order, every session. Trust the game over the
-   note (`show status.` first), but carry its goals and pawns-to-secure forward.
+1c. User, 2026-10-16: "models may not read reference playlog unless user explicitely allows it."
 2. If `send.ps1` answers `NOT RUNNING`, RimWorld is closed and nothing was sent: tell the user to start the
    game, load the colony and tick "Agent inbox" in the mod settings. Do not go on without it.
 2b. **Arm the watcher**, once, with the Monitor tool:
@@ -72,6 +70,7 @@ powershell -File "<skill folder>\send.ps1" -Reply apply        (or: -Reply cance
   `nothing_to_change`, `ask`, `cannot`, `failed`, `problem`, `cancelled`, `rejected`; `reasons` say why.
 - Numbers (coordinates, counts, sizes) must be in your sentence because you chose them from an answer; the
   router rejects a number that is not in the order.
+- `move chunks.` moves all stone chunks inside rooms to stockpile, if there is one, to make rooms prettier (user, 2026-10-16). The mod always waits for `-Reply apply` or `-Reply cancel`.
 
 ## The loop
 1. `show events.` and `show status.` (after every stop, before any order).

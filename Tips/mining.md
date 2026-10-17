@@ -14,15 +14,19 @@ is the roof. You choose the place; the mod never picks it.
 ## Digging
 - A room: `dig room 9 by 7 around 50, 60 door east.` Rock inside is marked for mining, rock at the edge
   stays as wall, open edge cells get wall blueprints, one door. Furnish it afterwards with build lines.
-- Clearing rock: `mine everything in area 40, 50 to 52, 60.` At most 500 cells in one order.
-- Ore: `mine nearest steel near Bob.` takes the whole vein, but only as far as you can see it (user: you
-  can not give a mine order for a vein you can not see). Ask again when more of it shows.
+- Rock is dug out only with `dig room`.
+- Ore (since 2026-10-16): `mine near 50, 60.`, `mine nearest steel near Bob.`, `mine steel near Bob.` or `mine steel in area AREA.`
+  sends colonists: each mines the nearest ore in the 8x8 around the place (in AREA and its edge for an area),
+  1 tile below Mining 8, 2 at 8-10, 3 at 11 and up (`mine nearest 2 steel near Bob.` caps it at 2), then
+  hauls what dropped until it can carry no more and walks home. Only ore in view counts (user: you can not
+  give a mine order for a vein you can not see). Add `with Bob and Ann` to name who; without it the mod
+  asks. `haul from 50, 60.` / `haul steel near Bob.` is the hauling part alone.
 - Someone has to do it: `set Mining priority 1 for Carl.`; watch with `show designations.`, `show pending.`
 
 ## Columns (user; the numbers are from the game's code)
 - A roof falls in where no wall or rock stands within about 6 cells of it. Under a mountain that kills.
-- So a very large dug area needs columns. The mod leaves them by itself: any `dig room` or `mine ... in
-  area` more than 12 cells both ways keeps one rock cell every 9 cells, the first 7 in from the edge. The
+- So a very large dug area needs columns. The mod leaves them by itself: any `dig room` more than 12 cells
+  both ways keeps one rock cell every 9 cells, the first 7 in from the edge. The
   plan notes say where.
 - Do not mine the columns out later. If you want a wide hall, keep the columns or build walls inside first.
 - The mod can only leave a column where rock stands. Where the grid cell is already open, the plan notes
@@ -48,3 +52,4 @@ The user's Shivalbard run, from the same start as the agent's run:
 Wealth from day 0 to day 17: the user's run went $13,823 -> $23,467 (+$573/day); the agent's run
 (surface buildings, a greenhouse on soil, outdoor turbines) went $13,719 -> $16,682 (+$174/day).
 On such a map, plan the mountain base and hydroponics first, not surface buildings and soil farms.
+DO NOT RESEARCH HYDROPONICS UNLESS YOU RESEARCH BATTERY AND SOLAR PANELS FIRST. SURELY YOU KNOW A WIND TURBINE BY ITSELF WOULDNT RUN RELIABLY WITHOUT A BACKUP BATTERY, RIGHT?

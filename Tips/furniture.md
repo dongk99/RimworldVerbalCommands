@@ -82,6 +82,7 @@ code does; (unchecked) is neither.
 - So: the first general stockpile goes indoors or at least under a roof. Outdoors keep only metal and stone.
 - Through the mod: `show roof map around SPOT.` shows whether a zone is under open sky;
   `area roof add 115, 119 to 118, 124.` has colonists roof it (each cell needs a wall within 6 tiles);
+  `build roof at 115, 119 to 118, 124 using Bob.` has Bob roof it and do no other construction work meanwhile;
   better, give the delicate things an indoor zone: `put medicine in zone Stockpile zone 1.` and a higher
   priority there: `set zone Stockpile zone 1 to important priority.`
 - `show storage of zone NAME.` says what a zone holds; it does not say whether it is roofed or what is
