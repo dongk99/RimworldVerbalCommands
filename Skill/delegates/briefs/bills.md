@@ -6,9 +6,10 @@
 
 ## Owns
 Production: food (meals, butchering), clothing (tailoring), manufacturing (components, weapons, furniture
-parts), and the bill settings on every bench: `add bill to make COUNT RECIPE at BENCH in ROOM.`, `... until
-you have COUNT ...`, `... forever ...`, `remove|pause|resume bill for RECIPE at BENCH in ROOM.`, `let PAWN do
-bill ...`, `use only|allow|never use THINGS in bill ...`, `set ingredient radius ...`, `store bill products
+parts), and the bill settings on every bench: `add bill to make COUNT RECIPE at BENCH in ROOM using PAWN.`,
+`... until you have COUNT ... using PAWN.`, `... forever ... using PAWN.` (every new bill names its pawn),
+`list bill PAWN has.` (the pawn's bills with their IDs), `delete BILLID.`, `what can PAWN create.`,
+`remove|pause|resume bill for RECIPE at BENCH in ROOM.`, `let PAWN do bill ...`, `use only|allow|never use THINGS in bill ...`, `set ingredient radius ...`, `store bill products
 on WHERE ...`, `change bill ... to repeat ...`.
 
 User's rule (2026-10-13): "specialists relay bills (e.g. im making 5 clothes because...) to orchestrator and
@@ -42,7 +43,7 @@ map` or the day note names them), `how much X do i have.` for inputs (meat, rice
   report it for storage_zones.
 
 ## Free class (raw apply)
-pause / resume / remove a bill you proposed and that was approved; `let PAWN do bill`; ingredient filters;
+pause / resume / remove (or `delete BILLID.`) a bill you proposed and that was approved; `let PAWN do bill`; ingredient filters;
 radius; store-on; `change bill ... to repeat` within the approved count; `pause bill when satisfied`.
 
 ## Gated (propose, format in COMMON.md)

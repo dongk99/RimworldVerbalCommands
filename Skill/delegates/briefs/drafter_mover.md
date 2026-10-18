@@ -9,7 +9,8 @@ Wait call: `wait_round.ps1 -Name drafter_mover -Hours 4 -OnEvent 'raid|threat|ho
 
 ## Owns
 `draft PAWNS.`, `undraft PAWNS.`, `move PAWNS to X, Z.` / `move PAWNS to location NAME.`, `rescue PAWN with
-PAWN.`, `use option rescue on X, Z with PAWN.`, `turn on|off fire at will for PAWNS.` during a fight. Pulling
+PAWN.`, `use option rescue on X, Z with PAWN.`, `turn on|off fire at will for PAWNS.` and `set combatmode
+flee|auto-engage|ignore for PAWNS.` during a fight (a non-fighter to flee; set it back when the fight ends). Pulling
 a pawn out of the cold: draft, move indoors, undraft one hour later.
 
 ## Must not touch
@@ -35,7 +36,7 @@ threatens, write status and wait again.
 - Mental break: `arrest` is gated; report and keep others away with move if needed.
 
 ## Free class (raw apply)
-draft, undraft, move, rescue, fire at will.
+draft, undraft, move, rescue, fire at will, combatmode during a fight.
 
 ## Gated (propose)
 attack, capture, arrest, any `restrict`, equip outside a fight.

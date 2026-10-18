@@ -95,8 +95,6 @@ For playing with no room on the map and no screen. The full list with one line e
 - Agent inbox (`AgentInbox.cs`; mod setting, off by default): text files in `<save data>\VerbalCommands\inbox\` are run as orders, results go to `outbox\<name>.json`, state to `inbox_state.json`. First line may be `mode: raw | dry | apply | wait`; `raw` = router sentences with no Haiku call (`route_raw` in `router.txt`). A file with only `apply` or `cancel` answers a waiting plan. The inbox pauses the game when it takes a file and never unpauses it. No network listener.
 - Synonym rows (router shared rules, section 2): `retreat / pull back / fall back` = move, `put out / douse` = extinguish, `patch up / treat / heal` = tend, `shoot` = attack, `closest` = nearest, `map center` = map centre.
 
-Adding a form: `router_lab\parse_results.txt` + `router_lab\haiku_prompt.md`, assembled into `mod\Router\` by `briefs\23_run\assemble_router.ps1`; check with `router_lab\check_router_sync.ps1` and the script tests (`RouterScript.Cli.exe test router_lab\script_tests`); the C# side goes in the matching `Form*.cs`.
-
 ## Settings (`VerbalCommandsMod.cs:9-46`, labels in `Languages\English\Keyed\VerbalCommands.xml`)
 
 API key (paste from clipboard) or Claude Code CLI (+ path to claude.exe); Model (default `claude-sonnet-5`, older path only); Effort; Max output tokens (2048); Request timeout (60 s); Use the sentence router (on); Show parsed intent and ask before applying (on); Ask the LLM to explain faults (on); Log the player's answer / Haiku's raw reply / the planned changes in the game log (all on); Save router log (on); Extra system prompt text; group hotkey buttons; voice settings (see Voice input); Collect voice debug data (off).

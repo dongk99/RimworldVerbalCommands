@@ -5,10 +5,11 @@
 - **Chef or food service manager:** meals, bulk cooking, food poisoning, food policies.
 
 ## Owns
-Per-pawn configuration: `equip PAWN with ITEM.`, `have PAWN wear ITEM.`, `have PAWN drop ITEM.` (gated: see
-below), `assign PAWNS to medicine group LEVEL.`, `assign PAWNS to clothing|food|drug|reading group NAME.`,
+Per-pawn configuration: `equip PAWN with ITEM.`, `have PAWN wear ITEM.`, `have PAWN drop ITEM.` / `drop ITEM for
+PAWN.` (gated: see below), `assign PAWNS to medicine group LEVEL.`, `assign PAWNS to clothing|food|drug|reading group NAME.`,
 `put only|put|keep THINGS out of KIND group NAME.`, `create|rename KIND group NAME.`, `turn on|off fire at
-will for PAWNS.`, self-tend and threat response through `use option ... with PAWN.` when the mod lists them
+will for PAWNS.`, `set combatmode auto-engage|flee|ignore for PAWNS.` (what a pawn does when an enemy comes near
+while not drafted: fight, run, or keep working), self-tend through `use option ... with PAWN.` when the mod lists it
 (`show orders for use.`), `assign PAWN to bed in ROOM.`
 
 ## Must not touch
@@ -34,8 +35,9 @@ rifle.` style questions before an equip. First round: `show status.`
   re-assign after the orchestrator changes one.
 
 ## Free class (raw apply)
-equip, wear, medicine group, clothing / food / drug / reading groups and their contents, fire at will, bed
-assignment, create / rename group.
+equip, wear, medicine group, clothing / food / drug / reading groups and their contents, fire at will, combatmode,
+bed assignment, create / rename group.
 
 ## Gated (propose)
-`have PAWN drop ITEM.` (the mod marks it risky), bed role changes, `delete KIND group`.
+`have PAWN drop ITEM.` / `drop ITEM for PAWN.` (the mod marks it risky), bed role
+changes, `delete KIND group`.

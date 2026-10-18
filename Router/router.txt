@@ -80,6 +80,8 @@ VERBS["patch up"] = "tend"
 VERBS["treat"] = "tend"
 VERBS["heal"] = "tend"
 VERBS["shoot"] = "attack"
+# User 2026-10-17: "Install small sculpture will do exact same thing." / "Install also works." (as "build"; AgentInstall.cs).
+VERBS["install"] = "build"
 
 # Phrases anywhere in the line -> the one phrase the forms use. Longer phrases first.
 PHRASES = [
@@ -278,6 +280,9 @@ for t in ROOM_TYPES:
 room_type_form("barracks", "build barracks {AREA}[ made of {STUFF}][ door {SIDE}] with {COUNT} beds.")
 build_place_form("build line", "build {BUILDING}[ made of {STUFF}] from {AREA}.")
 build_place_form("build floor", "build floor {FLOOR} in area {AREA}.")
+# User 2026-10-17: "build {floortype} for {roomid/roomname}" (AgentBuildShapes.PlanFloorRoom): the whole room, its cost and
+# the stats after; with several rooms of that name the mod lists them.
+build_place_form("build floor room", "build {FLOOR} for {ROOM}.")
 # User 2026-10-04: a building the game allows on one kind of spot only (a geothermal generator on a steam
 # geyser) needs no place from the player: the mod takes the nearest free one. Refused by the mod for anything else.
 build_place_form("build anywhere", "build {BUILDING}[ made of {STUFF}] anywhere.")
@@ -333,24 +338,35 @@ form("cannot", "CANNOT: {REASON}", [])
 # "allow", "never use". "until" and "forever" come before the COUNT form, so "add bill to make 5 stew
 # forever at ..." is not read as a count.
 BILL_AT = " at {BENCH}[ in {ROOM}]."
-new_form("bill add until", "add bill to make {RECIPE} until you have {COUNT}" + BILL_AT, [])
-new_form("bill add forever", "add bill to make {RECIPE} forever" + BILL_AT, [])
-new_form("bill add count", "add bill to make {COUNT} {RECIPE}" + BILL_AT, [])
+# User 2026-10-17: "add bill to make {count} {recipe} at {bench} [in {room}] using {pawnname}. Yes now EVERY FUCKING
+# BILL must have pawnname as REQUIREMENT. that means NO bills can be created that are skill based."; until and
+# forever keep their forms, with "using PAWN" too (the user's pick). An "add bill" sentence that fits none of them
+# gets the user's line (read_sentence, ADD_BILL_PROPER).
+BILL_USING = " at {BENCH}[ in {ROOM}] using {PAWN}."
+# The user's words, verbatim: "Whenever agent fucks it up by saying shit wrong, it says "The proper sentence is "add bill to
+# make {count} {recipie} at {bench} [in {room}] using {pawnname}"."
+ADD_BILL_PROPER = "The proper sentence is \"add bill to make {count} {recipie} at {bench} [in {room}] using {pawnname}\""
+new_form("bill add until", "add bill to make {RECIPE} until you have {COUNT}" + BILL_USING, [])
+new_form("bill add forever", "add bill to make {RECIPE} forever" + BILL_USING, [])
+new_form("bill add count", "add bill to make {COUNT} {RECIPE}" + BILL_USING, [])
 new_form("bill remove", "remove bill for {RECIPE}" + BILL_AT, [])
 # Brief 27: "when satisfied" forms before the plain "pause", so "when satisfied" is never part of RECIPE.
 new_form("bill pause when satisfied", "pause bill for {RECIPE} when satisfied" + BILL_AT, [])
 new_form("bill unpause when satisfied", "unpause bill for {RECIPE} when satisfied" + BILL_AT, [])
 new_form("bill pause", "pause bill for {RECIPE}" + BILL_AT, [])
 new_form("bill resume", "resume bill for {RECIPE}" + BILL_AT, [])
-# WHO is anyone, mechs, non-mechs or slaves; "anyone" belongs to this form only. Before "bill pawn".
-new_form("bill workers", "let {WHO} do bill for {RECIPE}" + BILL_AT, [])
+# User 2026-10-17: "let WHO do bill" (anyone, mechs, non-mechs, slaves) and "set skill range" are removed (the user's
+# pick: no sentence takes a bill off its pawn).
 new_form("bill pawn", "let {PAWN} do bill for {RECIPE}" + BILL_AT, [])
-new_form("bill skill", "set skill range {MIN} to {MAX} on bill for {RECIPE}" + BILL_AT, [])
 new_form("bill radius", "set ingredient radius to {N} on bill for {RECIPE}" + BILL_AT, [])
 new_form("bill store", "store bill products on {WHERE} for {RECIPE}" + BILL_AT, [])
 new_form("bill ingredients only", "use only {THINGS} in bill for {RECIPE}" + BILL_AT, ["THINGS"])
 new_form("bill ingredients allow", "allow {THINGS} in bill for {RECIPE}" + BILL_AT, ["THINGS"])
 new_form("bill ingredients forbid", "never use {THINGS} in bill for {RECIPE}" + BILL_AT, ["THINGS"])
+# User 2026-10-17: "Each bill will have own ID (the game should have it)." / "Then agent can say "delete {billid}" and it
+# deletes." BILLID is the game's Bill.GetUniqueLoadID ("Bill_" + recipe defName + "_" + loadID, the user's pick), as
+# "list bill PAWN has." gives it (FormBills.cs).
+new_form("bill delete", "delete {BILLID}.", [])
 
 # Brief 23, wave 2: building controls (user 2026-10-02: open/close vents, set the temperature of coolers
 # and heaters, refuel on/off on generators). TARGETS are building names and may be "those" alone (what a
@@ -447,6 +463,9 @@ for verb in ["forbid", "unforbid"]:
     fixed_form("items " + verb, verb + " items[ of {THINGS}] near {SPOT}.", ["THINGS"], {"MODE": "near"})
 # Cancel marks of one kind (KIND from CANCEL_KINDS). Blueprints are "cancel blueprint ..." (agent 08), whose
 # forms come earlier; "cancel operation ..." has no "all" and no "in area", so these never take it.
+# User 2026-10-17: "cancel floor for {roomid/roomname}" (AgentBuildShapes.PlanCancelFloorRoom): the room's floor plans are
+# cancelled and its built floor removed, with what comes back.
+new_form("cancel floor room", "cancel floor for {ROOM}.", [])
 fixed_form("designate cancel", "cancel all {KIND}.", [], {"MODE": "all"})
 fixed_form("designate cancel", "cancel {KIND} in area {AREA}.", [], {"MODE": "area"})
 
@@ -465,6 +484,10 @@ for group_kind in ["clothing", "food", "drug", "reading"]:
     new_form(group_kind + " group", "assign {PAWNS} to " + group_kind + " group {NAME}.", ["PAWNS"])
 new_form("medical care", "assign {PAWNS} to medicine group {LEVEL}.", ["PAWNS"])
 new_form("threat response", "set threat response of {PAWNS} to {RESPONSE}.", ["PAWNS"])
+# User 2026-10-17: "Options so that they can switch combat mode to auto-engage, ignore, flee, verbal-based & interactable
+# via shell (i.e. set combatmode flee for alice)" / "combatmode, not combat mode (no spacebar)". The same setting as
+# "threat response" (the game's Attack / Flee / Ignore); auto-engage is Attack.
+new_form("threat response", "set combatmode {RESPONSE} for {PAWNS}.", ["PAWNS"])
 # User 2026-10-14 ("see if mod has sentence so that doctors can carry medicine manually" / "add sentence, make new
 # vocabs to router as needed, and change dll as necessary"): the Assign tab's Carry column (the pawn's inventory
 # stock, group Medicine): N from 0 to 3 (the game's limit), MEDICINE from the vocabulary line "carry medicines";
@@ -587,6 +610,9 @@ query_form("query food", "show food.", [])
 query_form("query power", "show power.", [])
 query_form("query temperature", "show temperature.", [])
 query_form("query temperature", "show temperature of {ROOM}.", [])
+# User 2026-10-17: "New order. Show {Roomname} stats." Every room of that name, each with its game room ID ("Room412", the
+# user's pick), buildings, stats, the user's line and bills (RoomStats.cs). ROOM may be the room ID.
+query_form("query room stats", "show {ROOM} stats.", [])
 query_form("query mood", "show mood of {PAWN}.", [])
 # Agent 06: zones and areas.
 query_form("query zones", "show zones.", [])
@@ -637,6 +663,17 @@ query_form("query where", "where is {NAME}.", [])
 query_form("query nearest", "where is nearest {THING}[ to {SPOT}].", [])
 query_form("query list", "where are {THINGS}.", ["THINGS"])
 query_form("query list", "list {THINGS} on map.", ["THINGS"])
+# User 2026-10-17: "list buildings will show every building the agent can currently build. the list can be sorted based
+# on categories" / "If you know roughly what category you know you want to build, say list [building_category], for
+# example, list production." CATEGORY is a build menu category (the mod answers it, AgentBuild.cs); these come after
+# every other "list" form. One fixed sentence per category of the build menu (the user's picture of it, without ship and
+# vehicles: "ignore vehicles and ship for now"), CATEGORY set by the template (FIXED), so no free slot takes a sentence
+# another "list" form refused.
+BUILD_CATEGORIES = ["structure", "production", "furniture", "power", "security", "misc", "floors", "recreation", "temperature", "ideology", "biotech"]
+query_form("query buildings", "list buildings.", [])
+for category in BUILD_CATEGORIES:
+    FIXED["list " + category + "."] = {"CATEGORY": category}
+    query_form("query buildings", "list " + category + ".", [])
 
 # Agent 07: what is still marked (by kind and place), and the wild animals in view (count, nearest, whether
 # hunting is risky, whether the game lets the colony tame them).
@@ -659,6 +696,11 @@ query_form("query bed of", "show bed of {PAWN}.", [])
 query_form("query settings of", "show settings of {PAWN}.", [])
 query_form("query bills", "show bills at {BENCH} at {SPOT}.", [])
 query_form("query bills", "show bills at {BENCH}[ in {ROOM}].", [])
+# User 2026-10-17: "Agents can say "list bill {pawnname} has". It will list bills for them that the pawn currently has
+# with the game's ID." / "they can query what that pawn can make (based on current assigned jobs) by saying "What can
+# {pawnname} create"" (FormBills.cs).
+query_form("query pawn bills", "list bill {PAWN} has.", [])
+query_form("query pawn create", "what can {PAWN} create.", [])
 query_form("query storage", "show storage of zone {ZONE}.", [])
 for place in PLACES:
     # The bare "{STORAGE_ID}" place would read every "show ..." question as an ID: the question says "storage".
@@ -695,6 +737,8 @@ for spot_end in [" at {SPOT}.", " near {SPOT}.", "."]:
     new_form("pick up", "have {PAWN} pick up {COUNT} {ITEM}" + spot_end, [])
     new_form("pick up", "have {PAWN} pick up {ITEM}" + spot_end, [])
 new_form("drop", "have {PAWN} drop {ITEM}.", [])
+# User 2026-10-17, the pawn watch tip: "you can make pawns drop items or gear by saying drop {itemname} for {pawn}."
+new_form("drop", "drop {ITEM} for {PAWN}.", [])
 new_form("rest", "have {PAWN} rest.", [])
 new_form("self tend on", "turn on self tend for {PAWNS}.", ["PAWNS"])
 new_form("self tend off", "turn off self tend for {PAWNS}.", ["PAWNS"])
@@ -757,6 +801,7 @@ help("query food", "show food.", "food by kind, nutrition, days of food, crops, 
 help("query power", "show power.", "each power net: made, used, stored, battery hours, what is off or unpowered")
 help("query temperature", "show temperature.", "outdoors, each enclosed room, who is too cold or hot")
 help("query temperature", "show temperature of ROOM.", "one room: temperature, heaters and coolers, who is in it")
+help("query room stats", "show ROOM stats.", "the room's impressiveness, beauty, cleanliness, space and wealth, its buildings and bills; ROOM may be a room ID")
 help("query mood", "show mood of PAWN.", "mood, break thresholds, every thought, inspiration")
 help("query zones", "show zones.", "every zone: kind, place, size, crop or what it holds, priority")
 help("query areas", "show areas.", "home, roof, no roof, snow clear and allowed areas: size and place")
@@ -767,6 +812,8 @@ help("query events", "show events since day DAY.", "letters, messages and events
 help("query tips", "I need tips on NAME.", "the know-how file NAME in full (NAME from the tips line); also: I need tips for NAME")
 help("query mental break", "what does BREAK do.", "what that mental break does and how it ends (BREAK as the alert or list breaks says it)")
 help("query mental breaks", "list breaks.", "every mental break this game can have, by severity")
+help("query buildings", "list buildings.", "every building the colony can build now, by category")
+help("query buildings", "list CATEGORY.", "the buildings of that category the colony can build now")
 help("query pending", "show pending.", "what orders started that colonists have not finished yet")
 help("query interactable", "show interactable pawns.", "traders, visitors, quest givers, prisoners and enemies in view, with the right-click orders the game offers on each")
 help("query interactable", "show interactable pawns for PAWN.", "the same, with the orders the game offers that colonist")
@@ -799,6 +846,8 @@ help("query schedule", "show schedule.", "the schedule of every colonist")
 help("query area of", "show area of PAWN.", "the allowed area the pawn is restricted to")
 help("query bed of", "show bed of PAWN.", "the bed the pawn owns, where it is and what kind")
 help("query settings of", "show settings of PAWN.", "whether the pawn is drafted, fire at will, threat response, medical care and self-tend")
+help("query pawn bills", "list bill PAWN has.", "the bills only that pawn does, with their IDs")
+help("query pawn create", "what can PAWN create.", "the recipes that pawn can make on benches of the work it is assigned to")
 help("query bills", "show bills at BENCH in ROOM.", "each bill at that bench: repeat, paused, who may do it, skill range, radius, where products go, ingredients; in ROOM may be left out, or write at SPOT")
 help("query storage", "show storage of zone ZONE.", "what that storage accepts, its priority and what is in it; also near BENCH, in ROOM, a direction from a door, at X, Z, or storage ID")
 help("query stores", "show places that store THINGS.", "every storage that accepts THINGS (an item, a category or an item's ID): zones by name, buildings with ID and cell; the ones that take only THINGS are marked")
@@ -821,12 +870,17 @@ help("build", "build BUILDING DIRECTION of ANCHOR in ROOM.", "a blueprint on tha
 help("build room", "build room like ROOM.", "draws plan options for a room like that room or layout")
 help("build option", "build option N.", "blueprints for plan option N drawn by build room like")
 help("build at", "build BUILDING made of STUFF at SPOT facing SIDE.", "one blueprint exactly on that cell; made of STUFF and facing SIDE may be left out")
+# User 2026-10-17 (AgentInstall.cs; the user's rows, "As shown").
+help("build at", "build ITEMID at SPOT facing SIDE.", "installs that packed item; facing SIDE may be left out")
+help("build", "install NAME.", "same as build NAME: packed NAMEs on the map are listed first, with their IDs")
+help("build at", "build new BUILDING at SPOT.", "a new one even when packed ones lie on the map")
 help("build anywhere", "build BUILDING anywhere.", "for a building that fits one kind of spot only: a geothermal generator on the nearest free steam geyser in view")
 help("build near", "build COUNT BUILDING made of STUFF near SPOT facing SIDE.", "blueprints on the nearest free cells to SPOT; COUNT, made of STUFF and facing SIDE may be left out")
 help("place at", "place BUILDING at SPOT facing SIDE.", "a spot (sleeping spot, butcher spot, ...) put down at once on that cell; spots are placed, never built")
 help("place near", "place COUNT BUILDING near SPOT facing SIDE.", "spots put down at once on the nearest free cells to SPOT; COUNT and facing SIDE may be left out")
 help("build line", "build BUILDING made of STUFF from AREA.", "a straight line one cell wide: wall, fence, sandbags, conduit")
 help("build floor", "build floor FLOOR in area AREA.", "floor blueprints over AREA")
+help("build floor room", "build FLOOR for ROOM.", "floors the whole room; the plan gives the cost and the stats after")
 help("build room new", "build room AREA made of STUFF door SIDE.", "walls round the edge of AREA and one door; colonists roof the closed box themselves")
 help("roof only", "build roof at AREA using PAWN.", "PAWN builds only roofs in AREA; their other construction work waits until it is done")
 help("dig room", "dig room AREA made of STUFF door SIDE.", "a room dug into rock: mines the inside, keeps rock as wall, walls the open edge, one door")
@@ -854,15 +908,13 @@ help("control group members", "put PAWNS in control group SLOT.", "adds those co
 help("control group remove", "take PAWNS out of control group SLOT.", "takes those colonists out of hotkey group SLOT")
 help("control group cleared", "clear control group SLOT.", "empties hotkey group SLOT")
 help("query control group", "show control group SLOT.", "the rule of hotkey group SLOT and who is in it now")
-help("bill add count", "add bill to make COUNT RECIPE at BENCH in ROOM.", "a bill that makes COUNT")
-help("bill add until", "add bill to make RECIPE until you have COUNT at BENCH in ROOM.", "a bill that keeps COUNT in stock")
-help("bill add forever", "add bill to make RECIPE forever at BENCH in ROOM.", "a bill that never stops")
+help("bill add count", "add bill to make COUNT RECIPE at BENCH in ROOM using PAWN.", "a bill that makes COUNT")
+help("bill add until", "add bill to make RECIPE until you have COUNT at BENCH in ROOM using PAWN.", "a bill that keeps COUNT in stock")
+help("bill add forever", "add bill to make RECIPE forever at BENCH in ROOM using PAWN.", "a bill that never stops")
 help("bill remove", "remove bill for RECIPE at BENCH in ROOM.", "deletes the bill")
 help("bill pause", "pause bill for RECIPE at BENCH in ROOM.", "pauses the bill")
 help("bill resume", "resume bill for RECIPE at BENCH in ROOM.", "resumes the bill")
-help("bill workers", "let WHO do bill for RECIPE at BENCH in ROOM.", "anyone, mechs, non-mechs or slaves may do the bill")
 help("bill pawn", "let PAWN do bill for RECIPE at BENCH in ROOM.", "only that pawn does the bill")
-help("bill skill", "set skill range MIN to MAX on bill for RECIPE at BENCH in ROOM.", "the bill's skill range")
 help("bill radius", "set ingredient radius to N on bill for RECIPE at BENCH in ROOM.", "the bill's ingredient radius")
 help("bill store", "store bill products on WHERE for RECIPE at BENCH in ROOM.", "where the bill's products go")
 help("bill ingredients only", "use only THINGS in bill for RECIPE at BENCH in ROOM.", "the bill uses only those")
@@ -871,6 +923,7 @@ help("bill ingredients forbid", "never use THINGS in bill for RECIPE at BENCH in
 help("bill repeat", "change bill for RECIPE to repeat COUNT times at BENCH in ROOM.", "also: until you have COUNT, forever")
 help("bill pause when satisfied", "pause bill for RECIPE when satisfied at BENCH in ROOM.", "an until-you-have bill pauses when full")
 help("bill unpause when satisfied", "unpause bill for RECIPE when satisfied at BENCH in ROOM.", "it no longer pauses")
+help("bill delete", "delete BILLID.", "deletes that bill (the ID from list bill PAWN has)")
 help("switch on", "switch on TARGETS in ROOM.", "switches buildings on")
 help("switch off", "switch off TARGETS in ROOM.", "switches buildings off")
 help("vent open", "open TARGETS in ROOM.", "opens vents")
@@ -903,9 +956,11 @@ for verb in DESIGNATE_VERBS:
         help("designate haul", "haul THINGS in area AREA.", DESIGNATE_HELP[verb] + "; also: haul THINGS. / haul THINGS in ROOM. / haul nearest COUNT THINGS near SPOT.")
     elif verb != "mine":
         help("designate " + verb, verb + " THINGS in area AREA.", DESIGNATE_HELP[verb] + "; also: " + verb + " THINGS. / " + verb + " THINGS in ROOM. / " + verb + " nearest COUNT THINGS near SPOT. / " + verb + " THINGS near SPOT.")
+help("designate uninstall", "uninstall ITEMID.", "uninstalls that one thing")
 help("items forbid", "forbid items of THINGS in area AREA.", "items lying there are forbidden; of THINGS and in area AREA may be left out; also: near SPOT")
 help("items unforbid", "unforbid items of THINGS in area AREA.", "items lying there may be used again; of THINGS and in area AREA may be left out; also: near SPOT")
 help("designate cancel", "cancel KIND in area AREA.", "removes marks of one kind (mining, chopping, hunting, ..., designations = all); also: cancel all KIND")
+help("cancel floor room", "cancel floor for ROOM.", "cancels the room's floor plans and removes its built floor; the plan gives what comes back")
 help("turret hold fire", "hold fire with TARGETS in ROOM.", "turrets hold fire")
 help("turret fire", "open fire with TARGETS in ROOM.", "turrets shoot again")
 help("bed medical", "set every bed in ROOM to medical.", "also: set COUNT bed in ROOM to medical")
@@ -917,6 +972,7 @@ help("drug group", "assign PAWNS to drug group NAME.", "the pawns' drug group")
 help("reading group", "assign PAWNS to reading group NAME.", "the pawns' reading group")
 help("medical care", "assign PAWNS to medicine group LEVEL.", "the medical care level of colonists, prisoners or colony animals")
 help("threat response", "set threat response of PAWNS to RESPONSE.", "flee, attack or ignore")
+help("threat response", "set combatmode RESPONSE for PAWNS.", "auto-engage, flee or ignore: what the pawn does when an enemy comes near while not drafted (the same setting as threat response; auto-engage = attack)")
 help("carry medicine", "set carry medicine of PAWNS to N MEDICINE.", "the pawns keep N (0 to 3) of that medicine in their inventory and refill it, to tend away from storage; MEDICINE may be left out")
 help("area", "restrict PAWNS to area NAME.", "the pawns' allowed area; anywhere lifts it")
 help("group things only", "put only THINGS in KIND group NAME.", "a clothing or food group allows only those")
@@ -966,6 +1022,7 @@ help("equip", "equip PAWN with WEAPON at SPOT.", "the pawn picks up and wields t
 help("wear", "have PAWN wear APPAREL at SPOT.", "the pawn puts on the clothing; at SPOT may be left out")
 help("pick up", "have PAWN pick up COUNT ITEM at SPOT.", "the pawn carries the item in its inventory; COUNT and at SPOT may be left out")
 help("drop", "have PAWN drop ITEM.", "the pawn drops what it holds, wears or carries; risky")
+help("drop", "drop ITEM for PAWN.", "the same as 'have PAWN drop ITEM.'; risky")
 help("rest", "have PAWN rest.", "the pawn goes to bed until healed")
 help("self tend on", "turn on self tend for PAWNS.", "the pawns treat their own wounds")
 help("self tend off", "turn off self tend for PAWNS.", "the pawns stop treating their own wounds")
@@ -1198,6 +1255,8 @@ function is_storage_place(text):
 # A check() answer meaning "this form does not fit at all": read_sentence() tries the next form and keeps the
 # problem an earlier form gave, so a place added last does not hide it.
 NOT_THIS_FORM = "(not this form)"
+# The forms whose ROOM may be a game room ID (user 2026-10-17).
+ROOM_ID_FORMS = ["query room stats", "build floor room", "cancel floor room"]
 
 # One storage building by its cell or its game ID (user 2026-10-07, see PLACES); "" when fine. The cell is two
 # numbers only (no name: a name says no single building), rewritten in its one form; an ID is one word from the
@@ -1385,6 +1444,20 @@ function side_name(words):
     return d
 
 # "" when fine. Runs after check_place (agent 03), so SPOT and AREA are already in their one form.
+# User 2026-10-17: "build" (and "install", the same verb) first lists the packed items of that name on the map, the
+# mod's answer (AgentInstall.cs). "If the model says "build NEW bed", only then it will build a new one": "new" comes
+# off the name and NEW = yes goes to the mod. True when the name is a packed item's game ID ("say Build {fullItemId}
+# at x,z") or on the "packed" line: the mod lists or installs those, so no other check applies.
+function packed_name(slots):
+    m = find_pattern("^new (.+)$", slots["BUILDING"])
+    if m != none:
+        slots["BUILDING"] = m[1]
+        slots["NEW"] = "yes"
+        return false
+    b = slots["BUILDING"]
+    # Only a real "packed" line counts (listed() lets every name through when there is no vocabulary).
+    return find_pattern("^minifiedthing[a-z]*[0-9]+$", b) != none or (has(VOCAB, "packed") and listed("packed", b))
+
 function check_build_place(name, slots):
     for key in ["FACING", "SIDE"]:
         if has(slots, key):
@@ -1393,12 +1466,19 @@ function check_build_place(name, slots):
                 return key + " must be north, south, east or west"
             slots[key] = d
     if has(slots, "BUILDING"):
+        if starts_with(name, "build ") and packed_name(slots):
+            return ""
         b = slots["BUILDING"]
         first = split(b, " ")[0]
         if b in NOT_A_BUILDING or first in ["room", "floor"]:
             return "'" + b + "' is not a building: a room is 'build room AREA', a floor is 'build floor FLOOR in area AREA'"
         if not listed("buildings", b):
-            return "'" + b + "' is not on the buildings line (what the colony can build now)"
+            # User 2026-10-17: the bounce says how to see the list ("list buildings." / "list CATEGORY.", AgentBuild.cs).
+            return b + " is not found, you typed it wrong. say \"list buildings\" for list of buildings that you can currently build. If you know roughly what category you know you want to build, say list [building_category], for example, list production."
+    # "build FLOOR for ROOM" read again by build_place_why (the older build form): the room is checked here too, so its
+    # reason is the one the player reads.
+    if name == "build floor room" and find_pattern("^room[0-9]+$", slots["ROOM"]) == none and not listed("rooms", slots["ROOM"]):
+        return "'" + slots["ROOM"] + "' is not a room on the map"
     if has(slots, "FLOOR") and not listed("floors", slots["FLOOR"]):
         return "'" + slots["FLOOR"] + "' is not on the floors line (the floors the colony can lay now)"
     if name == "build near":
@@ -1415,6 +1495,9 @@ function check_build_place(name, slots):
 # gives that form's problem instead ("FACING must be ..."), so the player reads the real reason. "" = none.
 function build_place_why(slots):
     line = "build " + slots["BUILDING"]
+    # "build new NAME" (packed_name took "new" off): rebuilt with it, so a packed NAME is not read as the packed item.
+    if get(slots, "NEW", "") == "yes":
+        line = "build new " + slots["BUILDING"]
     if has(slots, "STUFF"):
         line = line + " made of " + slots["STUFF"]
     line = line + "."
@@ -1842,11 +1925,15 @@ function check_new(name, slots):
         return "DEGREES must be a number"
     if bad_number(slots, "DEGREES", -273, 1000):
         return "that temperature is not possible; it must be a whole number from -273 to 1000"
-    if name == "bill workers" and not (slots["WHO"] in ["anyone", "mechs", "non-mechs", "slaves"]):
-        return "WHO must be anyone, mechs, non-mechs or slaves"
+    # "delete zone X." and the other delete forms also fit "delete {BILLID}."; only a bill ID is this form, so their
+    # own reason stays.
+    if name == "bill delete" and find_pattern("^bill_[a-z0-9_]+_[0-9]+$", slots["BILLID"]) == none:
+        return NOT_THIS_FORM
     if has(slots, "BENCH") and not listed("benches", slots["BENCH"]):
         return "'" + slots["BENCH"] + "' is not a bench on the map"
-    if has(slots, "ROOM") and slots["ROOM"] != "those" and not listed("rooms", slots["ROOM"]):
+    # User 2026-10-17: the room forms also take the game's room ID ("Room412"; RoomStats.cs).
+    room_id = name in ROOM_ID_FORMS and find_pattern("^room[0-9]+$", slots["ROOM"]) != none
+    if has(slots, "ROOM") and slots["ROOM"] != "those" and not room_id and not listed("rooms", slots["ROOM"]):
         return "'" + slots["ROOM"] + "' is not a room on the map"
     # User 2026-10-16: "EVERY pawn should have show health of [x] available." Guests, strangers, wild animals and enemies
     # are on no vocabulary line: the mod matches the name against every pawn in view (FormWave1Queries.QueryHealth).
@@ -1882,8 +1969,8 @@ function check_new(name, slots):
             return "N must be a whole number from 0 to 3 (the game's limit for carried medicine)"
         if has(slots, "MEDICINE") and not listed("carry medicines", slots["MEDICINE"]):
             return "'" + slots["MEDICINE"] + "' is not a medicine a pawn can carry; they are " + join_list(get(VOCAB, "carry medicines", []))
-    if name == "threat response" and not (slots["RESPONSE"] in ["flee", "attack", "ignore"]):
-        return "RESPONSE must be flee, attack or ignore"
+    if name == "threat response" and not (slots["RESPONSE"] in ["flee", "attack", "ignore", "auto-engage", "auto engage"]):
+        return "RESPONSE must be auto-engage, flee or ignore (attack is the same as auto-engage)"
     if name == "area" and slots["NAME"] != "anywhere" and not listed("areas", slots["NAME"]):
         return "'" + slots["NAME"] + "' is not an allowed area"
     if ends_with(name, " group") and not starts_with(name, "query "):
@@ -1965,6 +2052,9 @@ function check(name, slots):
     if name == "build":
         if has(slots, "COUNT") and not whole_number_between(slots["COUNT"], 1, 1000):
             return "COUNT must be a number"
+        # "build small sculpture." with packed small sculptures on the map: the mod lists them (packed_name).
+        if packed_name(slots):
+            return ""
         if not has(slots, "ANCHOR") and not has(slots, "ROOM"):
             why = build_place_why(slots)
             if why != "":
@@ -2304,6 +2394,10 @@ function read_sentence(line, said):
         remember(f, r["names"], r["refs"])
         # The same template filled back in: what the player would read.
         return {"kind": "ok", "line": line, "form": f["name"], "names": r["names"], "refs": r["refs"], "readback": fill(f["readback"], r["names"])}
+    # User 2026-10-17: an "add bill" sentence that fits no add form (said wrong) gets the user's line; an add form that
+    # fitted keeps its own reason.
+    if starts_with(line, "add bill ") and not starts_with(problem_form, "bill add "):
+        return {"kind": "no match", "line": line, "form": "", "why": ADD_BILL_PROPER}
     return {"kind": "no match", "line": line, "form": problem_form, "why": problem}
 
 # ==== shared rules: end ====

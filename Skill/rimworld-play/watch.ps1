@@ -5,12 +5,14 @@
 #   Monitor({ command: 'powershell -File "<skill folder>\watch.ps1"', description: 'RimWorld inbox_state events', timeout_ms: 1800000 })
 #
 # One line per NEW game event (`events` in inbox_state.json: letters, messages, pawn states; the mod rewrites the file
-# whenever AgentEvents gets one), one line when the inbox starts waiting for an answer, and one when
+# whenever AgentEvents gets one, user 2026-10-12), one line when the inbox starts waiting for an answer, and one when
 # the game stops or starts moving. Nothing else; nothing on a plain tick.
 # Lines:  EVENT seq=12 [day 5, 14h] letter: Raid (big threat, needs a choice)
 #         WAITING ask: <question>      WAITING plan   WAITING none
 #         GAME paused day 5 19h (speed Fast)   /   GAME running day 5 19h (speed Fast)
 #         NOT RUNNING: RimWorld process not found (then exits)
+#         [REMINDER] Hourly check N ... and "Hourly check N: ... vote: vote.ps1 -Name orchestrator -Check N" when the mod
+#         opens an hourly check (src\VerbalCommands\AgentHourlyCheck.cs, 2026-10-16), and once at the start if one is open.
 
 param([int]$IntervalMs = 1000)
 $state = "$env:USERPROFILE\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\inbox_state.json"
@@ -35,6 +37,17 @@ $lastWaiting = "$($j.waiting)"
 $lastUtc = "$($j.utc)"
 "WATCHING from event seq $lastSeq; game " + $(if ($lastPaused) { "paused" } else { "running" }) + " day $($j.game.day) $($j.game.hour)h (speed $($j.speed))"
 
+# The open hourly check: its batch and vote line, each time a new one opens (and the one open now, if any).
+$lastHourly = 0
+function Show-Hourly($j) {
+    if ($j -eq $null -or -not $j.PSObject.Properties["hourly"] -or $j.hourly -eq $null) { return }
+    if ([int]$j.hourly.seq -eq $script:lastHourly) { return }
+    $script:lastHourly = [int]$j.hourly.seq
+    "$($j.hourly.text)"
+    "$($j.hourly.pause_line)" -replace '-Name NAME', '-Name orchestrator'
+}
+Show-Hourly $j
+
 while ($true) {
     Start-Sleep -Milliseconds $IntervalMs
     if (-not (Get-Process -Name RimWorldWin64 -ErrorAction SilentlyContinue)) { "NOT RUNNING: RimWorld process not found"; exit 2 }
@@ -50,6 +63,7 @@ while ($true) {
             "EVENT seq=$($e.seq) [$($e.when)] $($e.kind): $($e.text)"
         }
     }
+    Show-Hourly $j
     $waiting = "$($j.waiting)"
     if ($waiting -ne $lastWaiting) {
         $lastWaiting = $waiting

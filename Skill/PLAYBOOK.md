@@ -1,7 +1,8 @@
 # Playbook: how to play RimWorld through the VerbalCommands mod (for the playing Claude)
 
-This is a manual for the instrument, not a guide to the game. You get no screen: no OCR, no screenshots, no
-dev mode. Everything you see and do goes through text files. Expect to find things that do not work and
+This is a manual for the instrument, not a guide to the game. You get no screen of your own: no OCR, no
+desktop capture, no dev mode. Everything you see and do goes through the mod's files; a picture of the
+colony is one of them (section 6, "Pictures"). Expect to find things that do not work and
 report them (section 9).
 
 `<mod folder>` below is where the mod is installed (`...\RimWorld\Mods\VerbalCommands`, or the Workshop
@@ -57,18 +58,18 @@ plain text.
   "you can only unpause/pause, play at 1x/2x/3x speed"). An earlier agent session sent 63 runs; they sat on
   hold behind windows it had left open (a research-finished box 5 times, a comms call it opened itself, the
   escape menu), and 7 times it sent a new run on top of one that was on hold ("replaced by a new run").
-- Time moves only with `set game speed to normal.` (1x), `set game speed to fast.` (2x) or `set game speed
-  to superfast.` (3x), sent with `mode: raw apply`.
+- Time moves only with `set game speed to normal.` (1x), sent with `mode: raw apply`. 2x and 3x are not
+  allowed (user, 2026-10-16: "STOP AGENTS PLAYING RIMWORLD PLAY TO RUN AT 2X SPEED AND 3X SPEED."; a hook blocks them).
 - The agent never pauses the game unless necessary, e.g. busy doing tasks like writing memos, checking game
   status, reading memos, delegating tasks to other agents. Earlier rule it replaces: "Game should *not* be
   paused by you (it already pauses itself for most message events)." So: `set game speed to paused.` only
   for such a task, and unpause as soon as it is done; never leave the game paused while idle or waiting.
 - One such task, required: at the end of every game day (hour 0 of the next), pause with `set
-  game speed to paused.` (`mode: raw apply`), write `<skill folder>\play_log\day_NN.md` (what you did today;
+  game speed to paused.` (`mode: raw apply`), write `<SaveData>\VerbalCommands\play_sessions\day_NN.md` (what you did today;
   short-term goal and why; long-term goal and why; which pawns to secure and the reasoning; one line against
   the human's same day in `reference_play\...analysis.md`), then `show windows.`, close what holds the
   pause, and set the speed again. Template at the top of the reference file.
-- Before starting another day, read the previous day's note(s) in `play_log\day_NN.md`: at session start
+- Before starting another day, read the previous day's note(s) in `play_sessions\day_NN.md`: at session start
   the newest two at least, and at every day turn the one just before the note you are writing. Check the
   new note against it; a goal dropped or a pawn no longer secured is said, with why.
 - Before you unpause: `show windows.`. Close whatever holds the pause first (`close window.` or `close window
@@ -118,6 +119,13 @@ plain text.
   to 140, 110.`; layers: terrain, resources, buildings, roof, creatures. `where is nearest steel.`,
   `where is nearest berries to steam geyser 1.`, `where are ship chunks.`, `list mountains on map.` (rock
   faces, overhead mountain, ore in view).
+- Pictures: `show picture around SPOT.` (the game's own view, 41 by 41 cells centred on SPOT) and
+  `show picture of AREA.` (centred on the middle of AREA, zoomed so all of it is in the frame). Examples:
+  `show picture around 120, 135.`, `show picture around Bob.`, `show picture around steam geyser 1.`,
+  `show picture around 6 tiles north of Carl.`, `show picture of 100, 80 to 140, 110.`,
+  `show picture of 30 by 30 around Bob.` The answer names the PNG (`picture.png` in the outbox folder); it
+  appears once the game has drawn the frame, then open it with the Read tool. North is up; the game's UI is in
+  it, cell numbers are not. If it does not come, `failed to make picture_png.md` in the same folder says why.
 - What you set up: `show zones.`, `show areas.`, `show blueprints.`, `show bills at BENCH.`,
   `show storage of zone Stockpile zone 1.`, `show building campfire.`, `show designations.`,
   `show wildlife.`, `show research.`, `show research path to PROJECT.`

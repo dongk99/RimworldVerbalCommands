@@ -1,10 +1,10 @@
 # Launches RimWorld and auto-loads a colony save, then confirms the colony is up through the VerbalCommands inbox.
 #   launch_game.ps1                              newest .rws in Saves\ (Autosave-N included), via Steam
-#   launch_game.ps1 -Save "My colony"            that save (name without .rws)
-#   launch_game.ps1 -Exe [-ExePath <path>]      start RimWorldWin64.exe directly (found through Steam's registry key, or given) instead of steam://rungameid/294100
+#   launch_game.ps1 -Save "Fable 5.1 colony 2"   that save (name without .rws)
+#   launch_game.ps1 -Exe [-ExePath <path>]      start RimWorldWin64.exe directly (found through the Steam libraries, or given) instead of steam://rungameid/294100
 #   launch_game.ps1 -NoProbe                     do not send "show status." after launch
 #
-# How the load works (verified in the decompiled game sources, RimWorld 1.6):
+# How the load works (verified in sources\RimWorldDecompiled, RimWorld 1.6):
 #   Verse\Root_Entry.cs:18-23   at the main menu the game calls SaveGameFilesUtility.GetAutostartSaveFile() once and,
 #                                if it returns a file, GameDataSaveLoader.LoadGame(file).
 #   Verse\SaveGameFilesUtility.cs:42-49   returns the save named "autostart" (case-insensitive), and ONLY if Prefs.DevMode.
@@ -32,10 +32,8 @@ $prefsXml = Join-Path $dataRoot "Config\Prefs.xml"
 $autostart = Join-Path $savesDir "autostart.rws"
 $exePath = $ExePath
 if ($exePath -eq "") {
-    # Steam install folder from the registry, then the default library.
-    $steamRoot = $null
-    try { $steamRoot = (Get-ItemProperty "HKCU:\Software\Valve\Steam" -ErrorAction Stop).SteamPath } catch { }
-    if ($steamRoot) { $exePath = Join-Path $steamRoot "steamapps\common\RimWorld\RimWorldWin64.exe" }
+    . (Join-Path $PSScriptRoot "find_mod.ps1")
+    if ($RimWorldDir) { $exePath = Join-Path $RimWorldDir "RimWorldWin64.exe" }
 }
 $steamAppId = 294100
 

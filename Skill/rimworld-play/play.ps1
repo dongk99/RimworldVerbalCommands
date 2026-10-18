@@ -9,48 +9,33 @@ param(
 # One call for a whole step of play: reply, plans, orders, a run that is waited for, then questions.
 #   play.ps1 -Do "restrict Stumpy to area base." -Run 4 -Ask "show events. show status."
 #   play.ps1 -Plan "hunt snowhare."      then      play.ps1 -Reply apply
+# Every step prints send.ps1's whole output (tips, reminders, the outbox JSON), nothing picked out (user, 2026-10-16:
+# "fix existing powershell so everything prints"; it used to print a few fields and dropped the reminders, and its
+# ConvertFrom-Json failed whenever send.ps1's Write-Host tip or reminder lines came before the JSON).
 $send = Join-Path $PSScriptRoot "send.ps1"
 $state = "$env:USERPROFILE\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\inbox_state.json"
 
 function Send-Order([string[]]$sendArgs) {
     if ($Model -ne "") { $sendArgs = $sendArgs + @("-Model", $Model) }
-    powershell -File $send @sendArgs | Out-String | ConvertFrom-Json
-}
-function Show-Actions($r) {
-    $r.actions | ForEach-Object { "  " + $_.result + " | " + $_.description + " | " + $_.reason }
-    $r.reasons
-}
-# Tips the mod adds to a result (TipInjector.cs); printed after each step's own lines.
-function Show-Tips($r) {
-    $r.tips | ForEach-Object { "TIP: " + $_ }
+    powershell -File $send @sendArgs
 }
 
 if ($Reply -ne "") {
-    $r = Send-Order @("-Reply", $Reply)
-    "REPLY $Reply -> " + $r.result
-    Show-Actions $r
-    Show-Tips $r
+    "REPLY $Reply ->"
+    Send-Order @("-Reply", $Reply)
 }
 foreach ($p in $Plan) {
-    $r = Send-Order @("-Text", $p)
-    "PLAN [$p] -> " + $r.result + $(if ($r.risky) { " (RISKY)" } else { "" })
-    $r.plan_lines
-    $r.notes
-    $r.reasons
-    Show-Tips $r
+    "PLAN [$p] ->"
+    Send-Order @("-Text", $p)
 }
 foreach ($d in $Do) {
-    $r = Send-Order @("-Text", $d, "-Mode", "raw apply")
-    "DO [$d] -> " + $r.result
-    Show-Actions $r
-    Show-Tips $r
+    "DO [$d] ->"
+    Send-Order @("-Text", $d, "-Mode", "raw apply")
 }
 if ($Run -gt 0) {
     $tick0 = (Get-Content $state -Raw | ConvertFrom-Json).game.tick
-    $r = Send-Order @("-Text", "run $Run hours.", "-Mode", "raw apply")
-    "RUN $Run -> " + $r.result
-    $r.reasons
-    Show-Tips $r
+    "RUN $Run ->"
+    Send-Order @("-Text", "run $Run hours.", "-Mode", "raw apply")
     # inbox_state.json is written when the game starts running and when it pauses again (not every 5 s any more):
     # the run has started once it shows the game running, or a later tick (a run short enough to end between looks).
     $moved = $false
@@ -65,9 +50,6 @@ if ($Run -gt 0) {
     "now: day index " + $j.game.day + " hour " + $j.game.hour + " tick " + $j.game.tick
 }
 if ($Ask -ne "") {
-    $r = Send-Order @("-Text", $Ask)
-    "ASK -> " + $r.result
-    $r.answers
-    $r.reasons
-    Show-Tips $r
+    "ASK ->"
+    Send-Order @("-Text", $Ask)
 }

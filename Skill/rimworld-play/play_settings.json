@@ -3,5 +3,24 @@
   "disableClaudeAiConnectors": true,
   "autoMemoryEnabled": false,
   "skillOverrides": {
+    "router-lab-run-diff": "off",
+    "built-in-browser": "off",
+    "chain-of-custody": "off",
+    "chrome-browser": "off",
+    "computer-use": "off",
+    "deep-research": "off",
+    "anthropic-skills:deep-research": "off",
+    "deltav-lookup": "off",
+    "docs": "off",
+    "docx": "off",
+    "google-workspace": "off",
+    "import-memory": "off",
+    "ksp-isru-chain": "off",
+    "morning": "off",
+    "pdf": "off",
+    "pptx": "off",
+    "skill-creator": "off",
+    "slot-trace": "off",
+    "xlsx": "off"
   }
 }

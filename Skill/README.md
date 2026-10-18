@@ -17,23 +17,10 @@ What is here:
    `delegates\`. In Claude Code the session then needs the `Agent`, `SendMessage` and `TaskStop` tools enabled
    (`launch_play.ps1` lists them).
 
-The skill reads `PLAYBOOK.md`, `Tips\INDEX.md` and `reference_play\...analysis.md` from the installed mod
-folder, so the mod must stay where RimWorld loads it from. The agent writes its own notes to
-`rimworld-play\play_log\` in its skill folder; nothing is written to the mod folder, the game's `Config`
-folder or the saves.
+The skill reads `PLAYBOOK.md`, `..\Tips\INDEX.md`, `reference_play\...analysis.md` and `delegates\` from the installed mod folder, so the mod must stay where RimWorld loads it from. The agents write their day notes to `<SaveData>\VerbalCommands\play_sessions\` and the specialists' files to `<SaveData>\VerbalCommands\delegates\` (`<SaveData>` = `%USERPROFILE%\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios`); nothing is written to the mod folder, the game's `Config` folder or the saves.
 
-## Optional: resume after a compaction
-`resume_hook.ps1` prints the newest `play_log\day_*.md` back into the context after `/compact`, only in the
-session that is playing. Add to `%USERPROFILE%\.claude\settings.json`:
-```
-"hooks": {
-  "SessionStart": [
-    { "matcher": "compact",
-      "hooks": [ { "type": "command",
-                   "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"%USERPROFILE%\.claude\skills\rimworld-play\resume_hook.ps1\"" } ] }
-  ]
-}
-```
+## Hooks
+See `..\Hook_list_for_setup.md`.
 
 ## Scripts
 - `send.ps1 -Text "show status."` : one order in, the outbox JSON out. `-Mode "raw apply"` applies at once;
@@ -45,4 +32,5 @@ session that is playing. Add to `%USERPROFILE%\.claude\settings.json`:
   (through Steam by default) and waits for the colony to answer. It turns dev mode on in `Prefs.xml` for the
   autostart load; turn it off in Options if unwanted.
 - `launch_play.ps1` : Claude Code with `play_settings.json` (bundled skills and connectors off; add your
-  own skills to `skillOverrides` as `"off"`) and the tools PowerShell, Read, Edit, Write, Glob, Grep.
+  own skills to `skillOverrides` as `"off"`) and the tools PowerShell, Read, Edit, Write, Glob, Grep, Skill, Monitor, Agent, SendMessage, TaskStop.
+- `pawns_watch.ps1`, `hostiles_watch.ps1`, `wait_for.ps1`, `wait_round.ps1`, `vote.ps1`, `clear.ps1`: see `rimworld-play\SKILL.md`.

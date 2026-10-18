@@ -64,7 +64,8 @@ and had zero recorded harm in 1,680 logged orders (router logs 2026-10-03..13) a
 
 - every question;
 - schedule changes; work priorities and `stop PAWN doing WORK`;
-- clothing / food / drug / reading / medicine group assignment, fire at will, bed assignment (not bed role);
+- clothing / food / drug / reading / medicine group assignment, fire at will, combatmode (`set combatmode
+  auto-engage|flee|ignore for PAWNS.`, the game's threat response), bed assignment (not bed role);
 - storage filters and priorities on existing zones and shelves; forbid / unforbid **near a spot inside the
   base** (never map-wide: see 2);
 - equip and wear (the item must be in view; "No X in view" is a harmless failure);
@@ -117,7 +118,20 @@ A specialist is one `Agent` call that loops:
 
 The orchestrator answers a proposal by resuming the specialist with `SendMessage` (the same agent, its context
 kept): `P3 approved, send it`, `P3 denied: <why>`, or `P3 edited: <sentence>; send that`. For a build the
-orchestrator sends the order itself and tells the specialist what now stands where. The orchestrator stops a
+orchestrator sends the order itself and tells the specialist what now stands where. `list buildings.` lists
+what the colony can build now, by category; `list CATEGORY.` one category (`list production.`). Every new bill
+names its pawn: `add bill to make COUNT RECIPE at BENCH in ROOM using PAWN.`; `list bill PAWN has.` gives that
+pawn's bills with their IDs, `delete BILLID.` deletes one; `what can PAWN create.` lists what the pawn can make.
+Packed items (user, 2026-10-17): `build NAME` (`install` is the same) first lists the packed NAMEs on the map with
+their IDs; `build ITEMID at X, Z.` installs one, `build new NAME at X, Z.` builds a new one instead. An uninstall that
+matches several things lists them with IDs; `uninstall ITEMID.` takes one. Rooms (user, 2026-10-17): `show ROOM stats.`
+gives each room of that name with its room ID (`Room412`), buildings, impressiveness, beauty, cleanliness, space,
+wealth, which of them matter for it, and its bills; `build FLOOR for ROOM.` floors the whole room (the plan gives the
+cost and the stats after); `cancel floor for ROOM.` cancels its floor plans and removes its built floor (the plan gives
+what comes back). A room ID changes when the game loads or the room's walls or doors change. A room with a
+hydroponics basin is named `growroom` everywhere (`show growroom stats.` lists each one with its ID). Every 12 game hours
+a `[REMINDER] 12-hour check (rooms)` block lists each room: stats, the stats that matter, bills, and for every floor the
+colony can lay its cost and the beauty, cleanliness and impressiveness after (affordable floors first). The orchestrator stops a
 specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`. Lift a stop with
 `powershell -File "<skill folder>\clear.ps1" -Stop <name>` (or `-Stop ALL`): the hooks allow no Remove-Item.
 
@@ -131,9 +145,27 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
 - Your plan/apply pairs still pause while the plan waits; `send.ps1` makes a specialist that collides with it
   wait and retry (up to 120 s), so finish a pair promptly.
 - Speed, windows and letters stay yours. Specialists never touch them.
+- Pawns watch (user, 2026-10-17: "The agent orchestrator doesnt know if pawns are being actively attacked/chased."):
+  `pawns_watch.ps1`, armed with Monitor next to `watch.ps1` (SKILL.md step 2c), prints every colonist, slave,
+  prisoner, guest, visitor, trader, ally and other non-hostile pawn with health, conditions and recovery estimates,
+  gear held and carried, medicine and combatmode, again on any change (1% steps) or a move of 3 cells; `NAME being
+  attacked by SOURCE`, `NAME being chased by SOURCE`, `NAME being engaged in melee on X, Z from shooting, being
+  attacked by SOURCE` (a ranged pawn in melee: shooting does not work at that range; move them out or fight back) and
+  the line when it ends; `PAWN LEFT` with why (died, recruited, left the map, ...). Act on an attack line at once.
+- `HOSTILES ON MAP: ...` (pawns watch): spawn the hostile_watch specialist (section 6, `briefs\hostile_watch.md`)
+  if it is not running, while you deal with the threat. It watches `hostiles_watch.ps1` and returns to you with a
+  report on every new enemy, every enemy attacking, chasing or within 10 cells of one of ours, every enemy downed or
+  gone; resume it with `SendMessage` (`go on watching`) after you acted. It ends itself on `HOSTILES GONE`.
 - Hourly check (user, 2026-10-16: "Every goddamn subagent AND ORCHESTRAOR votes to UNPAUSE."): the game stays
   paused until you and every running specialist have voted. On `Hourly check N` (watcher or a result): read the
   batch, act, then `powershell -File "<skill folder>\vote.ps1" -Name orchestrator -Check N`.
+  A specialist leaves the vote when its call ends (`subagent_stop_hook.ps1` deletes its heartbeat), and a stop file
+  takes it off at the next vote. After `TaskStop` or a stop by the user, take it off with
+  `powershell -File "<skill folder>\clear.ps1" -Beat <name>`.
+  Rotting food lines in it (2026-10-17): `[ITEM, QTY] is being rotten in ROOM (RoomID)` (indoors: build a fridge room) and
+  `... outdoors in (x, z) to (x, z)` (a 10x10 square). `haul ITEM.` then sends colonists to that square: the mod asks
+  which pawns (with hours to get there), answer with names; forbidden items there are unforbidden. With nothing of
+  that item rotting outdoors, `haul ITEM.` only marks items for hauling, as before.
 - Play decisions are yours too: never put one to the user as a question. Asked "hunt the megasloth with Zimmerman?"
   with options, the user answered "[cannot] I cannot make decision for the orchestrator." (2026-10-14). Weigh it,
   choose, act, and write the choice and why in the day note.
@@ -184,6 +216,11 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
   `mine` or `cancel`; answer it yourself when a specialist returns with it).
 - Each specialist's `status\<name>.md` is one glance; read them at each day turn and put a line per specialist
   in the day note. Delete stale `msg\` files you wrote before they were read if the plan changed (`clear.ps1 -Msg <name>`).
+- Bills in the day note (user, 2026-10-17: "daytoday handoff from now, include every bill the colonist currently has
+  in there."): at each day turn, send `list bill NAME has.` for every colonist and copy each answer, IDs included,
+  under the colonist's name in `play_sessions\day_NN.md`. The mod also writes them every game hour to
+  `<SaveData>\VerbalCommands\bills.md`; a hook (`bills_hook.ps1`) puts that file into your context after your next
+  tool call whenever it changed, and again after a compaction.
 - Ownership conflicts are settled by you, in the briefs, not in the game: bills (crafter time, materials) vs
   work priorities (who crafts) vs schedule (when). The briefs say what each one owns and must not touch.
 - Starting order on a new session: schedule → work_priority → equipment_config → storage_zones → bills →
@@ -199,6 +236,7 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
 | equipment_config | equip, wear, medicine level, food/clothing groups, fire at will, self-tend | 12 h | `briefs\equipment_config.md` |
 | bills | proposes bills (food, clothing, manufacturing); sends approved ones; pauses / resumes | 6 h | `briefs\bills.md` |
 | storage_zones | filters and priorities of existing storage; `move chunks.` (moves all stone chunks inside rooms to stockpile, if there is one, to make rooms prettier); proposes new zones | 12 h | `briefs\storage_zones.md` |
+| hostile_watch | the hostile list (`hostiles_watch.ps1`): reports enemies, their weapons, health and targets; questions only. Spawned on `HOSTILES ON MAP`, ends on `HOSTILES GONE` (user, 2026-10-17) | every change of the hostile list | `briefs\hostile_watch.md` |
 | expediter | `prioritize WORK at X, Z with PAWN` inside the base: material to blueprints, builders to frames, miners to marks (user, 2026-10-13); the micro orders `mine near X, Z with PAWNS.`, `mine in area AREA with PAWNS.`, `haul from X, Z with PAWNS.`, `mine nearest [COUNT] THINGS near X, Z with PAWNS.`, `mine THINGS near X, Z with PAWNS.`, `mine THINGS in area AREA with PAWNS.`, `haul THINGS near X, Z with PAWNS.` inside the base (user, 2026-10-16) | 2 h | `briefs\expediter.md` |
 
 ## 6. Spawning (what the orchestrator types)
@@ -207,9 +245,9 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
 Agent({ subagent_type: "general-purpose", model: "haiku", effort: "high",
   description: "RimWorld schedule specialist",
   prompt: "You are the schedule specialist for a RimWorld colony played through the VerbalCommands inbox.
-    Read <P>\agent_player\delegates\COMMON.md first (write <P> out as the full project path),
-    then delegates\briefs\schedule.md, then delegates\notes\schedule.md if it exists, then the newest
-    play_sessions\day_NN.md. Follow COMMON.md's round exactly. Orchestrator's standing direction for this call:
+    Read <mod folder>\Skill\delegates\COMMON.md first, then <mod folder>\Skill\delegates\briefs\schedule.md,
+    then <SaveData>\VerbalCommands\delegates\notes\schedule.md if it exists, then the newest
+    <SaveData>\VerbalCommands\play_sessions\day_NN.md (write both folders out in full). Follow COMMON.md's round exactly. Orchestrator's standing direction for this call:
     <one or two lines: current goals, pawns to secure, anything the specialist must not touch today>." })
 ```
 The same for each name. Keep the direction line current: it is the only thing the specialist knows about

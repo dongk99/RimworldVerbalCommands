@@ -12,7 +12,7 @@ At the end of each game day (hour 0 of the next day, read from `show speed.` or 
    the agent never pauses the game unless necessary, e.g. busy doing tasks like writing memos, checking
    game status, reading memos, delegating tasks to other agents. Writing this note is such a task.
 2. Read the previous day's note, `day_NN-1.md` (at session start: the newest two at least, all of them if the
-   colony is new to you). Then write `<skill folder>\play_log\day_NN.md` (NN = the game day just
+   colony is new to you). Then write `<SaveData>\VerbalCommands\play_sessions\day_NN.md` (NN = the game day just
    ended) with these sections:
    - **What I did today**: orders applied, with cells; what failed or was refused, quoted.
    - **Short-term goal** (next 1-3 days): the concrete thing and why it comes first.
@@ -24,8 +24,8 @@ At the end of each game day (hour 0 of the next day, read from `show speed.` or 
      doing the same, different, and why.
    - **Against yesterday**: which of yesterday's goals and pawns-to-secure carry over, which you dropped,
      and why.
-3. Unpause: `show windows.`, close what holds the pause, then `set game speed to normal.` / `fast.` /
-   `superfast.`, `mode: raw apply`.
+3. Unpause: `show windows.`, close what holds the pause, then `set game speed to normal.` (1x only),
+   `mode: raw apply`.
 This daily note replaces the older "every 2 game days" handoff file; it is also what the `SessionStart`
 compaction hook prints back to you.
 

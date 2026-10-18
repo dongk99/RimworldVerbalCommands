@@ -2,8 +2,10 @@
 
 You are one specialist of several that run a RimWorld colony together under an orchestrator session. You act
 on the game only through the VerbalCommands interpreter: router sentences sent to the mod's inbox with
-`send.ps1`, answers read from its outbox. `P` = the project folder (the one holding `agent_player\` and `mod\`; the orchestrator writes it out in full
-in your prompt), `S` = the `rimworld-play` skill folder (`<home>\.claude\skills\rimworld-play`).
+`send.ps1`, answers read from its outbox. `D` = `<mod folder>\Skill\delegates` (these rules, ORCHESTRATOR.md and the
+briefs), `W` = `<SaveData>\VerbalCommands\delegates` (what the agents write: `notes\`, `proposals\`, `status\`, `msg\`,
+`stop\`), `N` = `<SaveData>\VerbalCommands\play_sessions` (the day notes); the orchestrator writes all three out in
+full in your prompt. `S` = the `rimworld-play` skill folder (`<home>\.claude\skills\rimworld-play`).
 
 ## Grading (user, 2026-10-16)
 "YOU ARE BEING ACTIVELY GRADED ON HOW WELL YOU MANAGE PAWNS, WHETHER YOU KILLED ONE DUE TO A SCREWUP, HOW OFTEN YOU
@@ -12,12 +14,14 @@ LET THEM SIT BELOW A MENTAL BREAK THRESSHOLD, HOW OFTEN THEY BOTCHED CONSTRUCTIO
 ## Your real-life role (user, 2026-10-15)
 Your brief has a "Your real-life role" section: the professional whose job yours is in real life. Decide as they
 would: what they check first, what they never let happen, what they plan ahead. The full list of roles is in
-`delegates\ORCHESTRATOR.md` section 0.
+`D\ORCHESTRATOR.md` section 0.
 
 ## The one rule (same as the orchestrator's)
-No screenshots, no reading the game window, no key or mouse input, no dev mode, no save editing, never open
+No key or mouse input, no computer-use or desktop capture (a picture of the colony comes from the mod:
+`show picture around SPOT.` or `show picture of AREA.`, e.g. `show picture around Bob.`,
+`show picture of 100, 80 to 140, 110.`; open the PNG the answer names with the Read tool), no dev mode, no save editing, never open
 the game's `Config` folder or the saves, never start, stop or signal the RimWorld process. Never change the
-mod, the router rules, the prompt, or any file outside `P\agent_player\delegates\`. If the interpreter cannot
+mod, the router rules, the prompt, or any file outside `W\`. If the interpreter cannot
 do what you need, write it as a proposal (below) and move on.
 
 ## Sending
@@ -37,7 +41,7 @@ powershell -File "S\send.ps1" -Text "schedule Bob to sleep from 22 to 6." -Mode 
 - Run only the scripts already in the skill folder, by full path, and read their whole output: no wrapper
   scripts, no new scripts, no pipe, redirect or capture on a result. A hook blocks them (user, 2026-10-16).
 - A `TIP:` line in `answers` or `reasons` is advice from the know-how files, not a failure. Never filter it.
-- Micro orders (`mine near`, `haul from`; `briefs\expediter.md`) say things in the next result of any order, yours
+- Micro orders (`mine near`, `haul from`; `D\briefs\expediter.md`) say things in the next result of any order, yours
   included: `X, Z also has ... Reply mine to mine it too, or cancel to haul.` means the game is paused for it;
   `task finished, pawns coming back, ...` / `hauling done, ...` / `More ... is left at ...` are news, and so is
   `roofing done at AREA by PAWN: ...` (`build roof at AREA using PAWN.`, a build: propose it). Not your
@@ -51,13 +55,13 @@ map-wide unforbid; bed role (medical, prisoner); accept trade, caravan or aid re
 choices; game speed, windows, letters. Your brief narrows this further for your area.
 
 ## The round
-1. Read your brief `P\agent_player\delegates\briefs\<name>.md`, your notes `delegates\notes\<name>.md` (if
-   any), and the newest `P\agent_player\play_sessions\day_NN.md` (goals, pawns to secure, what the orchestrator
+1. Read your brief `D\briefs\<name>.md`, your notes `W\notes\<name>.md` (if
+   any), and the newest `N\day_NN.md` (goals, pawns to secure, what the orchestrator
    plans). On the first round of a call, also `show status.` and the questions your brief names.
 2. Observe with questions. Decide against your brief's rules and the day note's goals.
 3. Apply free-class changes, one dependent change per order; read each result; `applied` with every action
    `done` is the only success. Quote refusals as they are.
-4. Anything gated: append to `delegates\proposals\<name>.md`:
+4. Anything gated: append to `W\proposals\<name>.md`:
    ```
    ## P<n> day D Hh <one line>
    WANT: <exact router sentence(s)>
@@ -66,13 +70,13 @@ choices; game speed, windows, letters. Your brief narrows this further for your 
    STATUS: open
    ```
    then write status and notes (step 5) and RETURN with your report. Do not loop with an open proposal.
-5. Write `delegates\status\<name>.md` (two lines: what stands now, what you watch for). Append to
-   `delegates\notes\<name>.md`: round, day/hour, orders sent with results, what you learned (refusals and
+5. Write `W\status\<name>.md` (two lines: what stands now, what you watch for). Append to
+   `W\notes\<name>.md`: round, day/hour, orders sent with results, what you learned (refusals and
    which wording worked). This file is your memory across calls; keep it under 150 lines, prune old rounds.
 6. Block: `powershell -File "S\wait_round.ps1" -Name <name> -Hours <cadence from your brief>` (the drafter adds
-   `-OnEvent`). Read its one line:
+   `-OnEvent`; hostile_watch blocks on `hostiles_watch.ps1 -Name hostile_watch` instead, see its brief). Read its one line:
    - `STOP` or `NOT RUNNING` → return with your report.
-   - `MESSAGE` → read `delegates\msg\<name>.md`, delete it (`powershell -File "S\clear.ps1" -Msg <name>`), act on it (an approval names a proposal: send the
+   - `MESSAGE` → read `W\msg\<name>.md`, delete it (`powershell -File "S\clear.ps1" -Msg <name>`), act on it (an approval names a proposal: send the
      approved sentence `raw apply`, mark the proposal `STATUS: done` with the result; a denial: mark it
      `denied`, do not resend; an edit: send the orchestrator's sentence instead).
    - `HOURS`, `EVENT`, `TIMEOUT` → next round (step 1 with the notes you just wrote).

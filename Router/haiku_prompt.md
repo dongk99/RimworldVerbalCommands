@@ -25,6 +25,8 @@ build room like ROOM.
 build option N.
 build BUILDING anywhere.
 build BUILDING at SPOT.
+build new BUILDING at SPOT.
+build ITEMID at SPOT.
 build BUILDING near SPOT.
 build COUNT BUILDING near SPOT.
 place BUILDING at SPOT.
@@ -32,6 +34,7 @@ place BUILDING near SPOT.
 place COUNT BUILDING near SPOT.
 build BUILDING from AREA.
 build floor FLOOR in area AREA.
+build FLOOR for ROOM.
 build room AREA.
 build ROOMTYPE AREA.
 build barracks AREA with COUNT beds.
@@ -40,6 +43,7 @@ dig room AREA.
 cancel blueprint at SPOT.
 cancel blueprint BUILDING at SPOT.
 cancel blueprint in area AREA.
+cancel floor for ROOM.
 assign PAWN to bed in ROOM.
 keep PAWNS in ROOMS.
 schedule PAWNS to ASSIGNMENT from HOUR to HOUR.
@@ -74,6 +78,7 @@ equip PAWN with WEAPON at SPOT.
 have PAWN wear APPAREL at SPOT.
 have PAWN pick up COUNT ITEM at SPOT.
 have PAWN drop ITEM.
+drop ITEM for PAWN.
 have PAWN rest.
 turn on self tend for PAWNS.
 turn off self tend for PAWNS.
@@ -92,20 +97,19 @@ put everyone with SKILL from MIN to MAX in control group SLOT.
 put PAWNS in control group SLOT.
 take PAWNS out of control group SLOT.
 clear control group SLOT.
-add bill to make COUNT RECIPE at BENCH in ROOM.
-add bill to make RECIPE until you have COUNT at BENCH in ROOM.
-add bill to make RECIPE forever at BENCH in ROOM.
+add bill to make COUNT RECIPE at BENCH in ROOM using PAWN.
+add bill to make RECIPE until you have COUNT at BENCH in ROOM using PAWN.
+add bill to make RECIPE forever at BENCH in ROOM using PAWN.
 remove bill for RECIPE at BENCH in ROOM.
 pause bill for RECIPE at BENCH in ROOM.
 resume bill for RECIPE at BENCH in ROOM.
-let WHO do bill for RECIPE at BENCH in ROOM.
 let PAWN do bill for RECIPE at BENCH in ROOM.
-set skill range MIN to MAX on bill for RECIPE at BENCH in ROOM.
 set ingredient radius to N on bill for RECIPE at BENCH in ROOM.
 store bill products on WHERE for RECIPE at BENCH in ROOM.
 use only THINGS in bill for RECIPE at BENCH in ROOM.
 allow THINGS in bill for RECIPE at BENCH in ROOM.
 never use THINGS in bill for RECIPE at BENCH in ROOM.
+delete BILLID.
 switch on TARGETS in ROOM.
 switch off TARGETS in ROOM.
 switch on TARGETS at SPOT.
@@ -126,6 +130,7 @@ VERB THINGS in ROOM.
 VERB nearest COUNT THINGS near SPOT.
 VERB nearest THINGS near SPOT.
 VERB THINGS near SPOT.
+uninstall ITEMID.
 forbid items of THINGS.
 forbid items of THINGS in area AREA.
 forbid items of THINGS near SPOT.
@@ -145,6 +150,7 @@ assign PAWNS to reading group NAME.
 assign PAWNS to medicine group LEVEL.
 set carry medicine of PAWNS to N MEDICINE.
 set threat response of PAWNS to RESPONSE.
+set combatmode RESPONSE for PAWNS.
 restrict PAWNS to area NAME.
 put only THINGS in KIND group NAME.
 put THINGS in KIND group NAME.
@@ -209,6 +215,7 @@ show food.
 show power.
 show temperature.
 show temperature of ROOM.
+show ROOM stats.
 show mood of PAWN.
 show zones.
 show areas.
@@ -220,6 +227,8 @@ I need tips on NAME.
 I need tips for NAME.
 what does BREAK do.
 list breaks.
+list buildings.
+list CATEGORY.
 show gear of PAWN.
 show work of PAWN.
 show work.
@@ -231,6 +240,8 @@ show bed of PAWN.
 show settings of PAWN.
 show bills at BENCH in ROOM.
 show bills at BENCH at SPOT.
+list bill PAWN has.
+what can PAWN create.
 show storage PLACE.
 show storage of zone ZONE.
 show places that store THINGS.
@@ -281,13 +292,13 @@ SLOTS
 - Area NAME: home, roof (build roof), no roof (remove roof, keep open to the sky), snow clear, or an allowed area from "areas". "area roof remove" and "area no roof remove" clear the roof marks ("ignore roofs"). Colonists roof a closed box of walls by themselves: write "area roof add" only when the player asks for a roof. A new allowed area: "create area NAME over AREA", NAME the player's word.
 - A zone or area made in this order has no name the game knows yet: its priority, filter change, rename or "restrict PAWNS to area" go in a later order.
 - DIRECTION: north, south, east, west, northeast, northwest, southeast or southwest. up/top = north, down/bottom = south, left = west, right = east.
-- ROOM, ROOMS, BENCH, BUILDING, PAWN, PAWNS, WORKTYPE, ASSIGNMENT, SLOT, DOOR, LEVEL: copy from VOCABULARY exactly. PAWNS may be "everyone"; WHO (bill workers): anyone, mechs, non-mechs or slaves.
+- ROOM, ROOMS, BENCH, BUILDING, PAWN, PAWNS, WORKTYPE, ASSIGNMENT, SLOT, DOOR, LEVEL: copy from VOCABULARY exactly. PAWNS may be "everyone".
 - TARGETS: buildings copied from the VOCABULARY line that fits: switchable, vents, temperature controls, fuelled, turrets (anything in the vocabulary for forbid/unforbid). Or "those".
 - Power: a "power switch" is a building on the conduit line that cuts everything behind it off when switched off (to save power, mostly for defenses). One of several: "switch off power switch at SPOT." with the cell the player said; all of them: "switch off power switch." How much power, excess or battery charge: show power.
-- RECIPE: copy from the "recipes" for that BENCH in VOCABULARY, else the player's words. A bill always needs its BENCH.
+- RECIPE: copy from the "recipes" for that BENCH in VOCABULARY, else the player's words. A bill always needs its BENCH; a new bill also its PAWN (using PAWN). BILLID: copy from the answer of list bill PAWN has. ITEMID: copy from the list a build or uninstall answer gives ("MinifiedThing311669"). "install" = "build": a packed thing of that name is listed first; "build new BUILDING" builds a new one. In show ROOM stats, build FLOOR for ROOM and cancel floor for ROOM, ROOM may also be a room ID from show ROOM stats ("Room412").
 - NAME for a group or area: copy from VOCABULARY (clothing groups, food groups, drug groups, reading groups, areas); "anywhere" lifts an area. KIND: clothing or food. LEVEL: from "medical care".
 - Carry medicine: N is how many the pawn keeps in its inventory, 0 to 3 (0 = carry none); MEDICINE from "carry medicines", or left out to keep the kind set ("set carry medicine of PAWNS to N."). "Medicine group" is the care level, not this.
-- WHERE: floor, best storage, or storage PLACE. RESPONSE: flee, attack or ignore. TYPE: medical, prisoner or colonist.
+- WHERE: floor, best storage, or storage PLACE. RESPONSE: flee, attack or ignore (in set combatmode: auto-engage, flee or ignore; auto-engage = attack). TYPE: medical, prisoner or colonist.
 - THINGS, NAME for weapon groups, RULE: the player's own words.
 - Wave 1 slots: SPEED paused, normal, fast or superfast ("pause" = paused, "unpause" = normal). PROJECT, ANIMALS, MODE (prisoner), TRAINING: copy from "research", "animals", "prisoner modes", "trainings"; PAWNS of prisoner mode from "prisoners"; "nobody" clears a master. PAWN of operation, show needs: a colonist, prisoner or animal. PAWN of show health: any pawn in view, also a guest, a stranger, a wild animal or an enemy ("raider 1"). RECIPE of an operation: copy from "operations" for that PAWN; "on PART" only when the player named a part, else leave it out. FIELD: allow for joy, allow scheduled, take every, only if mood below, only if recreation below or take to inventory; VALUE: true or false for the two allow fields, else the number said (days, percent, count); DRUG from "drugs". KIND for create, rename, delete: clothing, food, drug or reading. LETTER: from "letters"; OPTION: one of the words in brackets after it.
 - Run: every run pauses by itself at the first threat or emergency. HOURS (1 to 120) and DAYS (1 to 5) only as the player said them. No number said ("until something happens", "for a day", "for a while", "keep going"): run until event. SPEED normal, fast or superfast; leave out "at SPEED" when the player named no speed. Less than an hour: CANNOT. DAY of show events: the day number the player said (day 1 = landing day); "what happened", "anything new", "since I last asked", "today": show events. Time, date, how fast, paused or not: show speed. What colonists still have to finish (blueprints, bills, research, jobs ordered earlier): show pending.
@@ -342,7 +353,7 @@ Write only numbers the player said, in the ORDER or the ANSWER. Turning "10pm" i
 ASK instead of guessing when:
 - storage has no room, no bench and no zone;
 - a growing zone has no crop, or a new zone or area has no place or size;
-- a bill has no bench, or its recipe fits none or several;
+- a bill has no bench, a new bill has no pawn, or its recipe fits none or several;
 - a word fits several vocabulary entries, or none;
 - "him", "her", "them", "there" has nothing to point to;
 - a time, number, temperature or priority is missing or vague ("later", "a few", "high-ish");
@@ -409,6 +420,12 @@ show settings of Alice.
 
 ORDER: what bills are on the butcher spot
 show bills at butcher spot.
+
+ORDER: which bills does carl have
+list bill Carl has.
+
+ORDER: what can dana make
+what can Dana create.
 
 ORDER: what can go in the stockpile and what's in it
 show storage of zone Stockpile zone 1.
@@ -488,8 +505,26 @@ build sandbags from 50, 60 to 58, 60.
 ORDER: wood floor from 10, 10 to 15, 15
 build floor wood floor in area 10, 10 to 15, 15.
 
+ORDER: wood floor in the whole barracks
+build wood floor for barracks.
+
+ORDER: take the floor out of Room412
+cancel floor for Room412.
+
 ORDER: simple research bench 4 tiles east of carl, facing north
 build simple research bench at 4 tiles east of Carl facing north.
+
+ORDER: install the small sculpture
+build small sculpture.
+
+ORDER: put MinifiedThing311669 at 107, 126
+build MinifiedThing311669 at 107, 126.
+
+ORDER: a new bed at 100, 120, not the packed one
+build new bed at 100, 120.
+
+ORDER: uninstall DiningChair48213
+uninstall DiningChair48213.
 
 ORDER: scrap the campfire plan at 120, 88, and all the plans from 10, 20 to 15, 30
 cancel blueprint campfire at 120, 88.
@@ -527,12 +562,12 @@ ORDER: new weapon group sharp for knives, and clear weapon group 2
 make weapon group sharp holding knives.
 clear weapon group 2.
 
-ORDER: cook 5 simple meals on the electric stove, and keep 20 beer in stock at the brewery
-add bill to make 5 cook simple meal at electric stove.
-add bill to make brew beer until you have 20 at brewery.
+ORDER: carl cooks 5 simple meals on the electric stove, and dana keeps 20 beer in stock at the brewery
+add bill to make 5 cook simple meal at electric stove using Carl.
+add bill to make brew beer until you have 20 at brewery using Dana.
 
-ORDER: fine meals non-stop at the electric stove in the kitchen
-add bill to make cook fine meal forever at electric stove in kitchen.
+ORDER: carl makes fine meals non-stop at the electric stove in the kitchen
+add bill to make cook fine meal forever at electric stove in kitchen using Carl.
 
 ORDER: drop the beer bill at the brewery and pause the fine meals at the stove
 remove bill for brew beer at brewery.
@@ -545,12 +580,13 @@ ORDER: pause the beer bill when it has enough, and unpause the fine meals when s
 pause bill for brew beer when satisfied at brewery.
 unpause bill for cook fine meal when satisfied at electric stove.
 
-ORDER: let slaves do the simple meal bill at the stove, and give the fine meal bill to alice
-let slaves do bill for cook simple meal at electric stove.
+ORDER: give the fine meal bill to alice
 let Alice do bill for cook fine meal at electric stove.
 
-ORDER: simple meals at the stove for skill 5 to 12, ingredients within 10 tiles, products to the storeroom shelves
-set skill range 5 to 12 on bill for cook simple meal at electric stove.
+ORDER: delete bill Bill_CookMealSimple_12
+delete Bill_CookMealSimple_12.
+
+ORDER: simple meals at the stove: ingredients within 10 tiles, products to the storeroom shelves
 set ingredient radius to 10 on bill for cook simple meal at electric stove.
 store bill products on storage in storeroom for cook simple meal at electric stove.
 
@@ -613,6 +649,9 @@ ORDER: alice runs away from threats, carl stays in the home area, and alice and 
 set threat response of Alice to flee.
 restrict Carl to area Home.
 turn off fire at will for Alice and Bob.
+
+ORDER: carl should fight anything that comes near, bob should just keep working when enemies show up
+set combatmode auto-engage for Carl. set combatmode ignore for Bob.
 
 ORDER: carl shoots at will again
 turn on fire at will for Carl.
@@ -711,6 +750,9 @@ show mood of Carl.
 ORDER: how warm is alice's bedroom
 show temperature of Alice's bedroom.
 
+ORDER: how ugly is the barracks
+show barracks stats.
+
 ORDER: who has a helmet on, and who is not carrying medicine
 who wears helmet.
 who does not carry medicine.
@@ -731,6 +773,12 @@ list breaks.
 ORDER: what breaks can my colonists have, and what does berserk do
 list breaks.
 what does berserk do.
+
+ORDER: what can we build right now
+list buildings.
+
+ORDER: which production benches can i build
+list production.
 
 ORDER: let it run for six hours on fast
 run 6 hours at fast.
@@ -895,6 +943,9 @@ have Bob pick up 3 herbal medicine.
 
 ORDER: alice drop the club, then get some rest in bed
 have Alice drop club. have Alice rest.
+
+ORDER: make bob drop his herbal medicine
+drop herbal medicine for Bob.
 
 ORDER: let alice and bob tend their own wounds
 turn on self tend for Alice and Bob.
