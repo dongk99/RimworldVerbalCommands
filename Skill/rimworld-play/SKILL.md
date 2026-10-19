@@ -194,9 +194,9 @@ either one finds a handoff:
 - Every colonist's bills (user, 2026-10-17): the mod writes them each game hour to
   `<SaveData>\VerbalCommands\bills.md`; the `PostToolUse` hook `bills_hook.ps1` (user's `settings.json`) puts the file
   into this session's context whenever it changed, and again after a compaction. The day note copies them (ORCHESTRATOR.md section 4).
-- Compaction vote (user, 2026-10-19): when a tool result or a refused order says `conditions are met for
-  compaction. if you are an orchestrator, vote for compaction.`, run `powershell -File "<skill folder>\vote.ps1"
-  -Name orchestrator -Compact`, then end your turn (ORCHESTRATOR.md section 4).
+- Compaction (since 2026-10-19 no vote; user, 2026-10-19: "no fucking votes from anyone, not even orchestrator."):
+  once the day notes make a compaction due, every game order is refused with `conditions are met for compaction.`; once a
+  compaction can run, the hook pauses the game and lets it run (ORCHESTRATOR.md section 4). Afterwards the game stays paused until you unpause it.
 - After a compaction go on playing without waiting for the user, if the user allowed that for RimWorld
   play: `show speed.` and `show status.` first, and trust the game over the log. This covers play only;
   mod changes, builds, git and anything outside RimWorld still wait for the user.

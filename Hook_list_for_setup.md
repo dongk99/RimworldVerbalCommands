@@ -16,7 +16,7 @@ rimworld-play scripts, written out in full. The hooks only act in a play session
 | PreToolUse | Bash\|PowerShell | compact_block.ps1 | While the compaction conditions are met, refuses every game order except the compaction vote. |
 | PreToolUse | Read\|Grep\|Glob\|Bash\|PowerShell\|Monitor\|Write\|Edit\|MultiEdit\|NotebookEdit | rimworld_play_folder.py | Reads and writes only inside the mod folder and `<SaveData>\VerbalCommands\play_sessions\` / `delegates\`. |
 
-The two `.py` hooks need Python 3 (`python` on PATH).
+rimworld_play_scripts.py, rimworld_play_folder.py and rimworld_skill_hint.py need Python 3 (`python` on PATH).
 
 ```json
 {

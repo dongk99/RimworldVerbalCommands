@@ -26,21 +26,25 @@ try {
 
     # After a 2-day compaction (user, 2026-10-15: "after compact telling it to read required .md (session notes,
     # orchestrator.md, and other files you think it should read), launch subagents, BEFORE releasing pause."). The game
-    # stays paused (vote.ps1 -Compact paused it, and compact_gate.ps1 only lets the compaction run paused).
+    # stays paused (compact_gate.ps1 paused it; user, 2026-10-19: "It doesnt unpause unless an orchestrator does it.").
     $proj = Split-Path $dir -Parent
     # The shipped docs (ORCHESTRATOR.md, COMMON.md, briefs) are in the mod; what the agents write is under $proj.
     . (Join-Path $PSScriptRoot "find_mod.ps1")
     $docs = if ($ModDir) { Join-Path $ModDir "Skill\delegates" } else { "<mod folder>\Skill\delegates" }
     $prev = Get-ChildItem -LiteralPath $dir -Filter "day_*.md" -File -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -Skip 1 -First 1
-    # Only after a gated compaction (specialists stopped). A compaction forced by the context limit can come mid-game with
-    # specialists still running; relaunching them then would start doubles.
-    $restart = Join-Path $dir "compact_restart.json"   # compact_gate.ps1 turned the compact vote into it (2026-10-19)
-    if (Test-Path -LiteralPath $restart) { Remove-Item -LiteralPath $restart -Force -ErrorAction SilentlyContinue; $head += "`n[2-day compaction restart] The game is paused on purpose. Before you unpause, in this order: " +
+    # After a compaction while the day notes are there (compact_common.ps1; user, 2026-10-19: "HOOK READS IF NOTE EXIST").
+    # Every compaction in the session then gets these orders; nothing is used up. The compaction is recorded, so the
+    # block on game orders lifts.
+    . (Join-Path $PSScriptRoot "compact_common.ps1")
+    $ev = CC-Evaluate ($raw | ConvertFrom-Json)
+    $own = $ev.ok -and ($ev.notesThere -or $ev.contextDue)
+    if ($ev.ok) { CC-Compacted $ev }
+    if ($own) { $head += "`n[2-day compaction restart] The game is paused on purpose. Before you unpause, in this order: " +
         "1. Read: <home>\.claude\skills\rimworld-play\SKILL.md; $docs\ORCHESTRATOR.md (section 0 roles, section 3 the round, section 4 your loop, section 6 spawning); " +
         "$docs\COMMON.md; the day note below" + $(if ($prev) { " and the one before it ($($prev.FullName))" } else { "" }) + "; every $proj\delegates\status\*.md; " +
         "and the router pointers above (WHY.md, README.md). " +
         "2. Send ``show speed.``, ``show status.``, ``show alerts.`` and ``show letters.``; trust the game over the notes. " +
-        "3. Delete $proj\delegates\stop\ALL (powershell -File `"<home>\.claude\skills\rimworld-play\clear.ps1`" -Stop ALL; the hooks allow no Remove-Item), then relaunch the specialists as ORCHESTRATOR.md section 4 orders them (schedule, work_priority, equipment_config, storage_zones, bills, expediter, drafter_mover last), each with a current direction line (section 6). " +
+        "3. Delete $proj\delegates\stop\ALL (powershell -File `"<home>\.claude\skillsimworld-play\clear.ps1`" -Stop ALL; the hooks allow no Remove-Item), then relaunch the specialists as ORCHESTRATOR.md section 4 orders them (schedule, work_priority, equipment_config, storage_zones, bills, expediter, drafter_mover last), each with a current direction line (section 6). " +
         "4. Only then unpause (``set game speed to normal.`` or a ``run``)." }
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
     if ($file) {

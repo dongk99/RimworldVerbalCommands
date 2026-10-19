@@ -1,36 +1,27 @@
-# compact_common.ps1 - the compaction rules, dot-sourced by compact_block.ps1 (PreToolUse), compact_due.ps1
-# (PostToolUse), compact_gate.ps1 (PreCompact) and vote.ps1 -Compact. Defines functions only; prints nothing.
+# compact_common.ps1 - the compaction rules, dot-sourced by compact_block.ps1 (PreToolUse), compact_gate.ps1
+# (PreCompact) and resume_hook.ps1 (SessionStart). Defines functions only; prints nothing.
 #
-# The flow (user, 2026-10-18/19):
-#   - "pre-compaction hook requirement from 3 days of writing .md to 2 days (every other day)": cycles of 2 game days,
-#     counted from 1 (game days 0-1 = cycle 1, 10-11 = cycle 6). A cycle compaction is due once a new cycle has begun
-#     (cycle above lastCycle in play_sessions\compact_state.json) and both notes of the cycle that just ended exist
+# The rule (user, 2026-10-19: "the hook for compaction just needs to see files being there. no fucking votes from anyone,
+# not even orchestrator." / "All it needs is day notes from orchestrator in order to compact. that's literally all it
+# does."). No votes, no specialist notes ("I dont care what specialist status is. that gets compacted regardless.").
+#   - Cycle path (user, 2026-10-18: "pre-compaction hook requirement from 3 days of writing .md to 2 days (every other
+#     day)"): cycles of 2 game days, counted from 1 (game days 0-1 = cycle 1, 10-11 = cycle 6). Due once a new cycle has
+#     begun (cycle above lastCycle in play_sessions\compact_state.json) and both notes of the cycle that just ended exist
 #     (at day 12: day_10.md and day_11.md; a note is named after the in-game day it is written on).
-#   - Context path, limits in compact_limits.json ("270,000 and 300,000"): from warn the orchestrator is told to append
-#     to the current day's note and the note's size is saved; from valve a compaction is due once the note is larger than
-#     that size (it was appended to after the warning; no clock) and the previous day's note exists too: two day
-#     notes, as for a cycle (user, 2026-10-19: "you need TWO days of note to compact. NOT one." / "because there
-#     wasnt two notes. that's the fucking bug."; one note was enough before). On day 0 this path never fires.
-#   - "whenever the conditions are met, write a logic so that no model/specialist can interact with the game, and have
-#     the logic output "conditions are met for compaction. if you are an orchestrator, vote for compaction."":
-#     compact_block.ps1 refuses every game order except the compact vote, with that text.
-#   - "you only let the orchestrator vote": vote.ps1 -Compact (orchestrator only) pauses the game, puts down
-#     delegates\stop\ALL and records the specialists' status note sizes; the specialists are told by hook to pause and
-#     write their note. "90 second after orchestrator vote no matter what. if the note has been updated for all the
-#     specialist, then dont wait 90s." / "no 90s, 30s": the gate lets the compaction run once every note grew, or 30 s
-#     after the vote.
+#   - Context path, limits in compact_limits.json ("270,000 and 300,000"): from warn the size of the current day's note is
+#     saved; from valve a compaction is due once the note is
+#     larger than that size and the previous day's note exists too (user, 2026-10-19: "you need TWO days of note to
+#     compact. NOT one."). On day 0 this path never fires.
+#   - From due until done (user, 2026-10-19: "From due until done") every game order is refused (compact_block.ps1); the
+#     gate pauses the game and lets the compaction run (compact_gate.ps1, "you pause the game before compaction actually
+#     happens"); nothing but the orchestrator unpauses it ("It doesnt unpause unless an orchestrator does it.").
+# The play session: RIMWORLD_PLAY=1 (play_here.ps1) or its id in play_sessions\active_session.txt.
 $CC_Proj = Join-Path $env:USERPROFILE "AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands"   # delegates\ and play_sessions\ live in <SaveData>\VerbalCommands
 $CC_Log = Join-Path $CC_Proj "play_sessions"
-$CC_Status = Join-Path $CC_Proj "delegates\status"
 $CC_GameState = Join-Path $env:USERPROFILE "AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\inbox_state.json"
 $CC_LimitsFile = Join-Path $PSScriptRoot "compact_limits.json"
 $CC_CycleFile = Join-Path $CC_Log "compact_state.json"     # lastCycle, and the context path's saved note size
-$CC_NowFile = Join-Path $CC_Log "compact_now.json"         # the last evaluation (compact_block.ps1), read by vote.ps1
-$CC_VoteFile = Join-Path $CC_Log "compact_vote.json"       # the orchestrator's compact vote
-$CC_RestartFile = Join-Path $CC_Log "compact_restart.json" # written by the gate when it lets the compaction run
-$CC_RunningFile = Join-Path $CC_Log "specialists_running.json"
-$CC_WaitSec = 30   # user, 2026-10-19: "no 90s, 30s"
-$CC_Message = "conditions are met for compaction. if you are an orchestrator, vote for compaction."   # user's words, verbatim
+$CC_Message = "conditions are met for compaction."   # user's words (2026-10-19), verbatim
 
 function CC-ReadJson([string]$path) {
     if (-not (Test-Path -LiteralPath $path)) { return $null }
@@ -84,33 +75,13 @@ function CC-Limits {
 }
 
 function CC-NotePath([int]$day) { return (Join-Path $CC_Log ("day_{0:D2}.md" -f $day)) }
-function CC-StatusPath([string]$name) { return (Join-Path $CC_Status "$name.md") }
 function CC-Size([string]$path) { if (Test-Path -LiteralPath $path) { return [long](Get-Item -LiteralPath $path).Length } else { return [long]-1 } }
 
-# The orchestrator's compact vote of this session, or $null.
-function CC-Vote([string]$sid) {
-    $v = CC-ReadJson $CC_VoteFile
-    if ($v -eq $null) { return $null }
-    if ($sid -and [string]$v.session -ne $sid) { return $null }
-    return $v
-}
-
-# Specialists seen in this session (agent id -> the -Name it gave wait_round / hostiles_watch / vote), until SubagentStop.
-function CC-Running([string]$sid) {
-    $r = CC-ReadJson $CC_RunningFile
-    $map = @{}
-    if ($r -ne $null -and [string]$r.session -eq $sid -and $r.agents -ne $null) {
-        foreach ($p in $r.agents.PSObject.Properties) { $map[$p.Name] = [string]$p.Value }
-    }
-    return $map
-}
-function CC-SaveRunning([string]$sid, $map) { CC-WriteJson $CC_RunningFile @{ session = $sid; agents = $map } }
-
-# Are the conditions met? $in: the hook input (session_id, transcript_path). Saves lastCycle on a first run or a new
-# game, and the note size when the context first reaches warn.
+# Is a compaction due? $in: the hook input (session_id, transcript_path). Saves lastCycle on a first run or a new game, the note size when
+# the context first reaches warn.
 function CC-Evaluate($in) {
     $r = @{ ok = $false; due = $false; path = $null; day = -1; cycle = 0; last = 0; ctx = 0; warned = $false
-            note = $null; prev = $null; missing = @(); speed = "" }
+            note = $null; prev = $null; missing = @(); speed = ""; notesThere = $false; contextDue = $false }
     $st = CC-ReadGame
     if ($null -eq $st) { return $r }
     $r.ok = $true
@@ -133,36 +104,50 @@ function CC-Evaluate($in) {
     }
     $r.last = $last
 
-    # Cycle path: the cycle that just ended is cycle - 1, game days 2(c-1)-2 and 2(c-1)-1.
-    $cycleDue = $false
-    if ($cycle -gt $last) {
+    # Cycle path: the cycle that just ended is cycle - 1, game days 2(c-1)-2 and 2(c-1)-1. notesThere: both its notes
+    # exist (what the gate and resume_hook.ps1 read); due: and no compaction has run in this cycle yet (lastCycle).
+    $r.notesThere = $false
+    if ($cycle -ge 2) {
         $b = $cycle - 1
         $notes = @((CC-NotePath (2 * $b - 2)), (CC-NotePath (2 * $b - 1)))
         $r.missing = @($notes | Where-Object { -not (Test-Path -LiteralPath $_) })
-        $cycleDue = ($r.missing.Count -eq 0)
+        $r.notesThere = ($r.missing.Count -eq 0)
     }
+    $cycleDue = ($cycle -gt $last) -and $r.notesThere
 
     # Context path.
     $contextDue = $false
     $note = CC-NotePath $day
     $r.note = $note
-    if ($in -ne $null -and $in.transcript_path) {
-        $ctx = CC-ContextTokens ([string]$in.transcript_path)
-        $r.ctx = $ctx
-        if ($ctx -ge $lim.warn) {
-            $r.warned = $true
-            if ([string]$state.noteFile -ne $note) { $state.noteFile = $note; $state.noteSize = (CC-Size $note); $dirty = $true }
-            $r.prev = $(if ($day -ge 1) { CC-NotePath ($day - 1) } else { $null })
-            if ($ctx -ge $lim.valve) {
-                $contextDue = ((CC-Size $note) -gt [long]$state.noteSize) -and $r.prev -and (Test-Path -LiteralPath $r.prev)
-            }
-        } elseif ($state.ContainsKey("noteFile") -and $state.noteFile) {
-            $state.noteFile = $null; $state.noteSize = $null; $dirty = $true
+    $ctx = CC-ContextTokens ([string]$in.transcript_path)
+    $r.ctx = $ctx
+    if ($ctx -ge $lim.warn) {
+        $r.warned = $true
+        if ([string]$state.noteFile -ne $note) { $state.noteFile = $note; $state.noteSize = (CC-Size $note); $dirty = $true }
+        $r.prev = $(if ($day -ge 1) { CC-NotePath ($day - 1) } else { $null })
+        if ($ctx -ge $lim.valve) {
+            $contextDue = ((CC-Size $note) -gt [long]$state.noteSize) -and $r.prev -and (Test-Path -LiteralPath $r.prev)
         }
+    } elseif ($state.ContainsKey("noteFile") -and $state.noteFile) {
+        $state.noteFile = $null; $state.noteSize = $null; $dirty = $true
     }
-    if ($dirty) { CC-WriteJson $CC_CycleFile $state }
 
-    $r.due = ($cycleDue -or $contextDue)
+    $r.contextDue = $contextDue
+    $due = ($cycleDue -or $contextDue)
+    if ($dirty) { $state.utc = (Get-Date).ToUniversalTime().ToString("o"); CC-WriteJson $CC_CycleFile $state }
+
+    $r.due = $due
     if ($cycleDue) { $r.path = "cycle" } elseif ($contextDue) { $r.path = "context" }
     return $r
+}
+
+# A compaction has run (resume_hook.ps1, SessionStart compact): the cycle's compaction is done, so the block lifts.
+function CC-Compacted($ev) {
+    $cs = CC-ReadJson $CC_CycleFile
+    $state = @{}
+    if ($cs -ne $null) { foreach ($p in $cs.PSObject.Properties) { $state[$p.Name] = $p.Value } }
+    if ($ev.notesThere) { $state.lastCycle = $ev.cycle; $state.day = $ev.day }
+    $state.noteFile = $null; $state.noteSize = $null
+    $state.utc = (Get-Date).ToUniversalTime().ToString("o")
+    CC-WriteJson $CC_CycleFile $state
 }

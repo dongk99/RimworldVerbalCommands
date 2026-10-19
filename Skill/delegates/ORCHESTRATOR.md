@@ -163,11 +163,10 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
   `powershell -File "<skill folder>\vote.ps1" -Name orchestrator -Check N`.
 - Compaction (user, 2026-10-18/19): when its conditions are met (a new 2-day cycle with both day notes of the last one
   written, or the context limit with today's note appended to and yesterday's note written: two day notes either way,
-  since 2026-10-19), every game order is refused with `conditions are met
-  for compaction. if you are an orchestrator, vote for compaction.`, and that line rides on every tool result. Vote:
-  `powershell -File "<skill folder>\vote.ps1" -Name orchestrator -Compact`. It pauses the game, puts down
-  `delegates\stop\ALL` (every specialist writes its status note and returns), and returns when the notes are in or
-  after 30 s. Then end your turn. Before the context limit, a hook line names the day note to append to.
+  since 2026-10-19), every game order is refused with `conditions are met for compaction.` There is no vote (since
+  2026-10-19; user: "no fucking votes from anyone, not even orchestrator."): the hook pauses the game and lets the
+  compaction run on the next request Claude Code offers one (from 20% of the auto-compact window); the specialists
+  are not stopped. Afterwards the game stays paused until you unpause it; the resume note says what to do first.
   Rotting food lines in it (2026-10-17): `[ITEM, QTY] is being rotten in ROOM (RoomID)` (indoors: build a fridge room) and
   `... outdoors in (x, z) to (x, z)` (a 10x10 square). `haul ITEM.` then sends colonists to that square: the mod asks
   which pawns (with hours to get there), answer with names; forbidden items there are unforbidden. With nothing of
