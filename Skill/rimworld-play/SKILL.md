@@ -47,31 +47,39 @@ interpreter falls short". That is a change to the mod, never a way round it.
 1c. User, 2026-10-16: "models may not read reference playlog unless user explicitely allows it."
 2. If `send.ps1` answers `NOT RUNNING`, RimWorld is closed and nothing was sent: tell the user to start the
    game, load the colony and tick "Agent inbox" in the mod settings. Do not go on without it.
-2b. **Arm the watcher** (user, 2026-10-12: "inbox_state.json's new messages get injected as prompt onto
-   agent, not based on -run or based on whether they paused/changed speed"), once, with the Monitor tool:
-   `Monitor({ command: 'powershell -File "<skill folder>\watch.ps1"', description: 'RimWorld inbox_state
-   events', timeout_ms: 1800000 })`. Every new game event (letter, message, pawn state), every change of
-   what the inbox waits for, and every stop/start of the game then arrives in your chat as a notification
-   the moment the mod writes it, with nothing sent to the game. Re-arm it when it expires (30 min) or
-   prints `NOT RUNNING`. Act on an `EVENT` or `WAITING ask` line as you would on a `show events.` answer.
-   On `Hourly check N` (watcher or a result): read the batch, act, then vote: `powershell -File "<skill
+2b. **Start the watcher** (user, 2026-10-19: "do find a way to get rid of system notification - not user input."),
+   once, in the background (PowerShell tool, `run_in_background: true`):
+   `powershell -File "<skill folder>\watch.ps1" -Feed`. It writes every new game event (letter,
+   message, pawn state), every change of what the inbox waits for, and every stop/start of the game to a feed
+   file, with nothing sent to the game. **Read the feed with `powershell -File "<skill folder>\next.ps1"`** (PowerShell
+   tool, foreground, `timeout: 600000`) whenever you wait for the game: it returns every line written since your
+   last call, or waits until one comes; after 9 minutes with nothing it returns `NOTHING NEW` (call it again).
+   Start the watcher again after it prints `NOT RUNNING`. Act on an `EVENT` or `WAITING ask` line as you would
+   on a `show events.` answer.
+   Before 2026-10-19 the watcher ran under the Monitor tool (user, 2026-10-12: "make it so that inbox_state.json's
+   new messages get injected as prompt onto agent, not based on -run or based on whether they paused/changed
+   speed."). Reason for the change, not the user's words: each Monitor notification carried about 170 tokens of
+   Claude Code's "[SYSTEM NOTIFICATION - NOT USER INPUT]" text; a tool result carries none.
+   On `Hourly check N` (from the watcher, once per check): read the batch, act, then vote: `powershell -File "<skill
    folder>\vote.ps1" -Name orchestrator -Check N`. The game stays paused until you have voted (only the
    orchestrator votes).
-2c. **Arm the pawns watch** (user, 2026-10-17: "The agent orchestrator doesnt know if pawns are being
-   actively attacked/chased. Solution: A perpetually opened shell that only updates/notifies agent if the values
-   change."), once, with the Monitor tool, next to the watcher: `Monitor({ command: 'powershell -File "<skill
-   folder>\pawns_watch.ps1"', description: 'RimWorld pawns', timeout_ms: 1800000 })`. It prints two tips, then every
+2c. **Start the pawns watch**, once, in the background next to the watcher (since 2026-10-19; before, under the
+   Monitor tool): `powershell -File "<skill folder>\pawns_watch.ps1" -Feed`; its lines come with `next.ps1` too
+   (step 2b). What it is for (user, 2026-10-17: "The agent orchestrator doesnt know if pawns are being actively
+   attacked/chased. Solution: A perpetually opened shell that only updates/notifies agent if the values change.").
+   It prints two tips, then every
    pawn (colonists, slaves, prisoners, guests, visitors, traders, allies, strangers, colony and wild animals) with
    health, pain, bleeding, capacities, conditions with recovery estimates, gear held and carried, medicine and
    combatmode, and again whenever a value changes (1% steps) or the pawn moves 3 cells; `NAME being attacked by
    SOURCE`, `NAME being chased by SOURCE`, `NAME being engaged in melee on X, Z from shooting, being attacked by
    SOURCE`, and a line when each ends; `PAWN NEW` / `PAWN LEFT` (with why). Leave out categories with `-Skip "wild
-   animal"` (wildcards; `-Only` for the reverse; the categories are listed at the top of the script). Re-arm it when
-   it expires or prints `NOT RUNNING`. On `HOSTILES ON MAP` spawn the hostile_watch specialist
+   animal"` (wildcards; `-Only` for the reverse; the categories are listed at the top of the script). Start it again
+   after it prints `NOT RUNNING`. On `HOSTILES ON MAP` spawn the hostile_watch specialist
    (`delegates\ORCHESTRATOR.md` section 4); `hostiles_watch.ps1` is its shell (run by hand it exits at once with
    `NO HOSTILES` when nothing hostile is in view).
-3. First orders: `show questions for show.`, `show orders.`, then `show status.` The mod's own lists are the
-   truth about what sentences exist; the documents can lag behind.
+3. First order: `show status.` The sentences are in PLAYBOOK.md sections 6-7, already read: ask `show orders for
+   WORD.` only for one the docs lack or the mod refused (user, 2026-10-19: "you should have gotten that memo from
+   first time."; a hook refuses `show orders.` and `show questions.`).
 
 ## Sending
 ```
@@ -83,17 +91,19 @@ powershell -File "<skill folder>\send.ps1" -Reply apply        (or: -Reply cance
 - On the session's first order add `-Model <your model id>` (e.g. `-Model claude-opus-5-5`; `play.ps1` takes it
   too). The inbox file names then carry your model, the harness and your session id, so the mod's token counter
   finds your transcript. Later orders reuse the name start; `-Model` is not needed again.
-- A result can carry tips: `TIP:` lines at the end of `answers` and of `reasons` (also in `tips`), short tips
-  from the know-how files that fit your order or what just happened. A `TIP:` line in `reasons` is not a failure. For a whole file send `send.ps1 -Text "I need tips on <name>"`.
+- A result can carry tips in `tips`: short tips from the know-how files that fit your order or what just happened.
+  Reminders are in `reminders`. Each line is in a result once (user, 2026-10-19: "no duplicates."). For a whole file send `send.ps1 -Text "I need tips on <name>"`.
 - `-Mode` default is `raw`: your text is router sentences, parsed as written, no Haiku call. Several
   sentences: one per line, or `. ` between them. Write `raw` always; plain-language mode (no `raw`) costs a
   Haiku call per order and is for testing the prompt only, on the user's word.
 - A question (`show ...`, `where ...`, `who ...`, `how much ...`, `list ...`) is answered at once.
-- A change comes back as `planned` with `plan_lines`, `notes` and `risky`. Read them, then
+- A change comes back as `planned` with `plan_lines`, `notes` and `risky` (since 2026-10-19 there only when true). Read them, then
   `-Reply apply` or `-Reply cancel`. Use `-Mode "raw apply"` only for runs and for changes you have already
   seen planned once. Never `apply` blind on a plan marked `risky`.
 - An order is all questions or all changes, never both.
-- The script prints the outbox JSON. `result`: `answer`, `planned`, `applied`, `dry_run`,
+- The script prints the outbox JSON on one line, with only the fields that say something (since 2026-10-19; user,
+  2026-10-19: "how do you think you can get rid of them, without killing context outright."): a field that is not
+  there is empty, `false` or `none`. `result`: `answer`, `planned`, `applied`, `dry_run`,
   `nothing_to_change`, `ask`, `cannot`, `failed`, `problem`, `cancelled`, `rejected`; `reasons` say why.
 - Read the whole output. The 6-hour `[REMINDER]` batch comes once, on the result of an order only the
   orchestrator sends (a speed change, a run, a letter, a build), and is gone if that result is cut. Run only
@@ -114,7 +124,7 @@ powershell -File "<skill folder>\send.ps1" -Reply apply        (or: -Reply cance
    unless necessary, e.g. busy doing tasks like writing memos, checking game status, reading memos,
    delegating tasks to other agents (user, 2026-10-12; earlier, 2026-10-09: "Game should *not* be paused
    by you (it already pauses itself for most message events)."). Pause for the task, unpause when it is
-   done; never leave the game paused while idle. While it moves, the watcher (step 2b) tells you what
+   done; never leave the game paused while idle. While it moves, call `next.ps1` (step 2b; since 2026-10-19) to hear what
    happens; do not poll `inbox_state.json` by hand or sleep in a shell. PLAYBOOK.md
    section 4. The end-of-day note (step 6) is one such task.
    Since the 2026-10-13 build the inbox itself pauses only while a plan or a question waits (user:

@@ -40,7 +40,7 @@ powershell -File "S\send.ps1" -Text "schedule Bob to sleep from 22 to 6." -Mode 
 - `NOT RUNNING`: return to the orchestrator at once.
 - Run only the scripts already in the skill folder, by full path, and read their whole output: no wrapper
   scripts, no new scripts, no pipe, redirect or capture on a result. A hook blocks them (user, 2026-10-16).
-- A `TIP:` line in `answers` or `reasons` is advice from the know-how files, not a failure. Never filter it.
+- A result's `tips` are advice from the know-how files, not a failure; its `reminders` are the mod's reminders.
 - Micro orders (`mine near`, `haul from`; `D\briefs\expediter.md`) say things in the next result of any order, yours
   included: `X, Z also has ... Reply mine to mine it too, or cancel to haul.` means the game is paused for it;
   `task finished, pawns coming back, ...` / `hauling done, ...` / `More ... is left at ...` are news, and so is

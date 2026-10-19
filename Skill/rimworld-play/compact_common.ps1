@@ -8,7 +8,9 @@
 #     (at day 12: day_10.md and day_11.md; a note is named after the in-game day it is written on).
 #   - Context path, limits in compact_limits.json ("270,000 and 300,000"): from warn the orchestrator is told to append
 #     to the current day's note and the note's size is saved; from valve a compaction is due once the note is larger than
-#     that size (it was appended to after the warning; no clock).
+#     that size (it was appended to after the warning; no clock) and the previous day's note exists too: two day
+#     notes, as for a cycle (user, 2026-10-19: "you need TWO days of note to compact. NOT one." / "because there
+#     wasnt two notes. that's the fucking bug."; one note was enough before). On day 0 this path never fires.
 #   - "whenever the conditions are met, write a logic so that no model/specialist can interact with the game, and have
 #     the logic output "conditions are met for compaction. if you are an orchestrator, vote for compaction."":
 #     compact_block.ps1 refuses every game order except the compact vote, with that text.
@@ -108,7 +110,7 @@ function CC-SaveRunning([string]$sid, $map) { CC-WriteJson $CC_RunningFile @{ se
 # game, and the note size when the context first reaches warn.
 function CC-Evaluate($in) {
     $r = @{ ok = $false; due = $false; path = $null; day = -1; cycle = 0; last = 0; ctx = 0; warned = $false
-            note = $null; missing = @(); speed = "" }
+            note = $null; prev = $null; missing = @(); speed = "" }
     $st = CC-ReadGame
     if ($null -eq $st) { return $r }
     $r.ok = $true
@@ -150,7 +152,10 @@ function CC-Evaluate($in) {
         if ($ctx -ge $lim.warn) {
             $r.warned = $true
             if ([string]$state.noteFile -ne $note) { $state.noteFile = $note; $state.noteSize = (CC-Size $note); $dirty = $true }
-            if ($ctx -ge $lim.valve) { $contextDue = ((CC-Size $note) -gt [long]$state.noteSize) }
+            $r.prev = $(if ($day -ge 1) { CC-NotePath ($day - 1) } else { $null })
+            if ($ctx -ge $lim.valve) {
+                $contextDue = ((CC-Size $note) -gt [long]$state.noteSize) -and $r.prev -and (Test-Path -LiteralPath $r.prev)
+            }
         } elseif ($state.ContainsKey("noteFile") -and $state.noteFile) {
             $state.noteFile = $null; $state.noteSize = $null; $dirty = $true
         }

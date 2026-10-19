@@ -5,8 +5,9 @@ The user settles next to a mountain and digs the base into its foot: the rock is
 is the roof. You choose the place; the mod never picks it.
 
 ## Finding rock and ore (mod)
-- `list mountains on map.`: each mountain's nearest rock face, its span, how much is overhead mountain, the
-  ore in view.
+- `list mountains on map.`: a drawn picture of the whole map (`map.png`): rock, darker under overhead mountain,
+  ore by colour, fog in black; the text names every tag (colonists, animals, geysers, ship chunks, stockpiles)
+  with its cell. The game pauses until you unpause after reading it.
 - `show roof map around SPOT.`: open sky, built roof, thin rock roof, overhead mountain.
 - `show resources map.`, `where is nearest steel.`, `where is nearest compacted machinery.`
 - Only what is in view counts. Rock behind the face is under fog until you dig to it.

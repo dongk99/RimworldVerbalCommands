@@ -1,8 +1,9 @@
-# watch.ps1 - hand every new line of inbox_state.json to the playing agent as a notification.
+# watch.ps1 - hand every new line of inbox_state.json to the playing agent.
 #
-# Arm it ONCE per session with the Monitor tool (not Bash): each stdout line becomes a prompt in the agent's chat
-# the moment it is printed, with nothing sent to the game. Re-arm when the monitor expires (30 min at most).
-#   Monitor({ command: 'powershell -File "<skill folder>\watch.ps1"', description: 'RimWorld inbox_state events', timeout_ms: 1800000 })
+# Start it ONCE per session in the background with -Feed (PowerShell tool, run_in_background: true); the agent reads its
+# lines with next.ps1 (see -Feed below and next.ps1). Nothing is sent to the game. Start it again after NOT RUNNING.
+#   powershell -File "<skill folder>\watch.ps1" -Feed
+# Without -Feed it prints the lines (a Monitor tool notification per line, each with Claude Code's notification text).
 #
 # One line per NEW game event (`events` in inbox_state.json: letters, messages, pawn states; the mod rewrites the file
 # whenever AgentEvents gets one, user 2026-10-12), one line when the inbox starts waiting for an answer, and one when
@@ -14,8 +15,26 @@
 #         [REMINDER] Hourly check N ... and "Hourly check N: ... vote: vote.ps1 -Name orchestrator -Check N" when the mod
 #         opens an hourly check (src\VerbalCommands\AgentHourlyCheck.cs, 2026-10-16), and once at the start if one is open.
 
-param([int]$IntervalMs = 1000)
+param([int]$IntervalMs = 1000, [switch]$Feed)
 $state = "$env:USERPROFILE\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\inbox_state.json"
+
+# -Feed (user, 2026-10-19: "do find a way to get rid of system notification - not user input."): started in the background
+# (PowerShell tool, run_in_background: true) instead of as a Monitor. Every line is appended to
+# <SaveData>\VerbalCommands\feed\<session>_events.log and nothing is printed; next.ps1 hands the new lines to the agent as
+# its own tool result, which carries no notification text. The file is only appended to, so next.ps1's place in it holds.
+if ($Feed) {
+    $sid = ([string]$env:CLAUDE_CODE_SESSION_ID).ToLowerInvariant() -replace '[^0-9a-f]', ''
+    $sid = $(if ($sid.Length -ge 8) { $sid.Substring(0, 8) } else { "nosessio" })
+    $dir = Join-Path $env:USERPROFILE "AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\feed"
+    New-Item -ItemType Directory -Force $dir | Out-Null
+    $out = Join-Path $dir "${sid}_events.log"
+    $enc = New-Object Text.UTF8Encoding $false
+    & $PSCommandPath -IntervalMs $IntervalMs | ForEach-Object {
+        $line = "$_`r`n"
+        for ($i = 0; $i -lt 3; $i++) { try { [IO.File]::AppendAllText($out, $line, $enc); break } catch { } }
+    }
+    exit
+}
 
 function Read-State {
     try {

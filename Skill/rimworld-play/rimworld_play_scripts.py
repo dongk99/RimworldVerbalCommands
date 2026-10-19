@@ -27,7 +27,7 @@ PROJECT_SCRIPTS = [
 ]
 SCRIPT_EXT = (".ps1", ".psm1", ".psd1", ".bat", ".cmd", ".sh", ".bash", ".vbs")
 CODE_EXT = (".py", ".pyw", ".js", ".mjs", ".cjs", ".ts", ".rb", ".pl")
-RESULT_SCRIPTS = ("send.ps1", "play.ps1", "wait_for.ps1", "vote.ps1")
+RESULT_SCRIPTS = ("send.ps1", "play.ps1", "wait_for.ps1", "vote.ps1", "next.ps1")
 # Hourly check votes (src\VerbalCommands\AgentHourlyCheck.cs, 2026-10-16; user: "that also means modifying hook."):
 # written only by vote.ps1, never by hand. (The specialists' heartbeats in agents\ are gone since 2026-10-19: only the
 # orchestrator votes.)
@@ -61,7 +61,18 @@ def speed_problems(text):
             problems.append("'" + m.group(0).strip() + "': a run must say 'at normal' (with no speed it goes at superfast, 3x). " + SPEED_HOW)
     if PLAY_RUN_RE.search(text) and re.search(r"play\.ps1", text, re.IGNORECASE):
         problems.append("play.ps1 -Run sends 'run N hours.' at superfast (3x). " + SPEED_HOW)
+    for m in LISTING_RE.finditer(text):
+        problems.append("'" + m.group(0).strip() + "': " + LISTING_HOW)
     return problems
+
+
+# The full sentence lists (user, 2026-10-19: "Hook oughta do this.", after a play session spent about 5k tokens on
+# "show questions for show. show orders." when every sentence it then used was in PLAYBOOK.md sections 6-7, and said
+# "you should have gotten that memo from first time."). Blocked: "show orders.", "show questions.", and the same "for
+# show"; "show orders for WORD." / "show questions for WORD." with any other WORD stay allowed.
+LISTING_RE = re.compile(r"\bshow\s+(?:orders|questions)(?:\s+for\s+show)?\s*\.", re.IGNORECASE)
+LISTING_HOW = ("PLAYBOOK.md sections 6-7 list these sentences. Ask 'show orders for WORD.' only for a sentence the docs "
+               "lack or the mod refused.")
 
 
 HOW = ("Send orders only with the skill's own scripts, called by full path, e.g. "

@@ -9,9 +9,8 @@ param(
 # One call for a whole step of play: reply, plans, orders, a run that is waited for, then questions.
 #   play.ps1 -Do "restrict Stumpy to area base." -Run 4 -Ask "show events. show status."
 #   play.ps1 -Plan "hunt snowhare."      then      play.ps1 -Reply apply
-# Every step prints send.ps1's whole output (tips, reminders, the outbox JSON), nothing picked out (user, 2026-10-16:
-# "fix existing powershell so everything prints"; it used to print a few fields and dropped the reminders, and its
-# ConvertFrom-Json failed whenever send.ps1's Write-Host tip or reminder lines came before the JSON).
+# Every step prints send.ps1's whole output (the outbox JSON, tips and reminders in it), nothing picked out (user,
+# 2026-10-16: "fix existing powershell so everything prints"; it used to print a few fields and dropped the reminders).
 $send = Join-Path $PSScriptRoot "send.ps1"
 $state = "$env:USERPROFILE\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\inbox_state.json"
 

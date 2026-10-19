@@ -39,9 +39,10 @@ function Read-State {
     return $null
 }
 function Game-Running { return [bool](Get-Process -Name RimWorldWin64 -ErrorAction SilentlyContinue) }
-# Everything else the questions brought back (send.ps1's tip, reminder and PICTURE lines, printed before the JSON) is
-# kept and printed after the closing line (user, 2026-10-16: "fix existing powershell so everything prints"); it used
-# to be dropped with the rest of each answer.
+# Everything else the questions brought back (the results' tips, reminders and PICTURE notes) is kept and printed
+# after the closing line, each once (user, 2026-10-16: "fix existing powershell so everything prints"); it used to be
+# dropped with the rest of each answer. Taken from the JSON fields since send.ps1 stopped printing them above it
+# (user, 2026-10-19: "no duplicates.").
 $extra = New-Object System.Collections.Generic.List[string]
 function Done([string]$line, [int]$code) {
     $line
@@ -58,8 +59,11 @@ function Ask([string]$text) {
     foreach ($l in ($head -split "`n")) { $t = $l.TrimEnd(); if ($t -ne "" -and -not $extra.Contains($t)) { $extra.Add($t) } }
     if ($i -lt 0) { return @() }
     try { $r = $out.Substring($i) | ConvertFrom-Json } catch { return @() }
+    $more = @(@($r.tips) | Where-Object { $_ } | ForEach-Object { "TIP: $_" }) + @(@($r.reminders) | Where-Object { $_ }) +
+        @(@($r.notes) | Where-Object { "$_" -like 'PICTURE:*' })
+    foreach ($t in $more) { if (-not $extra.Contains("$t")) { $extra.Add("$t") } }
     if ($r.result -ne "answer") { return @() }
-    return @($r.answers | Where-Object { $_ -notlike "TIP:*" })
+    return @($r.answers)
 }
 
 if ($Near -ne "" -and $Question -eq "") { $Question = "show interactable pawns." }

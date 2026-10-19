@@ -26,8 +26,7 @@ See `..\Hook_list_for_setup.md`.
 - `send.ps1 -Text "show status."` : one order in, the outbox JSON out. `-Mode "raw apply"` applies at once;
   `-Reply apply|cancel` answers a plan that waits; `-Model <id>` on a session's first order.
 - `play.ps1 -Do ... -Plan ... -Reply ... -Ask ...` : a whole step of play in one call.
-- `watch.ps1` : armed once per session with the Monitor tool; every new game event, inbox wait and
-  stop/start becomes a chat notification.
+- `watch.ps1` : started once per session in the background with `-Feed`; `next.ps1` hands its lines to the agent
 - `launch_game.ps1 [-Save <name>] [-Exe [-ExePath <...\RimWorldWin64.exe>]]` : starts the game on a save
   (through Steam by default) and waits for the colony to answer. It turns dev mode on in `Prefs.xml` for the
   autostart load; turn it off in Options if unwanted.

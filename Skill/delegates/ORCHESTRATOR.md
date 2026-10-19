@@ -146,7 +146,8 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
   wait and retry (up to 120 s), so finish a pair promptly.
 - Speed, windows and letters stay yours. Specialists never touch them.
 - Pawns watch (user, 2026-10-17: "The agent orchestrator doesnt know if pawns are being actively attacked/chased."):
-  `pawns_watch.ps1`, armed with Monitor next to `watch.ps1` (SKILL.md step 2c), prints every colonist, slave,
+  `pawns_watch.ps1` (since 2026-10-19 started with `-Feed` in the background next to `watch.ps1 -Feed` and read with
+  `next.ps1`, SKILL.md steps 2b-2c; before, under the Monitor tool) prints every colonist, slave,
   prisoner, guest, visitor, trader, ally and other non-hostile pawn with health, conditions and recovery estimates,
   gear held and carried, medicine and combatmode, again on any change (1% steps) or a move of 3 cells; `NAME being
   attacked by SOURCE`, `NAME being chased by SOURCE`, `NAME being engaged in melee on X, Z from shooting, being
@@ -158,10 +159,11 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
   gone; resume it with `SendMessage` (`go on watching`) after you acted. It ends itself on `HOSTILES GONE`.
 - Hourly check (user, 2026-10-19: "the 1-hour reminder does not need specialist voting. I dont trust haikus to vote
   intelligently."): the game stays paused until you have voted; specialists get the batch but do not vote. On
-  `Hourly check N` (watcher or a result): read the batch, act, then
+  `Hourly check N` (from the watcher, once per check): read the batch, act, then
   `powershell -File "<skill folder>\vote.ps1" -Name orchestrator -Check N`.
 - Compaction (user, 2026-10-18/19): when its conditions are met (a new 2-day cycle with both day notes of the last one
-  written, or the context limit with today's note appended to), every game order is refused with `conditions are met
+  written, or the context limit with today's note appended to and yesterday's note written: two day notes either way,
+  since 2026-10-19), every game order is refused with `conditions are met
   for compaction. if you are an orchestrator, vote for compaction.`, and that line rides on every tool result. Vote:
   `powershell -File "<skill folder>\vote.ps1" -Name orchestrator -Compact`. It pauses the game, puts down
   `delegates\stop\ALL` (every specialist writes its status note and returns), and returns when the notes are in or
@@ -173,8 +175,7 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
 - Play decisions are yours too: never put one to the user as a question. Asked "hunt the megasloth with Zimmerman?"
   with options, the user answered "[cannot] I cannot make decision for the orchestrator." (2026-10-14). Weigh it,
   choose, act, and write the choice and why in the day note.
-- The `[REMINDER] 6-hour check` block in `answers` / `reasons` (and the `reminders` field; one entry, the reminders
-  numbered inside it) is yours: every 6 game hours the mod
+- The `[REMINDER] 6-hour check` block in the `reminders` field (one entry, the reminders numbered inside it) is yours: every 6 game hours the mod
   lists work spots and benches whose place costs work speed (outdoors, cold, wrong room), benches whose interaction
   spot has under 50% light (build a lamp), labeled rooms under 10C or over 35C (heater / cooler, or a vent to a
   better room next door), stone chunks lying indoors (`move chunks.` moves all stone chunks inside rooms to stockpile, if there is one, to make rooms prettier), and steel / components / plasteel

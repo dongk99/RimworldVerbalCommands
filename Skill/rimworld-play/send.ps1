@@ -74,8 +74,8 @@ if ($null -eq $prefix) {
 $base = ("{0}_{1:D5}" -f $prefix, ($n + 1))
 # Tip-filter detection (user, 2026-10-08: "write a detection into ps1 but dont also inject into agent itself, just
 # have it write silently into transcripts (the mod log transcript, not in-game transcript)"). The caller's whole
-# command is read from the call stack; when it drops TIP lines (`-notmatch '^TIP'`, `-notlike 'TIP*'`, ...) or the
-# Write-Host tips below (`6>$null`, `*>$null`, -InformationAction Ignore), one "agent_tip_filter" record goes into
+# command is read from the call stack; when it drops TIP lines (`-notmatch '^TIP'`, `-notlike 'TIP*'`, ...) or
+# output streams (`6>$null`, `*>$null`, -InformationAction Ignore), one "agent_tip_filter" record goes into
 # the mod's router log of this game launch (logs\router_*.jsonl, made after RimWorld started). Prints nothing,
 # fails silently. The mod appends a line at a time (RouterLog.cs AppendRaw), so this does the same, before the
 # order is in the inbox.
@@ -106,6 +106,51 @@ Rename-Item $tmp $txt
 try { $mutex.ReleaseMutex() } catch { }
 $mutex.Dispose()
 
+# The result as one line of JSON with only the fields that say something (user, 2026-10-19, after a play session's
+# context held about 6.6k tokens of the same field lines: "how do you think you can get rid of them, without killing
+# context outright"). Left out: null, false, "", [], {}, "waiting": "none", and the fields that only name the file
+# (file, kind, mode, order_id, turn, text, utc). A field that is not there has its empty or default value. The outbox
+# file keeps everything; a result that does not parse prints as it is.
+$SlimDrop = @("file", "kind", "mode", "order_id", "turn", "text", "utc")
+function Slim-Str([string]$s) {
+    $s = $s.Replace('\', '\\').Replace('"', '\"').Replace("`r", '\r').Replace("`n", '\n').Replace("`t", '\t')
+    $s = [regex]::Replace($s, '[\x00-\x1f]', { param($m) '\u{0:x4}' -f [int][char]$m.Value })
+    return '"' + $s + '"'
+}
+function Slim-Val($v, [string]$key) {
+    if ($null -eq $v) { return $null }
+    if ($v -is [bool]) { if ($v) { return "true" } else { return $null } }
+    if ($v -is [string]) {
+        if ($v -eq "" -or ($key -eq "waiting" -and $v -eq "none")) { return $null }
+        return (Slim-Str $v)
+    }
+    if ($v -is [System.Array]) {
+        $parts = New-Object System.Collections.Generic.List[string]
+        foreach ($x in $v) { $s = Slim-Val $x ""; if ($null -ne $s) { $parts.Add($s) } }
+        if ($parts.Count -eq 0) { return $null }
+        return "[" + ($parts -join ",") + "]"
+    }
+    if ($v -is [System.Management.Automation.PSCustomObject]) {
+        $parts = New-Object System.Collections.Generic.List[string]
+        foreach ($p in $v.PSObject.Properties) {
+            $s = Slim-Val $p.Value $p.Name
+            if ($null -ne $s) { $parts.Add((Slim-Str $p.Name) + ":" + $s) }
+        }
+        if ($parts.Count -eq 0) { return $null }
+        return "{" + ($parts -join ",") + "}"
+    }
+    if ($v -is [System.IFormattable]) { return $v.ToString($null, [Globalization.CultureInfo]::InvariantCulture) }
+    return (Slim-Str "$v")
+}
+function Slim([string]$text) {
+    try { $o = $text | ConvertFrom-Json } catch { return $text }
+    if ($o -isnot [System.Management.Automation.PSCustomObject]) { return $text }
+    foreach ($k in $SlimDrop) { if ($o.PSObject.Properties[$k]) { $o.PSObject.Properties.Remove($k) } }
+    $s = Slim-Val $o ""
+    if ($null -eq $s) { return "{}" }
+    return $s
+}
+
 $result = Join-Path $outbox "$base.json"
 $deadline = (Get-Date).AddSeconds($TimeoutSec)
 while (-not (Test-Path $result)) {
@@ -133,22 +178,11 @@ if ($Reply -eq "" -and $RetryWaitingSec -gt 0 -and $json -match '"result"\s*:\s*
         }
     }
     Write-Output "STILL WAITING: another agent's plan has waited for apply/cancel for $RetryWaitingSec s; this order was not re-sent."
-    $json
+    Slim $json
     exit 4
 }
-# The tips go to the console with Write-Host, outside the output stream: `$r = (& send.ps1 ...) | ConvertFrom-Json`
-# and a `Where-Object { $_ -notmatch '^TIP' }` on answers/reasons do not reach them (session 23dffa7c filtered every
-# TIP line from its third order on; user, 2026-10-08: "edit that .ps1"). The JSON below still carries them.
-try {
-    foreach ($t in @((ConvertFrom-Json $json).tips)) { if ($t) { Write-Host "TIP: $t" } }
-} catch { }
-# The orchestrator's work spot reminder (AgentWorkspotScan.cs, user 2026-10-14) goes to the console the same way.
-try {
-    foreach ($r in @((ConvertFrom-Json $json).reminders)) { if ($r) { Write-Host $r } }
-} catch { }
-# A PICTURE note (AgentLightCheck.cs, user 2026-10-14: the sun lamp / hydroponics layout picture) goes to the console
-# too: it names a .png to open with the Read tool.
-try {
-    foreach ($n in @((ConvertFrom-Json $json).notes)) { if ("$n" -like 'PICTURE:*') { Write-Host $n } }
-} catch { }
-$json
+# The result, whole and once (user, 2026-10-19: "fix it. no duplicates."): tips, reminders and PICTURE notes are in its
+# tips / reminders / notes fields. They were also printed above it with Write-Host, outside the output stream, while an
+# agent could filter or capture the result (user, 2026-10-08: "edit that .ps1"); rimworld_play_scripts.py has the
+# result read whole since 2026-10-16.
+Slim $json

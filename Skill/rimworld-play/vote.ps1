@@ -5,8 +5,10 @@
 #   powershell -File "<skill folder>\vote.ps1" -Name orchestrator -Compact      vote for compaction
 #
 # Hourly check (user, 2026-10-16): the mod (src\VerbalCommands\AgentHourlyCheck.cs) pauses the game every game hour that
-# its scan has lines, hands the batch "[REMINDER] Hourly check N ..." to every agent (outbox results, watch.ps1,
-# wait_round.ps1), and resumes at normal speed once the orchestrator has voted for N. N is only in the batch, so a vote
+# its scan has lines, hands the batch "[REMINDER] Hourly check N ..." to the agents through watch.ps1 and wait_round.ps1,
+# once per check (since 2026-10-19 no longer on outbox results; user, 2026-10-19: "it would be REMINDER list that would
+# get spammed until they vote, which autopause game, so it shouldnt even be spamming to them."), and resumes at normal
+# speed once the orchestrator has voted for N. N is only in the batch, so a vote
 # needs the batch. Writes <SaveData>\VerbalCommands\votes\<N>\orchestrator.txt, then prints one line (wording approved
 # by the user, 2026-10-16). Nothing is sent to the game's inbox.
 #

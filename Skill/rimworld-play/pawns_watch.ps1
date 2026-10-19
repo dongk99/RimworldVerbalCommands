@@ -1,9 +1,10 @@
 # pawns_watch.ps1 - hand every change of the colony's pawns to the playing agent as a notification (user, 2026-10-17: "A
 # perpetually opened shell that only updates/notifies agent if the values change.").
 #
-# Arm it ONCE per session with the Monitor tool, next to watch.ps1; re-arm when the monitor expires or prints NOT RUNNING:
-#   Monitor({ command: 'powershell -File "<skill folder>\pawns_watch.ps1"', description: 'RimWorld pawns', timeout_ms: 1800000 })
-#   Monitor({ command: 'powershell -File "<skill folder>\pawns_watch.ps1" -Skip "wild animal"', ... })   leave out a category
+# Start it ONCE per session in the background with -Feed, next to watch.ps1 -Feed (PowerShell tool, run_in_background:
+# true); the agent reads its lines with next.ps1. Start it again after NOT RUNNING:
+#   powershell -File "<skill folder>\pawns_watch.ps1" -Feed
+#   powershell -File "<skill folder>\pawns_watch.ps1" -Feed -Skip "wild animal"     leave out a category
 #   -Only "colonist","prisoner"   only these categories. Categories (the word in [ ] after the name): colonist, slave,
 #   prisoner, colony mech, colony animal, colony other, guest, visitor, trader, ally, traveller, stranger, mech, entity, other,
 #   wild animal, "animal of <faction>". -Skip / -Only take wildcards ("animal of *").
@@ -11,8 +12,11 @@
 # Reads only <SaveData>\VerbalCommands\pawn_watch.json, which the mod rewrites when something in it changes
 # (src\VerbalCommands\AgentPawnWatch.cs). Nothing is sent to the game. Lines:
 #   TIP: ...                                   the two tips, once, at the start (user, 2026-10-17)
-#   PAWN Alice at 120, 85 (in bedroom): [colonist] | ... | combatmode: auto-engage    the whole line: at the start, for a pawn
-#                                              new on the list (PAWN NEW), and whenever any value in it changed (1% steps)
+#   PAWN Alice at 120, 85 (in bedroom): [colonist] | ... | combatmode: auto-engage    the whole line: at the start, and for a
+#                                              pawn new on the list (PAWN NEW)
+#   PAWN Alice: consciousness 74%, hauling Steel x20; no longer: hauling Wood x29    only what changed in its line (1% steps)
+#                                              (user, 2026-10-19: "only have it change whatever it is changed, so it doesnt
+#                                              fucking eat into context"; it printed the whole line on every change before)
 #   PAWN Alice moved to 123, 85 (outdoors)    moved 3 cells or more since its last line (user: "3 cells")
 #   Alice being attacked by raider 2 (...)    an attack started; "... is no longer being attacked by ..." when it ended
 #   Alice being chased by mad snowhare 1 (...), 7 cells away
@@ -25,9 +29,27 @@ param(
     [string[]]$Skip = @(),
     [string[]]$Only = @(),
     [double]$Cells = 3,
-    [int]$IntervalMs = 1000
+    [int]$IntervalMs = 1000,
+    [switch]$Feed
 )
 $root = Join-Path $env:USERPROFILE "AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands"
+
+# -Feed: as watch.ps1 -Feed (user, 2026-10-19: "do find a way to get rid of system notification - not user input."). Started
+# in the background, not as a Monitor; every line is appended to <SaveData>\VerbalCommands\feed\<session>_pawns.log and
+# next.ps1 hands the new lines to the agent as its own tool result.
+if ($Feed) {
+    $sid = ([string]$env:CLAUDE_CODE_SESSION_ID).ToLowerInvariant() -replace '[^0-9a-f]', ''
+    $sid = $(if ($sid.Length -ge 8) { $sid.Substring(0, 8) } else { "nosessio" })
+    $dir = Join-Path $root "feed"
+    New-Item -ItemType Directory -Force $dir | Out-Null
+    $out = Join-Path $dir "${sid}_pawns.log"
+    $enc = New-Object Text.UTF8Encoding $false
+    & $PSCommandPath -Skip $Skip -Only $Only -Cells $Cells -IntervalMs $IntervalMs | ForEach-Object {
+        $line = "$_`r`n"
+        for ($i = 0; $i -lt 3; $i++) { try { [IO.File]::AppendAllText($out, $line, $enc); break } catch { } }
+    }
+    exit
+}
 $file = Join-Path $root "pawn_watch.json"
 
 function Read-Watch {
@@ -44,6 +66,35 @@ function Wanted([string]$category) {
     foreach ($o in $Only) { if ($category -like $o) { return $true } }
     return $false
 }
+# The parts of a pawn's line: its " | " sections split at ", " and "; ". A section's label ("conditions: A; B") goes on
+# each of its parts ("conditions: A", "conditions: B"), so a part keeps its name when the one before it goes.
+function Parts([string]$text) {
+    $out = New-Object System.Collections.Generic.List[string]
+    foreach ($seg in ($text -split ' \| ')) {
+        $label = ""
+        if ($seg -match '^([a-z][a-z ]*): (.*)$') { $label = $Matches[1] + ": "; $seg = $Matches[2] }
+        foreach ($it in ($seg -split ', |; ')) { $t = $it.Trim(); if ($t) { $out.Add($label + $t) } }
+    }
+    return ,$out
+}
+# "PAWN Alice: <new or changed parts>; no longer: <parts gone>", or nothing when only the order changed. A part whose
+# words stay and whose numbers change ("consciousness 76%" -> "74%") counts as changed, not as gone.
+function Change-Line([string]$name, [string]$old, [string]$new) {
+    $o = Parts $old
+    $n = Parts $new
+    $added = @($n | Where-Object { -not $o.Contains($_) })
+    $keys = @($added | ForEach-Object { $_ -replace '\d+(\.\d+)?', '#' })
+    $gone = @($o | Where-Object { -not $n.Contains($_) -and ($keys -notcontains ($_ -replace '\d+(\.\d+)?', '#')) })
+    $text = @()
+    if ($added.Count) { $text += ($added -join ", ") }
+    if ($gone.Count) { $text += ("no longer: " + ($gone -join ", ")) }
+    if ($text.Count) { "PAWN ${name}: " + ($text -join "; ") }
+}
+# "120, 126 (16 tiles north of Bob) (outdoors)" -> the room part "(outdoors)" and the rest. The move line names the room
+# only when it differs from the pawn's last line (user, 2026-10-19: "Feels spammy. especially "OUTDOORS". I dont think
+# it needs to say every fucking call.").
+function Room-Of([string]$where) { if ($where -match '\s*(\([^()]*\))\s*$') { return $Matches[1] } else { return "" } }
+function Place-Of([string]$where) { return ($where -replace '\s*\([^()]*\)\s*$', '') }
 function Dist($a, $x, $z) { return [math]::Sqrt([math]::Pow([double]$a.x - $x, 2) + [math]::Pow([double]$a.z - $z, 2)) }
 function Standing($j) { if ($j.PSObject.Properties["hostiles_standing"]) { return [int]$j.hostiles_standing } else { return 0 } }
 function Hostile-Line($j, [string]$word) {
@@ -75,7 +126,7 @@ $listed = @($j.pawns | Where-Object { Wanted $_.category })
 "WATCHING pawns at $($j.when): $($listed.Count) listed" + $(if ($Skip.Count) { "; skipping " + ($Skip -join ", ") } else { "" }) + $(if ($Only.Count) { "; only " + ($Only -join ", ") } else { "" })
 foreach ($p in $listed) {
     "PAWN $($p.name) at $($p.where): $($p.text)"
-    $pawns["$($p.id)"] = @{ text = "$($p.text)"; x = [double]$p.x; z = [double]$p.z }
+    $pawns["$($p.id)"] = @{ text = "$($p.text)"; x = [double]$p.x; z = [double]$p.z; room = (Room-Of "$($p.where)") }
     foreach ($a in @($p.attacks)) { if ($a) { "$($a.on)"; $attacks["$($p.id)|$($a.key)"] = "$($a.off)" } }
 }
 $hostileOn = (Standing $j) -gt 0
@@ -97,13 +148,14 @@ while ($true) {
         $old = $pawns[$id]
         if ($old -eq $null) {
             "PAWN NEW $($p.name) at $($p.where): $($p.text)"
-            $pawns[$id] = @{ text = "$($p.text)"; x = [double]$p.x; z = [double]$p.z }
+            $pawns[$id] = @{ text = "$($p.text)"; x = [double]$p.x; z = [double]$p.z; room = (Room-Of "$($p.where)") }
         } elseif ("$($p.text)" -ne $old.text) {
-            "PAWN $($p.name) at $($p.where): $($p.text)"
-            $old.text = "$($p.text)"; $old.x = [double]$p.x; $old.z = [double]$p.z
+            Change-Line "$($p.name)" $old.text "$($p.text)"
+            $old.text = "$($p.text)"
         } elseif ((Dist $p $old.x $old.z) -ge $Cells) {
-            "PAWN $($p.name) moved to $($p.where)"
-            $old.x = [double]$p.x; $old.z = [double]$p.z
+            $room = Room-Of "$($p.where)"
+            if ($room -ne $old.room) { "PAWN $($p.name) moved to $($p.where)" } else { "PAWN $($p.name) moved to $(Place-Of "$($p.where)")" }
+            $old.x = [double]$p.x; $old.z = [double]$p.z; $old.room = $room
         }
         foreach ($a in @($p.attacks)) {
             if (-not $a) { continue }

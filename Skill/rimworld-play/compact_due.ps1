@@ -45,7 +45,8 @@ try {
         if ($ev.due) { $text = $CC_Message }
         elseif ($ev.warned -and -not $aid) {
             $lim = CC-Limits
-            $text = "The context is at $($ev.ctx) tokens. A compaction becomes due at $($lim.valve) once $($ev.note) has grown. Append to it now."
+            $two = $(if ($ev.prev) { " and $($ev.prev) exists" } else { " and the previous day's note exists (none on day 0)" })
+            $text = "The context is at $($ev.ctx) tokens. A compaction becomes due at $($lim.valve) once $($ev.note) has grown$two. Append to it now."
         }
     }
     if ($null -eq $text) { exit 0 }

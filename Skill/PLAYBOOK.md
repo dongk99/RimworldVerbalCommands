@@ -33,8 +33,9 @@ plain text.
 - `<save data>\VerbalCommands\inbox_state.json` : what the inbox is doing now. Whether the game is running is
   not read from it: `send.ps1` sends nothing while RimWorld is closed (`NOT RUNNING`). It also carries
   `events` (the last 20 AgentEvents entries: seq, when, kind, text) and `last_event_seq`, and the mod
-  rewrites it whenever a new event comes, not only on a pause or a speed change. The skill's `watch.ps1`,
-  armed with the Monitor tool, turns each new entry into a prompt in the agent's chat.
+  rewrites it whenever a new event comes, not only on a pause or a speed change. The skill's `watch.ps1 -Feed`,
+  started in the background, writes each new entry to a feed file, and `next.ps1` hands the new lines to the agent
+  as its own result (since 2026-10-19, SKILL.md step 2b; before, under the Monitor tool).
 - `<save data>\VerbalCommands\logs\router_<date>.jsonl` : everything the router did (you may read it).
 
 ## 3. One order, start to end
@@ -76,8 +77,8 @@ plain text.
   with option WORDS.`), in an order of its own, and read its result; then the speed order. If the speed
   order's notes say a window holds the pause, the game did not move: close that window, do not send the
   speed again.
-- While the game moves, wait without sending: the watcher (`watch.ps1` under Monitor, skill step 2b) hands
-  you every new event, every change of what the inbox waits for, and every stop/start as it happens; no
+- While the game moves, wait without sending: `next.ps1` (since 2026-10-19, skill step 2b) hands you every new event
+  from the watcher, every change of what the inbox waits for, and every stop/start since your last call; no
   polling by hand. The fields, if you ever read the file yourself: (`paused`, `speed`, `tick`; 2500 ticks
   = 1 game hour). Then one combined check (`show speed. show events. show status.`).
 - `show speed.` (date, hour, speed, why the last run stopped), `show events.` (what happened since you last
@@ -102,6 +103,9 @@ plain text.
 - Every answer prints a cell as `112, 87 (6 tiles north of Bob)`: copy the numbers into the next order.
 - You never get anything under fog, and you can not order anything under fog.
 - Only numbers that stand in your order are accepted; a made-up coordinate or size is rejected.
+- Go by names, as a human does: landmarks (`steam geyser 2`, `ship chunk 1`), `where is nearest steel.`, the
+  colonists. Use them as SPOT (`build ... near steam geyser 2.`) and let the plan, or its refusal, give the exact cells
+  (user, 2026-10-19: "you dont need entire goddamn cell by cell of mountain. humans dont play like this").
 
 ## 6. Seeing
 - `show questions.` and `show orders.` list every sentence the mod knows, with one line each. `show orders
@@ -117,8 +121,10 @@ plain text.
 - Stores: `show food.`, `how much steel do i have.`, `show power.`, `show temperature.`, `show weather.`
 - The map: `show map.` (coarse), `show terrain map around Bob.` (41 by 41 detail), `show roof map of 100, 80
   to 140, 110.`; layers: terrain, resources, buildings, roof, creatures. `where is nearest steel.`,
-  `where is nearest berries to steam geyser 1.`, `where are ship chunks.`, `list mountains on map.` (rock
-  faces, overhead mountain, ore in view).
+  `where is nearest berries to steam geyser 1.`, `where are ship chunks.`, `list mountains on map.` (a
+  drawn picture of the whole map, `map.png`: rock, ore, snow, walls, stockpiles, colonists, animals, geysers,
+  tagged, with every tag's name and cell in the text; it pauses the game: read it, then unpause; user,
+  2026-10-19: "if they say "list mountains on map", then the game just takes picture of the entire map instead.").
 - Pictures: `show picture around SPOT.` (the game's own view, 41 by 41 cells centred on SPOT) and
   `show picture of AREA.` (centred on the middle of AREA, zoomed so all of it is in the frame). Examples:
   `show picture around 120, 135.`, `show picture around Bob.`, `show picture around steam geyser 1.`,
@@ -151,7 +157,7 @@ plain text.
     placement rules (bed heads at a wall, end tables where they link, worker spots free and reachable).
     The plan lines name every piece and its cell; read them before you apply.
   - `dig room AREA door east.` : a room dug into rock: rock inside is mined, rock at the edge stays as wall.
-    Find rock with `list mountains on map.` and `show roof map ...`. Furnish it later with the build lines.
+    Find rock with `list mountains on map.` (the whole-map picture) and `show roof map ...`. Furnish it later with the build lines.
     A dug area more than 12 cells both ways keeps columns of rock (one every 9 cells, named in the plan
     notes), in `dig room` and in `mine ... in area AREA` alike: a roof more than 6 cells from any wall or
     rock falls in. Do not mine the columns out.
