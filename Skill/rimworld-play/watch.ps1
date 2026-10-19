@@ -11,6 +11,7 @@
 # Lines:  EVENT seq=12 [day 5, 14h] letter: Raid (big threat, needs a choice)
 #         WAITING ask: <question>      WAITING plan   WAITING none
 #         GAME paused day 5 19h (speed Fast)   /   GAME running day 5 19h (speed Fast)
+#         game paused, try "show windows" to see why      (after every GAME paused line, since 2026-10-19)
 #         NOT RUNNING: RimWorld process not found (then exits)
 #         [REMINDER] Hourly check N ... and "Hourly check N: ... vote: vote.ps1 -Name orchestrator -Check N" when the mod
 #         opens an hourly check (src\VerbalCommands\AgentHourlyCheck.cs, 2026-10-16), and once at the start if one is open.
@@ -92,5 +93,8 @@ while ($true) {
     if ($paused -ne $lastPaused) {
         $lastPaused = $paused
         "GAME " + $(if ($paused) { "paused" } else { "running" }) + " day $($j.game.day) $($j.game.hour)h (speed $($j.speed))"
+        # Every pause, whatever caused it (user, 2026-10-19: "whenever game pauses (yes, unconditional)"); a window that
+        # holds the pause (e.g. "Research finished") is in no event.
+        if ($paused) { 'game paused, try "show windows" to see why' }
     }
 }
