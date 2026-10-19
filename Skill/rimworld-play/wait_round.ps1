@@ -12,12 +12,11 @@
 #   EVENT      seq=N [day D, Hh] kind: text  (only with -OnEvent; one line per matching event, then exit) -> react
 #   TIMEOUT    -MaxMinutes real minutes passed with the game paused or slow -> next round anyway (check `show speed.`)
 #   NOT RUNNING: RimWorld process not found -> return to the orchestrator
-#   [REMINDER] Hourly check N ...  (the mod's open hourly check, while this name has not voted for it: the batch, then
-#              "Hourly check N: ... Read them, then vote: vote.ps1 -Name NAME -Check N") -> read, act, vote
+#   [REMINDER] Hourly check N ...  (the mod's open hourly check: its batch, once per check for this name) -> read, act
+#              on what is yours. Only the orchestrator votes (user, 2026-10-19: "the 1-hour reminder does not need
+#              specialist voting" / "Yes, they do need a reminder, but no vote."); the check last handed to this name
+#              is kept in play_sessions\hourly_seen\<name>.txt.
 # Nothing is sent to the game. Only inbox_state.json is read (tick, events, hourly) and the delegates folder.
-# Heartbeat (2026-10-16, hourly check): <SaveData>\VerbalCommands\agents\<name>.txt is rewritten while this waits; the mod
-# counts a specialist as a voter while it is under 30 minutes old (src\VerbalCommands\AgentHourlyCheck.cs). STOP and
-# NOT RUNNING delete it.
 
 param(
     [Parameter(Mandatory = $true)][string]$Name,
@@ -32,23 +31,18 @@ $state = Join-Path $env:USERPROFILE "AppData\LocalLow\Ludeon Studios\RimWorld by
 $stopMine = Join-Path $dl "stop\$Name"
 $stopAll = Join-Path $dl "stop\ALL"
 $msg = Join-Path $dl "msg\$Name.md"
-$agentsDir = Join-Path $env:USERPROFILE "AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\agents"
-$beat = Join-Path $agentsDir "$Name.txt"
-$lastBeat = [datetime]::MinValue
+$seenDir = Join-Path (Split-Path $dl -Parent) "play_sessions\hourly_seen"
+$seenFile = Join-Path $seenDir "$Name.txt"
 
-function Write-Beat {
-    try {
-        New-Item -ItemType Directory -Force -Path $agentsDir | Out-Null
-        [IO.File]::WriteAllText($beat, (Get-Date).ToUniversalTime().ToString("o"))
-        $script:lastBeat = Get-Date
-    } catch { }
-}
-function Remove-Beat { try { if (Test-Path $beat) { Remove-Item -LiteralPath $beat -Force } } catch { } }
-# The open hourly check's batch and vote line while this name has not voted, or $null.
+# The open hourly check's batch, the first time this name meets that check, or $null.
 function Hourly-Lines($j) {
     if ($j -eq $null -or -not $j.PSObject.Properties["hourly"] -or $j.hourly -eq $null) { return $null }
-    if (-not (@($j.hourly.waiting_for) -contains $Name)) { return $null }
-    return @("$($j.hourly.text)", ("$($j.hourly.pause_line)" -replace '-Name NAME', "-Name $Name"))
+    $n = [int]$j.hourly.seq
+    $last = 0
+    try { if (Test-Path -LiteralPath $seenFile) { $last = [int](Get-Content -LiteralPath $seenFile -TotalCount 1) } } catch { }
+    if ($n -eq $last) { return $null }
+    try { New-Item -ItemType Directory -Force -Path $seenDir | Out-Null; [IO.File]::WriteAllText($seenFile, "$n") } catch { }
+    return @("$($j.hourly.text)")
 }
 
 function Read-State {
@@ -63,10 +57,9 @@ function Check-Files {
 }
 
 $line = Check-Files
-if ($line) { if ($line -like "STOP*") { Remove-Beat }; $line; exit 0 }
-Write-Beat
+if ($line) { $line; exit 0 }
 $j = Read-State
-if ($j -eq $null) { Remove-Beat; "NOT RUNNING: inbox_state.json unreadable"; exit 2 }
+if ($j -eq $null) { "NOT RUNNING: inbox_state.json unreadable"; exit 2 }
 $hl = Hourly-Lines $j
 if ($hl) { $hl; exit 0 }
 $t0 = [long]$j.game.tick
@@ -77,10 +70,9 @@ $deadline = (Get-Date).AddMinutes($MaxMinutes)
 
 while ($true) {
     Start-Sleep -Milliseconds $IntervalMs
-    if (-not (Get-Process -Name RimWorldWin64 -ErrorAction SilentlyContinue)) { Remove-Beat; "NOT RUNNING: RimWorld process not found"; exit 2 }
+    if (-not (Get-Process -Name RimWorldWin64 -ErrorAction SilentlyContinue)) { "NOT RUNNING: RimWorld process not found"; exit 2 }
     $line = Check-Files
-    if ($line) { if ($line -like "STOP*") { Remove-Beat }; $line; exit 0 }
-    if (((Get-Date) - $lastBeat).TotalSeconds -ge 30) { Write-Beat }
+    if ($line) { $line; exit 0 }
     $j = Read-State
     if ($j -eq $null) { continue }
     $hl = Hourly-Lines $j

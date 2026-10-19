@@ -9,10 +9,8 @@
 #   powershell -File "<skill folder>\hostiles_watch.ps1" -Name hostile_watch
 #       the hostile_watch specialist's round (delegates\briefs\hostile_watch.md): prints the list (all of it on the first call,
 #       later only what changed since its last call), then blocks until something changes, gathers changes for -GatherSec
-#       more seconds, prints them and exits. Like wait_round.ps1 it keeps the specialist's heartbeat (so the hourly check
-#       counts its vote), and prints STOP / MESSAGE / the open hourly check and exits. NO HOSTILES and HOSTILES GONE delete
-#       the heartbeat: the brief ends the specialist on them, and a heartbeat left behind held every hourly check opened in
-#       the next 30 minutes on a vote that never came (2026-10-17, checks 466-473).
+#       more seconds, prints them and exits. Like wait_round.ps1 it prints STOP / MESSAGE / the open hourly check's batch
+#       (once per check; only the orchestrator votes, user 2026-10-19) and exits.
 #   -Skip "animal" / -Only "humanlike","mech"   categories: humanlike, animal, mech, insect, entity, other (wildcards allowed)
 #
 # Exits at once with "NO HOSTILES: ..." when nothing hostile is in view. Reads only <SaveData>\VerbalCommands\pawn_watch.json
@@ -60,15 +58,9 @@ function Gone-Line($j) {
     "HOSTILES GONE: no hostile is standing" + $(if ($names) { "; still on the hostile list (downed): $names" } else { "" }) + "."
 }
 
-# The specialist's side (only with -Name): stop / message files, heartbeat, the open hourly check. Same as wait_round.ps1.
-$agentsDir = Join-Path $root "agents"
-$beat = Join-Path $agentsDir "$Name.txt"
-$lastBeat = [datetime]::MinValue
-function Write-Beat {
-    if (-not $Name) { return }
-    try { New-Item -ItemType Directory -Force -Path $agentsDir | Out-Null; [IO.File]::WriteAllText($beat, (Get-Date).ToUniversalTime().ToString("o")); $script:lastBeat = Get-Date } catch { }
-}
-function Remove-Beat { if ($Name) { try { if (Test-Path $beat) { Remove-Item -LiteralPath $beat -Force } } catch { } } }
+# The specialist's side (only with -Name): stop / message files, the open hourly check. Same as wait_round.ps1.
+$seenDir = Join-Path $root "play_sessions\hourly_seen"
+$seenFile = Join-Path $seenDir "$Name.txt"
 function Check-Files {
     if (-not $Name) { return $null }
     if ((Test-Path (Join-Path $dl "stop\$Name")) -or (Test-Path (Join-Path $dl "stop\ALL"))) { return "STOP ${Name}: stop file found; return to the orchestrator now." }
@@ -80,8 +72,12 @@ function Hourly-Lines {
     if (-not $Name) { return $null }
     $s = Read-Json $stateFile
     if ($s -eq $null -or -not $s.PSObject.Properties["hourly"] -or $s.hourly -eq $null) { return $null }
-    if (-not (@($s.hourly.waiting_for) -contains $Name)) { return $null }
-    return @("$($s.hourly.text)", ("$($s.hourly.pause_line)" -replace '-Name NAME', "-Name $Name"))
+    $n = [int]$s.hourly.seq
+    $last = 0
+    try { if (Test-Path -LiteralPath $seenFile) { $last = [int](Get-Content -LiteralPath $seenFile -TotalCount 1) } } catch { }
+    if ($n -eq $last) { return $null }
+    try { New-Item -ItemType Directory -Force -Path $seenDir | Out-Null; [IO.File]::WriteAllText($seenFile, "$n") } catch { }
+    return @("$($s.hourly.text)")
 }
 
 # What was last printed, kept between the specialist's calls (perpetual mode keeps it in memory only).
@@ -133,20 +129,18 @@ function Diff-Lines($j) {
     return ,$out
 }
 
-if (-not (Get-Process -Name RimWorldWin64 -ErrorAction SilentlyContinue)) { Remove-Beat; "NOT RUNNING: RimWorld process not found"; exit 2 }
+if (-not (Get-Process -Name RimWorldWin64 -ErrorAction SilentlyContinue)) { "NOT RUNNING: RimWorld process not found"; exit 2 }
 $line = Check-Files
-if ($line) { if ($line -like "STOP*") { Remove-Beat }; $line; exit 0 }
-Write-Beat
+if ($line) { $line; exit 0 }
 $hl = Hourly-Lines
 if ($hl) { $hl; exit 0 }
 $j = Read-Json $file
-if ($j -eq $null) { Remove-Beat; "NOT RUNNING: $file not found or unreadable (the mod build with the pawn watch is not loaded, no colony is loaded, or 'Agent inbox' is off in the mod settings)"; exit 1 }
+if ($j -eq $null) { "NOT RUNNING: $file not found or unreadable (the mod build with the pawn watch is not loaded, no colony is loaded, or 'Agent inbox' is off in the mod settings)"; exit 1 }
 # A saved memory from another game load (the tick went back) is dropped.
 if ($lastTick -gt [long]$j.tick) { $seen = @{}; $lastLeft = -1 }
 if ($lastLeft -lt 0 -and $j.PSObject.Properties["last_hostiles_left_seq"]) { $lastLeft = [int]$j.last_hostiles_left_seq }
 $listed = @($j.hostiles | Where-Object { $_ -and (Wanted $_.category) })
 if ((Standing $j) -eq 0 -and $listed.Count -eq 0) {
-    Remove-Beat
     Save-Mem $j
     "NO HOSTILES: nothing hostile is in view at $($j.when). Not watching."
     exit 0
@@ -173,7 +167,7 @@ $lines = Diff-Lines $j
 if ($lines.Count -gt 0) {
     "HOSTILES at $($j.when): $($listed.Count) on the list, $(Standing $j) standing"
     $lines
-    if ((Standing $j) -eq 0) { Remove-Beat; Gone-Line $j }
+    if ((Standing $j) -eq 0) { Gone-Line $j }
     Save-Mem $j
     exit 0
 }
@@ -183,10 +177,9 @@ $collected = @()
 $gatherUntil = $null
 while ($true) {
     Start-Sleep -Milliseconds $IntervalMs
-    if (-not (Get-Process -Name RimWorldWin64 -ErrorAction SilentlyContinue)) { Remove-Beat; Save-Mem $j; "NOT RUNNING: RimWorld process not found"; exit 2 }
+    if (-not (Get-Process -Name RimWorldWin64 -ErrorAction SilentlyContinue)) { Save-Mem $j; "NOT RUNNING: RimWorld process not found"; exit 2 }
     $line = Check-Files
-    if ($line) { if ($line -like "STOP*") { Remove-Beat }; $collected; Save-Mem $j; $line; exit 0 }
-    if (((Get-Date) - $lastBeat).TotalSeconds -ge 30) { Write-Beat }
+    if ($line) { $collected; Save-Mem $j; $line; exit 0 }
     $hl = Hourly-Lines
     if ($hl) { $collected; Save-Mem $j; $hl; exit 0 }
     $n = Read-Json $file
@@ -200,7 +193,7 @@ while ($true) {
         }
         if ((Standing $j) -eq 0) {
             "HOSTILES at $($j.when)"
-            Remove-Beat; $collected; Gone-Line $j; Save-Mem $j; exit 0
+            $collected; Gone-Line $j; Save-Mem $j; exit 0
         }
     }
     if ($gatherUntil -ne $null -and (Get-Date) -ge $gatherUntil) {

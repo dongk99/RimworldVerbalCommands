@@ -10,8 +10,8 @@ if (-not $ModDir) { $ModDirError; exit 1 }
 Set-Location (Join-Path $ModDir "Skill")
 $env:CLAUDE_CODE_DISABLE_AUTO_MEMORY = "1"
 $env:ENABLE_CLAUDEAI_MCP_SERVERS = "false"
-# 3-day compaction (user, 2026-10-15): Claude Code offers an auto-compact once context passes 20% of the auto-compact
-# window, and idle compaction from 100,000 tokens; the PreCompact hook compact_gate.ps1 lets it run only at a 3-day turn
+# 2-day compaction (user, 2026-10-15): Claude Code offers an auto-compact once context passes 20% of the auto-compact
+# window, and idle compaction from 100,000 tokens; the PreCompact hook compact_gate.ps1 lets it run only at a 2-day turn
 # with the game paused, the day note written and delegates\stop\ALL in place. Only this play session gets these values.
 $env:CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = "20"
 $env:CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS = "100000"

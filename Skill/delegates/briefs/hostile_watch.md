@@ -10,8 +10,8 @@ The orchestrator spawns you when its pawns watch prints `HOSTILES ON MAP: ...`; 
 ## Wait call (instead of COMMON.md's wait_round.ps1)
 `powershell -File "S\hostiles_watch.ps1" -Name hostile_watch` with the PowerShell tool and `timeout: 600000`. It prints
 the whole hostile list on your first call and afterwards only what changed since your last call; with nothing new it
-blocks until something changes (it gathers 5 more seconds of changes, then prints them). It keeps your heartbeat, so the
-hourly check waits for your vote; `NO HOSTILES` and `HOSTILES GONE` delete it. Its lines:
+blocks until something changes (it gathers 5 more seconds of changes, then prints them). It also prints the open hourly
+check's batch, once per check (only the orchestrator votes). Its lines:
 - `HOSTILE NEW NAME at X, Z (...): ...` / `HOSTILE NAME at X, Z (...): ...`: who it is (name for `attack TARGET`, real
   name, kind, faction, humanlike / animal / mech / insect / entity), what it holds (ranged or melee), health, pain,
   bleeding, moving / manipulation / consciousness, wounds, DOWNED, what it does (`attacking Alice at X, Z`,

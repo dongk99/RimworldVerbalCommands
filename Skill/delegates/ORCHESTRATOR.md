@@ -113,7 +113,7 @@ A specialist is one `Agent` call that loops:
 5. Otherwise write a two-line status to `delegates\status\<name>.md`, append to its notes, and block on
    `wait_round.ps1 -Name <name> -Hours <its cadence>` (drafter: `-OnEvent`). `STOP` or `NOT RUNNING` → return.
    `MESSAGE` → read `delegates\msg\<name>.md`, delete it (`clear.ps1 -Msg <name>`), act. `HOURS` / `EVENT` / `TIMEOUT` → next round.
-   `[REMINDER] Hourly check N` → read the batch, act, then `vote.ps1 -Name <name> -Check N` (every check).
+   `[REMINDER] Hourly check N` → read the batch, act on what is yours (only the orchestrator votes).
 6. After at most 8 rounds in one call, return with a report anyway (context).
 
 The orchestrator answers a proposal by resuming the specialist with `SendMessage` (the same agent, its context
@@ -156,12 +156,16 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
   if it is not running, while you deal with the threat. It watches `hostiles_watch.ps1` and returns to you with a
   report on every new enemy, every enemy attacking, chasing or within 10 cells of one of ours, every enemy downed or
   gone; resume it with `SendMessage` (`go on watching`) after you acted. It ends itself on `HOSTILES GONE`.
-- Hourly check (user, 2026-10-16: "Every goddamn subagent AND ORCHESTRAOR votes to UNPAUSE."): the game stays
-  paused until you and every running specialist have voted. On `Hourly check N` (watcher or a result): read the
-  batch, act, then `powershell -File "<skill folder>\vote.ps1" -Name orchestrator -Check N`.
-  A specialist leaves the vote when its call ends (`subagent_stop_hook.ps1` deletes its heartbeat), and a stop file
-  takes it off at the next vote. After `TaskStop` or a stop by the user, take it off with
-  `powershell -File "<skill folder>\clear.ps1" -Beat <name>`.
+- Hourly check (user, 2026-10-19: "the 1-hour reminder does not need specialist voting. I dont trust haikus to vote
+  intelligently."): the game stays paused until you have voted; specialists get the batch but do not vote. On
+  `Hourly check N` (watcher or a result): read the batch, act, then
+  `powershell -File "<skill folder>\vote.ps1" -Name orchestrator -Check N`.
+- Compaction (user, 2026-10-18/19): when its conditions are met (a new 2-day cycle with both day notes of the last one
+  written, or the context limit with today's note appended to), every game order is refused with `conditions are met
+  for compaction. if you are an orchestrator, vote for compaction.`, and that line rides on every tool result. Vote:
+  `powershell -File "<skill folder>\vote.ps1" -Name orchestrator -Compact`. It pauses the game, puts down
+  `delegates\stop\ALL` (every specialist writes its status note and returns), and returns when the notes are in or
+  after 30 s. Then end your turn. Before the context limit, a hook line names the day note to append to.
   Rotting food lines in it (2026-10-17): `[ITEM, QTY] is being rotten in ROOM (RoomID)` (indoors: build a fridge room) and
   `... outdoors in (x, z) to (x, z)` (a 10x10 square). `haul ITEM.` then sends colonists to that square: the mod asks
   which pawns (with hours to get there), answer with names; forbidden items there are unforbidden. With nothing of

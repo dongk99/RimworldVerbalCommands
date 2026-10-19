@@ -9,11 +9,11 @@ rimworld-play scripts, written out in full. The hooks only act in a play session
 | Event | Matcher | Script | What it does |
 |---|---|---|---|
 | SessionStart | compact | resume_hook.ps1 | After a compaction, prints the newest day note into the play session. |
-| PreCompact | auto | compact_gate.ps1 | Lets an auto-compaction run only at a 3-day turn, with the game paused, the day note written and the specialists stopped. |
-| PostToolUse | PowerShell\|Bash | compact_due.ps1 | Tells the play session a compaction is due and what to do first. |
+| PreCompact | auto | compact_gate.ps1 | Lets an auto-compaction run only after the orchestrator's compaction vote, with the game paused and the specialists' notes written (or 30 s after the vote). |
+| PostToolUse | PowerShell\|Bash | compact_due.ps1 | Tells every agent when the compaction conditions are met, and the specialists what to do after the vote. |
 | PostToolUse | PowerShell\|Bash | bills_hook.ps1 | Puts bills.md (every colonist's bills) into the play session when it changes. |
-| SubagentStop | | subagent_stop_hook.ps1 | Takes an ended specialist off the hourly unpause vote. |
 | PreToolUse | Bash\|PowerShell\|Monitor\|Write\|Edit\|MultiEdit\|NotebookEdit | rimworld_play_scripts.py | Only the skill folder's scripts run, by full path; no new scripts, no pipe or redirect on a result; game speed 1x only. |
+| PreToolUse | Bash\|PowerShell | compact_block.ps1 | While the compaction conditions are met, refuses every game order except the compaction vote. |
 | PreToolUse | Read\|Grep\|Glob\|Bash\|PowerShell\|Monitor\|Write\|Edit\|MultiEdit\|NotebookEdit | rimworld_play_folder.py | Reads and writes only inside the mod folder and `<SaveData>\VerbalCommands\play_sessions\` / `delegates\`. |
 
 The two `.py` hooks need Python 3 (`python` on PATH).
@@ -33,6 +33,7 @@ The two `.py` hooks need Python 3 (`python` on PATH).
     "PreToolUse": [
       { "matcher": "Bash|PowerShell|Monitor|Write|Edit|MultiEdit|NotebookEdit", "hooks": [
         { "type": "command", "command": "python -I \"<skill folder>\\rimworld_play_scripts.py\"", "timeout": 10 }] },
+      { "matcher": "Bash|PowerShell", "hooks": [{ "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<skill folder>\\compact_block.ps1\"", "timeout": 15 }] },
       { "matcher": "Read|Grep|Glob|Bash|PowerShell|Monitor|Write|Edit|MultiEdit|NotebookEdit", "hooks": [
         { "type": "command", "command": "python -I \"<skill folder>\\rimworld_play_folder.py\"", "timeout": 10 }] }]
   }

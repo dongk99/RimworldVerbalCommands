@@ -55,7 +55,8 @@ interpreter falls short". That is a change to the mod, never a way round it.
    the moment the mod writes it, with nothing sent to the game. Re-arm it when it expires (30 min) or
    prints `NOT RUNNING`. Act on an `EVENT` or `WAITING ask` line as you would on a `show events.` answer.
    On `Hourly check N` (watcher or a result): read the batch, act, then vote: `powershell -File "<skill
-   folder>\vote.ps1" -Name orchestrator -Check N`. The game stays paused until every agent has voted.
+   folder>\vote.ps1" -Name orchestrator -Check N`. The game stays paused until you have voted (only the
+   orchestrator votes).
 2c. **Arm the pawns watch** (user, 2026-10-17: "The agent orchestrator doesnt know if pawns are being
    actively attacked/chased. Solution: A perpetually opened shell that only updates/notifies agent if the values
    change."), once, with the Monitor tool, next to the watcher: `Monitor({ command: 'powershell -File "<skill
@@ -183,6 +184,9 @@ either one finds a handoff:
 - Every colonist's bills (user, 2026-10-17): the mod writes them each game hour to
   `<SaveData>\VerbalCommands\bills.md`; the `PostToolUse` hook `bills_hook.ps1` (user's `settings.json`) puts the file
   into this session's context whenever it changed, and again after a compaction. The day note copies them (ORCHESTRATOR.md section 4).
+- Compaction vote (user, 2026-10-19): when a tool result or a refused order says `conditions are met for
+  compaction. if you are an orchestrator, vote for compaction.`, run `powershell -File "<skill folder>\vote.ps1"
+  -Name orchestrator -Compact`, then end your turn (ORCHESTRATOR.md section 4).
 - After a compaction go on playing without waiting for the user, if the user allowed that for RimWorld
   play: `show speed.` and `show status.` first, and trust the game over the log. This covers play only;
   mod changes, builds, git and anything outside RimWorld still wait for the user.

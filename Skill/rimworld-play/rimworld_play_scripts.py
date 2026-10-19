@@ -28,10 +28,11 @@ PROJECT_SCRIPTS = [
 SCRIPT_EXT = (".ps1", ".psm1", ".psd1", ".bat", ".cmd", ".sh", ".bash", ".vbs")
 CODE_EXT = (".py", ".pyw", ".js", ".mjs", ".cjs", ".ts", ".rb", ".pl")
 RESULT_SCRIPTS = ("send.ps1", "play.ps1", "wait_for.ps1", "vote.ps1")
-# Hourly check votes and specialist heartbeats (src\VerbalCommands\AgentHourlyCheck.cs, 2026-10-16; user: "that also
-# means modifying hook."): written only by vote.ps1 and wait_round.ps1, never by hand.
+# Hourly check votes (src\VerbalCommands\AgentHourlyCheck.cs, 2026-10-16; user: "that also means modifying hook."):
+# written only by vote.ps1, never by hand. (The specialists' heartbeats in agents\ are gone since 2026-10-19: only the
+# orchestrator votes.)
 VOTE_PATH_RE = re.compile(r"verbalcommands[\\/]+(?:votes|agents)\b", re.IGNORECASE)
-VOTE_MSG = "votes and heartbeats are written only by vote.ps1 and wait_round.ps1"
+VOTE_MSG = "votes are written only by vote.ps1"
 SCRIPT_RE = re.compile(r"[^\s\"'=;|&<>(){}\[\],`]+\.(?:ps1|psm1|psd1|bat|cmd|sh|bash|vbs)(?![\w.])", re.IGNORECASE)
 WRAPPER_RE = re.compile(r"powershell|pwsh|send\.ps1|play\.ps1|wait_for\.ps1|rimworld-play", re.IGNORECASE)
 PS_RE = re.compile(r"\b(?:powershell|pwsh)(?:\.exe)?\b", re.IGNORECASE)

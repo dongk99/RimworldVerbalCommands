@@ -80,10 +80,12 @@ choices; game speed, windows, letters. Your brief narrows this further for your 
      approved sentence `raw apply`, mark the proposal `STATUS: done` with the result; a denial: mark it
      `denied`, do not resend; an edit: send the orchestrator's sentence instead).
    - `HOURS`, `EVENT`, `TIMEOUT` → next round (step 1 with the notes you just wrote).
-   - `[REMINDER] Hourly check N ...` (user, 2026-10-16: "Every goddamn subagent AND ORCHESTRAOR votes to UNPAUSE."):
-     the game stays paused until every agent has voted. Read the batch, act on what is yours, then
-     `powershell -File "S\vote.ps1" -Name <name> -Check N`. Every hourly check, every time; the same batch in a
-     `send.ps1` result is voted the same way.
+   - `[REMINDER] Hourly check N ...`: read the batch and act on what is yours. Only the orchestrator votes (user,
+     2026-10-19: "the 1-hour reminder does not need specialist voting."); the vote line in a `send.ps1` result is not
+     for you.
+   - A tool result says `conditions are met for compaction...`: game orders are refused; block on `wait_round.ps1`.
+     A tool result says `The orchestrator voted for compaction`: stop, write your status note to the path it names,
+     and return with your report.
 7. After 8 rounds in one call, return with your report regardless.
 
 ## Your report (what the orchestrator sees)
