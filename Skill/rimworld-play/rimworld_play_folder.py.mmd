@@ -1,0 +1,22 @@
+flowchart TB
+  start[PreToolUse call] --> session{"play session? RIMWORLD_PLAY=1 or session id in active_session.txt"}
+  session -- no --> allow0[allow]
+  session -- yes --> tool{tool}
+  tool -- "Read / Grep / Glob / Write / Edit / MultiEdit / NotebookEdit" --> paths["collect file_path / notebook_path / path, Glob fixed prefix, Grep glob"]
+  paths --> pic{"Read of an outbox picture file"}
+  pic -- yes --> ok[skip check]
+  pic -- no --> where{"inside project folder, or SKILL.md, or own session tool-results / scratchpad"}
+  picfiles["picture files: outbox\picture.png, outbox\failed to make picture_png.md"]
+  picfiles -.- pic
+  mapfile["NEW: outbox\map.png added to the picture files (list mountains on map draws it)"]
+  mapfile -.- pic
+  class mapfile new
+  tool -- "Bash / PowerShell / Monitor" --> cmdpaths["every path-shaped token in the command"]
+  cmdpaths --> where
+  tool -- "Bash / Monitor" --> psonly{"each statement is powershell -File script"}
+  psonly -- no --> blockps[block]
+  where -- no --> block[block: outside the project folder]
+  where -- yes --> allow[allow]
+  tool -- other --> allow0
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px
+  classDef removed fill:#f7b6b6,stroke:#b01a1a,stroke-width:3px,stroke-dasharray:6 4

@@ -3,8 +3,9 @@
 # FOLDER" / "models may not read reference playlog unless user explicitely allows it."
 #   - Every path must be inside the project folder P. Outside it only: the skill's SKILL.md and scripts, this session's
 #     own tool-results folder (.claude\projects\<slug>\<session id>\) and its scratchpad (Temp\claude\<slug>\<session id>\).
-#   - The mod's picture (AgentPicture.cs: outbox\picture.png and its failure note), Read tool only, these two files only
-#     (user, 2026-10-17, after the play session was refused picture.png: "Pls fix.").
+#   - The mod's picture (AgentPicture.cs: outbox\picture.png and its failure note), Read tool only, these files only
+#     (user, 2026-10-17, after the play session was refused picture.png: "Pls fix."). Also outbox\map.png
+#     (AgentMapPicture.cs, "list mountains on map"; user, 2026-10-21, after the play session was refused it).
 #   - New sessions write to agent_player\play_sessions\ (archive_play_log.ps1 zips it to Desktop\play_log\archive\).
 #   - Bash and Monitor may only run `powershell -File <script>`; the PowerShell tool only calls scripts
 #     (rimworld_play_scripts.py). Every path written in a command is checked the same way.
@@ -24,7 +25,8 @@ SCRIPT_EXT = (".ps1", ".psm1", ".psd1", ".bat", ".cmd")
 TEMP = os.environ.get("TEMP") or os.path.join(HOME, "AppData", "Local", "Temp")
 OUTBOX = os.path.join(HOME, "AppData", "LocalLow", "Ludeon Studios", "RimWorld by Ludeon Studios", "VerbalCommands",
                       "outbox")
-PICTURE_FILES = (os.path.join(OUTBOX, "picture.png"), os.path.join(OUTBOX, "failed to make picture_png.md"))
+PICTURE_FILES = (os.path.join(OUTBOX, "picture.png"), os.path.join(OUTBOX, "failed to make picture_png.md"),
+                 os.path.join(OUTBOX, "map.png"))
 
 
 def play_session(data):
