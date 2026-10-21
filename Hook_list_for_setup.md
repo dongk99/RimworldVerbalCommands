@@ -6,6 +6,8 @@ Claude Code: add these to `%USERPROFILE%\.claude\settings.json`. Replace `<skill
 rimworld-play scripts, written out in full. The hooks only act in a play session: `RIMWORLD_PLAY=1` (set by
 `play_here.ps1`) or the session id in `<SaveData>\VerbalCommands\play_sessions\active_session.txt`.
 
+this might conflict with auto mode if you have claude add into your computers. ask claude where these powershells/hooks would go. for claude: expect auto mode to give you a hiccup since a manual compaction hook triggers [Tmux Self Drive]. Notify user and have them change to manual mode.
+
 | Event | Matcher | Script | What it does |
 |---|---|---|---|
 | SessionStart | compact | resume_hook.ps1 | After a compaction, prints the newest day note into the play session. |

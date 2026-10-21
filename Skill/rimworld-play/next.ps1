@@ -10,16 +10,19 @@
 # waits, on the files' change notification, until a line comes. Its place in each file is saved only after the lines are
 # printed, so a call that is cut off loses nothing.
 #
-# -MaxMin (9 minutes, proposed by the agent with this item; user, 2026-10-19: "wortk on all 4, except 3, because you just
+# -MaxWaitMinutesUnderToolTimeout (9 minutes, proposed by the agent with this item; user, 2026-10-19: "wortk on all 4, except 3, because you just
 # said 3 isnt a problem. and 4 fixes itself, so, 1 and 2."): the PowerShell tool moves a call
 # that runs past its timeout (at most 10 minutes) into the background, where the lines would come back as a notification
 # with the wrapper. So with nothing new for 9 minutes it prints "NOTHING NEW ..." and returns; call it again.
 # Lines: whatever watch.ps1 and pawns_watch.ps1 print (see their headers), and
 #   NO FEED: ...          neither watcher runs with -Feed in this session
-#   NOTHING NEW ...       nothing in -MaxMin minutes
-param([double]$MaxMin = 9)
+#   Either somehow ...    nothing in -MaxWaitMinutesUnderToolTimeout minutes (3 since 2026-10-20; user: "set it to 3
+#                         minutes.")
+#   GAME IS PAUSED, ...   nothing new and inbox_state.json says paused (a paused game writes no new lines)
+param([double]$MaxWaitMinutesUnderToolTimeout = 3)
 $root = Join-Path $env:USERPROFILE "AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands"
 $dir = Join-Path $root "feed"
+$state = Join-Path $root "inbox_state.json"
 $sid = ([string]$env:CLAUDE_CODE_SESSION_ID).ToLowerInvariant() -replace '[^0-9a-f]', ''
 $sid = $(if ($sid.Length -ge 8) { $sid.Substring(0, 8) } else { "nosessio" })
 $names = @("${sid}_events.log", "${sid}_pawns.log")
@@ -72,7 +75,7 @@ $fsw.NotifyFilter = [IO.NotifyFilters]::LastWrite -bor [IO.NotifyFilters]::Size 
 $evId = "next_feed_" + [guid]::NewGuid().ToString("N")
 Register-ObjectEvent -InputObject $fsw -EventName Changed -SourceIdentifier $evId | Out-Null
 $fsw.EnableRaisingEvents = $true
-$deadline = (Get-Date).AddMinutes($MaxMin)
+$deadline = (Get-Date).AddMinutes($MaxWaitMinutesUnderToolTimeout)
 try {
     while ($true) {
         $lines = @()
@@ -82,8 +85,11 @@ try {
             Save
             break
         }
+        $paused = $false
+        try { $paused = [bool](([IO.File]::ReadAllText($state) | ConvertFrom-Json).paused) } catch { }
+        if ($paused) { 'GAME IS PAUSED, SAY "set game speed to normal." TO UNPAUSE TO GET UPDATES'; break }
         $left = ($deadline - (Get-Date)).TotalSeconds
-        if ($left -le 0) { "NOTHING NEW in $MaxMin min."; break }
+        if ($left -le 0) { "Either somehow nothing happened in 3 minutes in rimworld, or you forgot to unpause for 3 minutes."; break }
         Wait-Event -SourceIdentifier $evId -Timeout ([int][math]::Ceiling($left)) | Out-Null
         Remove-Event -SourceIdentifier $evId -ErrorAction SilentlyContinue
     }

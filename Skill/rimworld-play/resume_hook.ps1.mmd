@@ -1,0 +1,20 @@
+flowchart TD
+    A[SessionStart, matcher compact<br/>after auto AND manual /compact] --> B{play session?<br/>id in active_session.txt or RIMWORLD_PLAY=1}
+    B -- no --> X[exit 0, prints nothing]
+    B -- yes --> C[delete bills_shown.txt]
+    C --> D[newest day_*.md in SaveData\VerbalCommands\play_sessions = handoff]
+    D --> E["head: [rimworld-play resume] ... Handoff: file"]
+    E --> M[find_mod.ps1: docs = mod Skill\delegates]
+    M --> F[CC-Evaluate]
+    F --> H[CC-Compacted: lastCycle set, block lifts]
+    F --> G{ok AND notesThere or contextDue?}
+    G -- yes --> I["add [2-day compaction restart] orders<br/>read SKILL.md, docs\ORCHESTRATOR.md, docs\COMMON.md, day notes, status\*.md ..."]
+    G -- no --> J
+    I --> J[print head + ---- + handoff text]
+    J --> N1{NEW: play_sessions\compact_injected.txt there?}
+    N1 -- no --> END[exit 0]
+    N1 -- yes --> N2[NEW: delete compact_injected.txt]
+    N2 --> N3["NEW: line = Continue, read these before unpausing: full paths, separated by ; of<br/>SKILL.md, docs\ORCHESTRATOR.md, docs\COMMON.md, newest day note, the one before,<br/>every delegates\status\*.md<br/>no WHY.md / README.md: not shipped"]
+    N3 --> N4[NEW: start compact_inject.ps1 -ClaudePid N -Text line]
+    class N1,N2,N3,N4 new
+    classDef new fill:#b6f2b6

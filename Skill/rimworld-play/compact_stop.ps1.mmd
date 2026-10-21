@@ -1,0 +1,18 @@
+flowchart TD
+    S["NEW: settings.json Stop hook<br/>powershell -File compact_stop.ps1"] --> A[NEW: agent ends its turn, Stop hook fires]
+    A --> B{NEW: play session?<br/>CC-IsPlaySession}
+    B -- no --> OK1[NEW: exit 0, nothing]
+    B -- yes --> C[NEW: CC-Evaluate<br/>mod compact_common.ps1: play_sessions in SaveData\VerbalCommands]
+    C --> D{"NEW: 2-day note rule met?<br/>path = cycle: new cycle and both day notes exist<br/>context size not looked at"}
+    D -- no --> OK2[NEW: exit 0, nothing]
+    D -- yes --> E{NEW: game speed = Paused?}
+    E -- no --> F[NEW: send.ps1 set game speed to paused.]
+    E -- yes --> G
+    F --> G[NEW: find the claude.exe process above this hook]
+    G --> FL[NEW: write play_sessions\compact_injected.txt]
+    FL --> H[NEW: start compact_inject.ps1 -ClaudePid N<br/>detached, hidden]
+    H --> OK3[NEW: exit 0, turn ends normally]
+    H -.-> I["NEW: compact_inject.ps1 types /compact + Enter"]
+    I --> K[resume_hook.ps1: CC-Compacted, then types the read line]
+    class S,A,B,OK1,C,D,OK2,E,F,G,FL,H,OK3,I new
+    classDef new fill:#b6f2b6

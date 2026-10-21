@@ -1,0 +1,9 @@
+flowchart TD
+    A[NEW: start: -ClaudePid N, -Text default /compact<br/>hidden, detached from the hook] --> B[NEW: FreeConsole: drop own console]
+    B --> C{NEW: AttachConsole N ok?}
+    C -- no --> X[NEW: exit, nothing typed]
+    C -- yes --> D[NEW: WriteConsoleInput: key events for<br/>-Text then Enter]
+    D --> E[NEW: FreeConsole, exit]
+    E -.-> F[Claude Code reads it as if the user typed it]
+    class A,B,C,X,D,E new
+    classDef new fill:#b6f2b6

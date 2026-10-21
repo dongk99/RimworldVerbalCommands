@@ -1,0 +1,14 @@
+flowchart TD
+    A["start: -MaxWaitMinutesUnderToolTimeout 3<br/>NEW: 3 / REMOVED: 9"] --> B{feed dir has<br/>sid_events.log or sid_pawns.log?}
+    B -- no --> B1[print NO FEED ...<br/>exit 1]
+    B -- yes --> C[load cursor from sid.cursor]
+    C --> D[set up FileSystemWatcher on sid_*.log<br/>deadline = now + MaxWaitMinutesUnderToolTimeout]
+    D --> E[Take events.log, Take pawns.log<br/>complete lines after cursor]
+    E --> F{any lines?}
+    F -- yes --> G[print lines<br/>Save cursor<br/>return]
+    F -- no --> P{inbox_state.json<br/>paused?}
+    P -- yes --> P1[print GAME IS PAUSED, SAY<br/>set game speed to normal.<br/>TO UNPAUSE TO GET UPDATES<br/>return]
+    P -- no --> H{deadline passed?}
+    H -- yes --> I["NEW: print Either somehow nothing happened in 3 minutes in rimworld,<br/>or you forgot to unpause for 3 minutes.<br/>REMOVED: print NOTHING NEW in MaxWaitMinutesUnderToolTimeout min.<br/>return"]
+    H -- no --> J[Wait-Event on file change<br/>until deadline]
+    J --> E

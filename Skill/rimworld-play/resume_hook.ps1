@@ -53,6 +53,36 @@ try {
     } else {
         [Console]::Out.Write($head + "`n")
     }
+
+    # After a compaction compact_stop.ps1 started (user, 2026-10-20: "I would have it write out all of the .md instead of
+    # vagueposting as "read required files"."): no turn starts by itself after a /compact (2026-10-19 the user typed
+    # "Continue, read required notes before unpausing."), so that sentence, with every file of the restart orders above
+    # written out, is typed into this session's console (compact_inject.ps1). WHY.md and README.md are not shipped, so not
+    # listed (user, 2026-10-21: "Paths would not be required.").
+    $flag = Join-Path $dir "compact_injected.txt"
+    if (Test-Path -LiteralPath $flag) {
+        Remove-Item -LiteralPath $flag -ErrorAction SilentlyContinue
+        $paths = @((Join-Path $PSScriptRoot "SKILL.md"), (Join-Path $docs "ORCHESTRATOR.md"), (Join-Path $docs "COMMON.md"))
+        if ($file) { $paths += $file.FullName }
+        if ($prev) { $paths += $prev.FullName }
+        $paths += @(Get-ChildItem -LiteralPath (Join-Path $proj "delegates\status") -Filter "*.md" -File -ErrorAction SilentlyContinue |
+            Sort-Object Name | ForEach-Object { $_.FullName })
+        $line = "Continue, read these before unpausing: " + (($paths | Select-Object -Unique) -join "; ") + "."
+
+        # The claude.exe this hook runs under (the hook may sit below a shell).
+        $claudePid = 0
+        $p = $PID
+        for ($i = 0; $i -lt 10 -and $p; $i++) {
+            $proc = Get-CimInstance Win32_Process -Filter "ProcessId=$p"
+            if ($null -eq $proc) { break }
+            if ($proc.Name -ieq "claude.exe") { $claudePid = [int]$p; break }
+            $p = $proc.ParentProcessId
+        }
+        if ($claudePid) {
+            Start-Process powershell -WindowStyle Hidden -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+                ('"' + (Join-Path $PSScriptRoot "compact_inject.ps1") + '"'), "-ClaudePid", $claudePid, "-Text", ('"' + $line + '"'))
+        }
+    }
 } catch {
     exit 0
 }
