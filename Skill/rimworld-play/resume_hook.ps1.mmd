@@ -16,5 +16,6 @@ flowchart TD
     N1 -- yes --> N2[NEW: delete compact_injected.txt]
     N2 --> N3["NEW: line = Continue, read these before unpausing: full paths, separated by ; of<br/>SKILL.md, docs\ORCHESTRATOR.md, docs\COMMON.md, newest day note, the one before,<br/>every delegates\status\*.md<br/>no WHY.md / README.md: not shipped"]
     N3 --> N4[NEW: start compact_inject.ps1 -ClaudePid N -Text line]
-    class N1,N2,N3,N4 new
+    DIR["CHANGED: the restart orders name {YOUR DIRECTORY HERE}\SKILL.md and {YOUR DIRECTORY HERE}\clear.ps1<br/>instead of <home>\.claude\skills\rimworld-play\... (user, 2026-10-21: mod copies point at no directory;<br/>whoever installs fills it in)"]
+    class N1,N2,N3,N4,DIR new
     classDef new fill:#b6f2b6

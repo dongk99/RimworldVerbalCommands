@@ -1,0 +1,10 @@
+flowchart TD
+  A["play_here.ps1 (desktop shortcut 'RimWorld Play')"] --> B["find_mod.ps1: ModDir"]
+  B -- none --> X[print ModDirError, exit 1]
+  B --> C["Set-Location ModDir\Skill"]
+  C --> D["env: RIMWORLD_PLAY=1 (marks the play session for the hooks)<br/>CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=20 (auto-compact offered from 20% of the window; the gate decides)<br/>CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS=100000"]
+  D --> E["start the Claude Code exe with any arguments passed through (e.g. --resume id)"]
+  dir["CHANGED: the exe path = {YOUR DIRECTORY HERE}\claude.exe (was ~\.local\bin\claude.exe)<br/>(user, 2026-10-21: mod copies point at no author/harness directory; whoever installs fills it in)"]
+  dir -.- E
+  class dir new
+  classDef new fill:#b6f2b6

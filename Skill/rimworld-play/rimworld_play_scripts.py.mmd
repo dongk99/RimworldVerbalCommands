@@ -1,0 +1,20 @@
+flowchart TB
+  start[PreToolUse: Bash / PowerShell / Monitor / Write / Edit / MultiEdit / NotebookEdit] --> session{"play session?<br/>RIMWORLD_PLAY=1 or session id in SaveData\VerbalCommands\play_sessions\active_session.txt"}
+  session -- no --> allow0[exit 0]
+  session -- yes --> tool{tool}
+  tool -- "Bash / PowerShell / Monitor" --> cmd["check_command: every script token in the command"]
+  cmd --> known{"script is in the skill folder (SKILL), or one of PROJECT_SCRIPTS under P?"}
+  known -- no --> block["exit 2: BLOCKED (not one of the scripts in the folder; no new scripts)"]
+  known -- yes --> ps{"powershell only as -File script; no -Command"}
+  ps --> speed["speed cap: no 2x/3x, 'run' must say 'at normal', no play.ps1 -Run"]
+  speed --> listing["no bare 'show orders.' / 'show questions.' (PLAYBOOK sections 6-7)"]
+  listing --> pipes["send/play/wait_for/vote/next results never piped, redirected or captured; votes only via vote.ps1; no chmod"]
+  pipes --> ok{problems?}
+  ok -- yes --> block
+  ok -- no --> allow[exit 0]
+  tool -- "Write / Edit / MultiEdit / NotebookEdit" --> wr["check_write: no script files (.ps1 .bat .sh ...),<br/>no code file calling PowerShell or a skill script, speed cap in inbox files, votes only via vote.ps1"]
+  wr --> ok
+  dir["CHANGED: SKILL and P = {YOUR DIRECTORY HERE}; PROJECT_SCRIPTS hang off P<br/>(user, 2026-10-21: mod copies point at no author/harness directory; whoever installs fills them in)"]
+  dir -.- known
+  class dir new
+  classDef new fill:#b6f2b6

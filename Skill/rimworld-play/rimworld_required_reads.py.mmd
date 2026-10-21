@@ -1,0 +1,16 @@
+flowchart TD
+    classDef new fill:#b6f2b6
+    A[PreToolUse Bash / PowerShell<br/>stdin: tool_input.command, session_id, transcript_path]:::new --> B{command names a .ps1?}:::new
+    B -- no --> OK[exit 0: allowed]:::new
+    B -- yes --> C{play session<br/>RIMWORLD_PLAY=1 or active_session.txt = session_id<br/>or the .ps1 is in skills\rimworld-play}:::new
+    C -- no --> OK
+    C -- yes --> D[read skills\rimworld-play\required_reads.txt<br/>one path per line, * globs, 'newest N glob']:::new
+    D --> E[expand to the list of required files]:::new
+    E --> F[open the ORCHESTRATOR transcript<br/>transcript_path, never the subagent file]:::new
+    F --> G[keep only entries after the last isCompactSummary entry<br/>no summary: whole transcript]:::new
+    G --> H[collect reads of each required file:<br/>Read tool_use file_path + offset/limit<br/>attachment entries of type file after a compaction<br/>a Write of the file by the orchestrator itself<br/>Bash/PowerShell cat / Get-Content / type with no range,<br/>no redirect and no heredoc: 'cat > file <<EOF' is a write]:::new
+    H --> I{every required file covered<br/>from line 1 to its last line?<br/>images: one Read}:::new
+    I -- yes --> OK
+    I -- no --> J[exit 2: BLOCKED<br/>lists every missing file by full path<br/>'Read each in full with the Read tool, then send again']:::new
+    MC["NEW: mod copy of ~\.claude\hooks\rimworld_required_reads.py (project CLAUDE.md rule 25: hooks are hand-copied here),<br/>with required_reads.txt beside it. Only MARKER changed: SaveData\VerbalCommands\play_sessions\active_session.txt<br/>(same as the rimworld_play_folder.py / rimworld_skill_hint.py mod copies)"]:::new
+    DIR["CHANGED: SKILL and P = {YOUR DIRECTORY HERE}; required_reads.txt entries keep their P\... and ~\... forms<br/>(user, 2026-10-21: mod copies point at no author/harness directory; whoever installs fills them in)"]:::new

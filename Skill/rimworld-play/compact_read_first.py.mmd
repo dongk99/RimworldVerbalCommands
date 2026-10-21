@@ -1,0 +1,19 @@
+flowchart TD
+    S["NEW: PreToolUse hook, matcher * (every tool, subagents included)<br/>registered ONLY in the project's .claude\settings.json<br/>and agent_player\.claude\settings.json (project scope, never global)"] --> A["NEW: read hook input: tool_name, tool_input, transcript_path"]
+    A --> T{"NEW: this call touches a compaction file?<br/>tool_input text matches compact_*.ps1 / .json / .md,<br/>resume_hook.ps1, play_here.ps1 (any folder: skill, game mod, project mod;<br/>a Read, a Write/Edit, or a shell command naming one)"}
+    A --> U{"NEW: scan the whole transcript:<br/>any earlier tool call touched a compaction file?<br/>which MUST-READ files were opened with the Read tool?"}
+    T -- no --> U2{"NEW: earlier touch?"}
+    U --> U2
+    U2 -- no --> OK1["NEW: exit 0, not a compaction session"]
+    T -- yes --> M
+    U2 -- yes --> M{"NEW: every MUST-READ file read?"}
+    M -- yes --> OK2["NEW: exit 0, allowed"]
+    M -- no --> R{"NEW: this call is Read of a MUST-READ file<br/>or of its .mmd (mermaid gate needs the .mmd first)?"}
+    R -- yes --> OK3["NEW: exit 0, let them read it"]
+    R -- no --> X["NEW: exit 2, BLOCKED (user, 2026-10-21, verbatim):<br/>GO READ OTHER COMPACT RELEVANT FILES, ESPECIALLY IF YOU ARE WRITING.<br/>I DONT CARE IF YOU ARE READING EITHER.<br/>+ the list of MUST-READ files still unread"]
+    L["NEW: MUST-READ list:<br/>skill\play_here.ps1 (CLAUDE_AUTOCOMPACT_PCT_OVERRIDE, idle-compact env)<br/>~\.claude\settings.json (autoCompactWindow, autoCompactEnabled, hook registrations)<br/>agent_player\.claude\settings.json<br/>skill\compact_limits.json + compact_limits.md<br/>agent_player\play_sessions\compact_state.json<br/>skill\compact_common.ps1, compact_gate.ps1, compact_block.ps1,<br/>compact_stop.ps1, compact_inject.ps1, compact_warn.ps1, resume_hook.ps1"]
+    W["NEW: why: 2026-10-21 the agent diagnosed the play session's compaction<br/>without opening play_here.ps1, whose 20% override was the real trigger"]
+    MC["NEW: mod copy of hooks\compact_read_first.py (project CLAUDE.md rule 25: hooks are hand-copied here).<br/>Portable: skill folder = this script's own folder; compact_state.json in SaveData\VerbalCommands\play_sessions;<br/>no agent_player\.claude\settings.json entry (other players have none)"]
+    DIR["CHANGED: the harness settings.json entry = {YOUR DIRECTORY HERE}\settings.json<br/>(user, 2026-10-21: mod copies point at no author/harness directory; whoever installs fills it in)"]
+    class S,A,T,U,U2,OK1,M,OK2,R,OK3,X,L,W,MC,DIR new
+    classDef new fill:#b6f2b6

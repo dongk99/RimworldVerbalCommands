@@ -1,0 +1,30 @@
+flowchart TD
+    A[CC-Evaluate in]  --> R0{"NEW: day_00.md exists<br/>and day_01.md does not?"}
+    R0 -- yes --> R1["NEW: rename day_00.md to day_01.md<br/>(notes count from 1, SKILL.md)"]
+    R0 -- no --> B
+    R1 --> B
+    B[CC-ReadGame: inbox_state.json<br/>day, speed] --> C[cycle = floor day/2 + 1<br/>lastCycle from compact_state.json]
+    C --> D{cycle >= 2?}
+    D -- yes --> E["CHANGED: notesThere = day_2b-1.md and day_2b.md exist<br/>b = cycle - 1; note number = game day + 1"]
+    D -- no --> F
+    E --> F[cycleDue = cycle > lastCycle AND notesThere]
+    F --> G[ctx = last assistant usage in transcript<br/>input + cache read + cache write]
+    G --> G1["NEW: a compact boundary after the last usage line<br/>= ctx 0 (old usage is from before the compaction)"]
+    G1 --> H{ctx >= warn 270000?}
+    H -- no --> I["CHANGED: clear warnShown"]
+    H -- yes --> J["REMOVED: first time for this day's note:<br/>save noteFile + its size"]
+    H -- yes --> J2["NEW: warned = true<br/>no day note looked at"]
+    J2 --> K{ctx >= valve 300000?}
+    K -- yes --> L["REMOVED: contextDue = note grew since saved size<br/>AND previous day's note exists"]
+    K -- yes --> L2["NEW: contextDue = true<br/>no day note looked at"]
+    K -- no --> M
+    L2 --> M
+    I --> M[due = cycleDue OR contextDue]
+    M --> N[return due, notesThere, contextDue, warned, speed]
+    O[CC-Compacted: after a compaction<br/>resume_hook.ps1] --> P["CHANGED: lastCycle = cycle if notesThere<br/>clear warnShown"]
+    W["NEW: CC-WarnShown / CC-SetWarnShown<br/>warnShown in compact_state.json, read by compact_warn.ps1"]
+    MC["NEW: mod copy of the skill's compact_common.ps1;<br/>only its own $CC_Proj line kept (play_sessions in SaveData\VerbalCommands)"]
+    class R0,R1,E,G1,I,J2,L2,P,W,MC new
+    class J,L removed
+    classDef new fill:#b6f2b6
+    classDef removed fill:#f7b6b6,stroke-dasharray:6 4

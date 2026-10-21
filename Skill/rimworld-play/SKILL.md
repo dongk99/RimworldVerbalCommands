@@ -143,7 +143,7 @@ powershell -File "<skill folder>\send.ps1" -Reply apply        (or: -Reply cance
    building you placed.
 6. **End of every game day** (user, 2026-10-12): when the day turns (hour 0; `show speed.` or
    `inbox_state.json` tick, 60000 per day), pause with `set game speed to paused.` (`-Mode "raw apply"`),
-   write `<SaveData>\VerbalCommands\play_sessions\day_NN.md` with: what you did today (orders, cells, refusals quoted);
+   write `<SaveData>\VerbalCommands\play_sessions\day_NN.md` (NN counts from 1: the game's 1st day is 01) with: what you did today (orders, cells, refusals quoted);
    your short-term goal (1-3 days) and why; your long-term goal for the colony and why; which pawns you must
    secure and the reasoning (only researcher / doctor / builder / rifle carrier ...); one line comparing with
    the human's same day in the reference file; the WHY.md and README pointers. Before unpausing into the new day, re-read the previous

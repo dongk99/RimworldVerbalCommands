@@ -101,7 +101,7 @@ plain text.
   `6 tiles north of Bob`.
 - AREA, a rectangle: `100, 80 to 120, 95` (two corners, both included) or `10 by 10 around SPOT`.
 - Every answer prints a cell as `112, 87 (6 tiles north of Bob)`: copy the numbers into the next order.
-- You never get anything under fog, and you can not order anything under fog.
+- You never get anything under fog, and you can not order anything under fog, except digging: `dig room` marks fogged cells inside for mining, as a player's drag does (see mining.md).
 - Only numbers that stand in your order are accepted; a made-up coordinate or size is rejected.
 - Go by names, as a human does: landmarks (`steam geyser 2`, `ship chunk 1`), `where is nearest steel.`, the
   colonists. Use them as SPOT (`build ... near steam geyser 2.`) and let the plan, or its refusal, give the exact cells

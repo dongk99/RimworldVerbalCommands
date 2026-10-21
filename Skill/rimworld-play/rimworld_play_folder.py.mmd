@@ -11,6 +11,9 @@ flowchart TB
   mapfile["NEW: outbox\map.png added to the picture files (list mountains on map draws it)"]
   mapfile -.- pic
   class mapfile new
+  dir["CHANGED: SKILL, P and the harness transcripts folder = {YOUR DIRECTORY HERE}<br/>(user, 2026-10-21: mod copies point at no author/harness directory; whoever installs fills them in)"]
+  dir -.- where
+  class dir new
   tool -- "Bash / PowerShell / Monitor" --> cmdpaths["every path-shaped token in the command"]
   cmdpaths --> where
   tool -- "Bash / Monitor" --> psonly{"each statement is powershell -File script"}

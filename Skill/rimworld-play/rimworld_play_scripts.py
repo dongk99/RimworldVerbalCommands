@@ -17,8 +17,8 @@ import re
 import sys
 
 HOME = os.environ.get("USERPROFILE") or os.path.expanduser("~")
-SKILL = os.path.join(HOME, ".claude", "skills", "rimworld-play")
-P = os.path.join(HOME, ".claude", "projects", "RimWorld-LLM-Integration")
+SKILL = r"{YOUR DIRECTORY HERE}"   # the folder holding the rimworld-play scripts (user, 2026-10-21: mod copies point at no directory)
+P = r"{YOUR DIRECTORY HERE}"       # the project folder (PROJECT_SCRIPTS below hang off it)
 MARKER = os.path.join(HOME, "AppData", "LocalLow", "Ludeon Studios", "RimWorld by Ludeon Studios", "VerbalCommands", "play_sessions", "active_session.txt")
 PROJECT_SCRIPTS = [
     os.path.join(P, "briefs", "23_run", "assemble_router.ps1"),

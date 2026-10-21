@@ -3,9 +3,10 @@ flowchart TD
     A --> B{NEW: play session?<br/>CC-IsPlaySession}
     B -- no --> OK1[NEW: exit 0, nothing]
     B -- yes --> C[NEW: CC-Evaluate<br/>mod compact_common.ps1: play_sessions in SaveData\VerbalCommands]
-    C --> D{"NEW: 2-day note rule met?<br/>path = cycle: new cycle and both day notes exist<br/>context size not looked at"}
-    D -- no --> OK2[NEW: exit 0, nothing]
-    D -- yes --> E{NEW: game speed = Paused?}
+    C --> D["REMOVED: 2-day note rule met?<br/>path = cycle: new cycle and both day notes exist<br/>context size not looked at"]
+    C --> D2{"CHANGED: compaction due?<br/>path = cycle (2-day notes)<br/>OR path = context (ctx >= valve, no notes looked at)"}
+    D2 -- no --> OK2[exit 0, nothing]
+    D2 -- yes --> E{game speed = Paused?}
     E -- no --> F[NEW: send.ps1 set game speed to paused.]
     E -- yes --> G
     F --> G[NEW: find the claude.exe process above this hook]
@@ -14,5 +15,8 @@ flowchart TD
     H --> OK3[NEW: exit 0, turn ends normally]
     H -.-> I["NEW: compact_inject.ps1 types /compact + Enter"]
     I --> K[resume_hook.ps1: CC-Compacted, then types the read line]
-    class S,A,B,OK1,C,D,OK2,E,F,G,FL,H,OK3,I new
+    MC["NEW: mod copy = the skill's compact_stop.ps1, unchanged"]
+    class D2,MC new
+    class D removed
     classDef new fill:#b6f2b6
+    classDef removed fill:#f7b6b6,stroke-dasharray:6 4

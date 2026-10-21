@@ -1,0 +1,10 @@
+flowchart TD
+  A[launch_play.ps1] --> B["find_mod.ps1: ModDir (two folders up, Steam library, or Workshop)"]
+  B -- none --> X[print ModDirError, exit 1]
+  B --> C["Set-Location ModDir\Skill"]
+  C --> D["env: CLAUDE_CODE_DISABLE_AUTO_MEMORY=1, ENABLE_CLAUDEAI_MCP_SERVERS=false<br/>CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=20, CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS=100000"]
+  D --> E["start the Claude Code exe with --setting-sources user,<br/>--settings play_settings.json, --strict-mcp-config, limited --tools"]
+  dir["CHANGED: the exe path = {YOUR DIRECTORY HERE}\claude.exe (was ~\.local\bin\claude.exe)<br/>(user, 2026-10-21: mod copies point at no author/harness directory; whoever installs fills it in)"]
+  dir -.- E
+  class dir new
+  classDef new fill:#b6f2b6

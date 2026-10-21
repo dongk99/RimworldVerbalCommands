@@ -1,0 +1,15 @@
+# Files the ORCHESTRATOR must have read in full, in the current context (since the last compaction), before any .ps1 runs.
+# Checked by {YOUR DIRECTORY HERE}\rimworld_required_reads.py (user, 2026-10-21: "block ANY tooling into ps1 from
+# proceeding UNTIL the orchestrator reads ALL OF THE REQUIRED FILE").
+# One entry per line. ~ = home folder, P = <project folder>. * globs.
+# "newest N <glob>" = the N newest by name.
+{YOUR DIRECTORY HERE}\SKILL.md
+P\agent_player\PLAYBOOK.md
+P\agent_player\knowhow\INDEX.md
+P\agent_player\map2.jpg
+P\agent_player\delegates\ORCHESTRATOR.md
+P\agent_player\delegates\COMMON.md
+P\agent_player\delegates\status\*.md
+newest 2 P\agent_player\play_sessions\day_*.md
+P\src\RouterScript\notes\WHY.md
+P\src\RouterScript\README.md

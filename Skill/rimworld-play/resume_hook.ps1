@@ -40,11 +40,11 @@ try {
     $own = $ev.ok -and ($ev.notesThere -or $ev.contextDue)
     if ($ev.ok) { CC-Compacted $ev }
     if ($own) { $head += "`n[2-day compaction restart] The game is paused on purpose. Before you unpause, in this order: " +
-        "1. Read: <home>\.claude\skills\rimworld-play\SKILL.md; $docs\ORCHESTRATOR.md (section 0 roles, section 3 the round, section 4 your loop, section 6 spawning); " +
+        "1. Read: {YOUR DIRECTORY HERE}\SKILL.md; $docs\ORCHESTRATOR.md (section 0 roles, section 3 the round, section 4 your loop, section 6 spawning); " +
         "$docs\COMMON.md; the day note below" + $(if ($prev) { " and the one before it ($($prev.FullName))" } else { "" }) + "; every $proj\delegates\status\*.md; " +
         "and the router pointers above (WHY.md, README.md). " +
         "2. Send ``show speed.``, ``show status.``, ``show alerts.`` and ``show letters.``; trust the game over the notes. " +
-        "3. Delete $proj\delegates\stop\ALL (powershell -File `"<home>\.claude\skillsimworld-play\clear.ps1`" -Stop ALL; the hooks allow no Remove-Item), then relaunch the specialists as ORCHESTRATOR.md section 4 orders them (schedule, work_priority, equipment_config, storage_zones, bills, expediter, drafter_mover last), each with a current direction line (section 6). " +
+        "3. Delete $proj\delegates\stop\ALL (powershell -File `"{YOUR DIRECTORY HERE}\clear.ps1`" -Stop ALL; the hooks allow no Remove-Item), then relaunch the specialists as ORCHESTRATOR.md section 4 orders them (schedule, work_priority, equipment_config, storage_zones, bills, expediter, drafter_mover last), each with a current direction line (section 6). " +
         "4. Only then unpause (``set game speed to normal.`` or a ``run``)." }
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
     if ($file) {

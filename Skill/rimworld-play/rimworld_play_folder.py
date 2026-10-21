@@ -17,8 +17,8 @@ import re
 import sys
 
 HOME = os.environ.get("USERPROFILE") or os.path.expanduser("~")
-SKILL = os.path.join(HOME, ".claude", "skills", "rimworld-play")
-P = os.path.join(HOME, ".claude", "projects", "RimWorld-LLM-Integration")
+SKILL = r"{YOUR DIRECTORY HERE}"   # the folder holding the rimworld-play scripts (user, 2026-10-21: mod copies point at no directory)
+P = r"{YOUR DIRECTORY HERE}"       # the project folder (SESSIONS below hangs off it)
 SESSIONS = os.path.join(P, "agent_player", "play_sessions")
 MARKER = os.path.join(HOME, "AppData", "LocalLow", "Ludeon Studios", "RimWorld by Ludeon Studios", "VerbalCommands", "play_sessions", "active_session.txt")
 SCRIPT_EXT = (".ps1", ".psm1", ".psd1", ".bat", ".cmd")
@@ -78,7 +78,7 @@ def allowed(path, sid, script=False):
     if sid:
         parts = path.split("\\")
         own = sid.lower() in parts
-        if own and under(path, os.path.join(HOME, ".claude", "projects")):
+        if own and under(path, r"{YOUR DIRECTORY HERE}"):  # the harness's transcripts / tool-results folder
             return None
         if own and under(path, os.path.join(TEMP, "claude")):
             return None

@@ -3,7 +3,7 @@
 #   Tools: PowerShell (send.ps1, play.ps1), Read, Edit, Write, Glob, Grep. No Bash, web, subagents or MCP.
 #   Skills: rimworld-play only (play_settings.json turns the others and the bundled ones off). /compact stays.
 #   No auto memory, no claude.ai connectors. User settings still load (the after-compaction resume hook is there).
-#   Transcripts go to the usual %USERPROFILE%\.claude\projects, where the mod's token meter reads them.
+#   Transcripts go to the usual {YOUR DIRECTORY HERE}, where the mod's token meter reads them.
 $skill = $PSScriptRoot
 . (Join-Path $PSScriptRoot "find_mod.ps1")
 if (-not $ModDir) { $ModDirError; exit 1 }
@@ -15,7 +15,7 @@ $env:ENABLE_CLAUDEAI_MCP_SERVERS = "false"
 # with the game paused, the day note written and delegates\stop\ALL in place. Only this play session gets these values.
 $env:CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = "20"
 $env:CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS = "100000"
-& (Join-Path $env:USERPROFILE ".local\bin\claude.exe") `
+& "{YOUR DIRECTORY HERE}\claude.exe" `
     --setting-sources user `
     --settings (Join-Path $skill "play_settings.json") `
     --strict-mcp-config `

@@ -13,4 +13,4 @@ Set-Location (Join-Path $ModDir "Skill")
 $env:RIMWORLD_PLAY = "1"
 $env:CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = "20"
 $env:CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS = "100000"
-& (Join-Path $env:USERPROFILE ".local\bin\claude.exe") @args
+& "{YOUR DIRECTORY HERE}\claude.exe" @args

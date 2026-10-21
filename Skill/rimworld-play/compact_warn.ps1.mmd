@@ -1,0 +1,14 @@
+flowchart TD
+    S["NEW: settings.json PostToolUse, matcher Bash|PowerShell<br/>powershell -File compact_warn.ps1"] --> A[a Bash / PowerShell call finished]
+    A --> B{"NEW: play session?<br/>CC-IsPlaySession"}
+    B -- no --> OK1[exit 0, nothing]
+    B -- yes --> C["NEW: CC-Evaluate"]
+    C --> D{"NEW: warned (ctx >= warn 270000)<br/>AND warnShown not set?<br/>no day note looked at"}
+    D -- no --> OK2[exit 0, nothing]
+    D -- yes --> E["NEW: print additionalContext to the agent:<br/>Context is at CTX tokens, past WARN: append to today's note, day_NN.md."]
+    E --> F["NEW: CC-SetWarnShown<br/>once until the context drops below warn or a compaction runs"]
+    F  --> OK3[exit 0]
+    M["NEW: copy compact_warn.ps1 + compact_common.ps1 + compact_stop.ps1<br/>to mod\Skill\rimworld-play"]
+    MC["NEW: mod copy = the skill's compact_warn.ps1, unchanged"]
+    class S,B,C,D,E,F,M,MC new
+    classDef new fill:#b6f2b6

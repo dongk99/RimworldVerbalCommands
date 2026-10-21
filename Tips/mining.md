@@ -10,11 +10,14 @@ is the roof. You choose the place; the mod never picks it.
   with its cell. The game pauses until you unpause after reading it.
 - `show roof map around SPOT.`: open sky, built roof, thin rock roof, overhead mountain.
 - `show resources map.`, `where is nearest steel.`, `where is nearest compacted machinery.`
-- Only what is in view counts. Rock behind the face is under fog until you dig to it.
+- Only what is in view counts. Rock behind the face is under fog until you dig to it, but
+  `dig room` reaches into fog: fogged cells inside are marked for mining, as a player's drag marks them.
 
 ## Digging
 - A room: `dig room 9 by 7 around 50, 60 door east.` Rock inside is marked for mining, rock at the edge
   stays as wall, open edge cells get wall blueprints, one door. Furnish it afterwards with build lines.
+  Fogged edge cells get nothing: once they are explored, see whether each is rock or open ground and wall
+  the open ones (`build wall at X, Z.`).
 - Rock is dug out only with `dig room`.
 - Ore (since 2026-10-16): `mine near 50, 60.`, `mine nearest steel near Bob.`, `mine steel near Bob.` or `mine steel in area AREA.`
   sends colonists: each mines the nearest ore in the 8x8 around the place (in AREA and its edge for an area),

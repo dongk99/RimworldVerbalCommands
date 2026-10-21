@@ -7,11 +7,14 @@
 #   - Cycle path (user, 2026-10-18: "pre-compaction hook requirement from 3 days of writing .md to 2 days (every other
 #     day)"): cycles of 2 game days, counted from 1 (game days 0-1 = cycle 1, 10-11 = cycle 6). Due once a new cycle has
 #     begun (cycle above lastCycle in play_sessions\compact_state.json) and both notes of the cycle that just ended exist
-#     (at day 12: day_10.md and day_11.md; a note is named after the in-game day it is written on).
-#   - Context path, limits in compact_limits.json ("270,000 and 300,000"): from warn the size of the current day's note is
-#     saved; from valve a compaction is due once the note is
-#     larger than that size and the previous day's note exists too (user, 2026-10-19: "you need TWO days of note to
-#     compact. NOT one."). On day 0 this path never fires.
+#     (at game day 12: day_11.md and day_12.md). Notes count from 1 (SKILL.md, user 2026-10-21: "skill.md defines nn
+#     counting from 1"): note number = game day + 1. A day_00.md the agent wrote anyway is renamed to day_01.md, only
+#     that one ("compact_common needs to see if agent wrote day_nn as 00, and only for THAT, it writes as 01").
+#   - Context path, limits in compact_limits.json ("270,000 and 300,000"). User, 2026-10-21: "that valve needs to fucking
+#     work irregardless of day notes. same goes for warning." From warn the agent is told once (compact_warn.ps1); from
+#     valve a compaction is due. No day note is looked at. Why: the old rule (valve due once today's note grew since warn)
+#     never fired on 2026-10-21 (session 9dff3c40, 489k): the agent's notes were one day ahead of the game's day count,
+#     so every watched note was already finished (compact_common.ps1.event_2026-10-21_valve.mmd).
 #   - From due until done (user, 2026-10-19: "From due until done") every game order is refused (compact_block.ps1); the
 #     gate pauses the game and lets the compaction run (compact_gate.ps1, "you pause the game before compaction actually
 #     happens"); nothing but the orchestrator unpauses it ("It doesnt unpause unless an orchestrator does it.").
@@ -20,7 +23,7 @@ $CC_Proj = Join-Path $env:USERPROFILE "AppData\LocalLow\Ludeon Studios\RimWorld 
 $CC_Log = Join-Path $CC_Proj "play_sessions"
 $CC_GameState = Join-Path $env:USERPROFILE "AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\VerbalCommands\inbox_state.json"
 $CC_LimitsFile = Join-Path $PSScriptRoot "compact_limits.json"
-$CC_CycleFile = Join-Path $CC_Log "compact_state.json"     # lastCycle, and the context path's saved note size
+$CC_CycleFile = Join-Path $CC_Log "compact_state.json"     # lastCycle, and warnShown (compact_warn.ps1 told the agent)
 $CC_Message = "conditions are met for compaction."   # user's words (2026-10-19), verbatim
 
 function CC-ReadJson([string]$path) {
@@ -49,6 +52,7 @@ function CC-ReadGame {
 }
 
 # The newest assistant turn's usage at the end of the transcript (JSON lines): input + cache read + cache write.
+# A compact boundary after the last usage line: that usage is from before the compaction, so 0.
 function CC-ContextTokens([string]$path) {
     if ([string]::IsNullOrWhiteSpace($path) -or -not (Test-Path -LiteralPath $path)) { return 0 }
     $fs = [IO.File]::Open($path, 'Open', 'Read', 'ReadWrite')
@@ -60,6 +64,7 @@ function CC-ContextTokens([string]$path) {
     $lines = [Text.Encoding]::UTF8.GetString($buf) -split "`n"
     for ($i = $lines.Count - 1; $i -ge 0; $i--) {
         $l = $lines[$i]
+        if ($l -match '"subtype":"compact_boundary"') { return 0 }
         if ($l -notmatch '"type":"assistant"' -or $l -notmatch '"usage"') { continue }
         try { $u = ($l | ConvertFrom-Json).message.usage } catch { continue }
         if ($u) { return [int]$u.input_tokens + [int]$u.cache_read_input_tokens + [int]$u.cache_creation_input_tokens }
@@ -74,14 +79,23 @@ function CC-Limits {
     return @{ warn = $warn; valve = $valve }
 }
 
-function CC-NotePath([int]$day) { return (Join-Path $CC_Log ("day_{0:D2}.md" -f $day)) }
-function CC-Size([string]$path) { if (Test-Path -LiteralPath $path) { return [long](Get-Item -LiteralPath $path).Length } else { return [long]-1 } }
+# $day: the game's day (from 0). Notes count from 1: game day 0 = day_01.md.
+function CC-NotePath([int]$day) { return (Join-Path $CC_Log ("day_{0:D2}.md" -f ($day + 1))) }
 
-# Is a compaction due? $in: the hook input (session_id, transcript_path). Saves lastCycle on a first run or a new game, the note size when
-# the context first reaches warn.
+# A day_00.md (the agent counted from 0) becomes day_01.md; only that one, and never over an existing day_01.md.
+function CC-FixDayZero {
+    $zero = Join-Path $CC_Log "day_00.md"; $one = Join-Path $CC_Log "day_01.md"
+    if ((Test-Path -LiteralPath $zero) -and -not (Test-Path -LiteralPath $one)) {
+        try { Move-Item -LiteralPath $zero -Destination $one } catch { }
+    }
+}
+
+# Is a compaction due? $in: the hook input (session_id, transcript_path). Saves lastCycle on a first run or a new game,
+# clears warnShown below warn.
 function CC-Evaluate($in) {
-    $r = @{ ok = $false; due = $false; path = $null; day = -1; cycle = 0; last = 0; ctx = 0; warned = $false
-            note = $null; prev = $null; missing = @(); speed = ""; notesThere = $false; contextDue = $false }
+    $r = @{ ok = $false; due = $false; path = $null; day = -1; cycle = 0; last = 0; ctx = 0; warned = $false; warn = 0
+            note = $null; missing = @(); speed = ""; notesThere = $false; contextDue = $false }
+    CC-FixDayZero
     $st = CC-ReadGame
     if ($null -eq $st) { return $r }
     $r.ok = $true
@@ -104,7 +118,8 @@ function CC-Evaluate($in) {
     }
     $r.last = $last
 
-    # Cycle path: the cycle that just ended is cycle - 1, game days 2(c-1)-2 and 2(c-1)-1. notesThere: both its notes
+    # Cycle path: the cycle that just ended is cycle - 1, game days 2(c-1)-2 and 2(c-1)-1 (notes day_2(c-1)-1.md and
+    # day_2(c-1).md). notesThere: both its notes
     # exist (what the gate and resume_hook.ps1 read); due: and no compaction has run in this cycle yet (lastCycle).
     $r.notesThere = $false
     if ($cycle -ge 2) {
@@ -115,22 +130,20 @@ function CC-Evaluate($in) {
     }
     $cycleDue = ($cycle -gt $last) -and $r.notesThere
 
-    # Context path.
+    # Context path: no day note looked at. $r.note is only named in compact_warn.ps1's message.
     $contextDue = $false
-    $note = CC-NotePath $day
-    $r.note = $note
+    $r.note = CC-NotePath $day
     $ctx = CC-ContextTokens ([string]$in.transcript_path)
     $r.ctx = $ctx
+    $r.warn = $lim.warn
     if ($ctx -ge $lim.warn) {
         $r.warned = $true
-        if ([string]$state.noteFile -ne $note) { $state.noteFile = $note; $state.noteSize = (CC-Size $note); $dirty = $true }
-        $r.prev = $(if ($day -ge 1) { CC-NotePath ($day - 1) } else { $null })
-        if ($ctx -ge $lim.valve) {
-            $contextDue = ((CC-Size $note) -gt [long]$state.noteSize) -and $r.prev -and (Test-Path -LiteralPath $r.prev)
-        }
-    } elseif ($state.ContainsKey("noteFile") -and $state.noteFile) {
-        $state.noteFile = $null; $state.noteSize = $null; $dirty = $true
+        if ($ctx -ge $lim.valve) { $contextDue = $true }
+    } elseif ($state.ContainsKey("warnShown") -and $state.warnShown) {
+        $state.warnShown = $false; $dirty = $true
     }
+    # The old saved note size (noteFile / noteSize) is no longer used.
+    foreach ($k in @("noteFile", "noteSize")) { if ($state.ContainsKey($k)) { $state.Remove($k); $dirty = $true } }
 
     $r.contextDue = $contextDue
     $due = ($cycleDue -or $contextDue)
@@ -147,7 +160,22 @@ function CC-Compacted($ev) {
     $state = @{}
     if ($cs -ne $null) { foreach ($p in $cs.PSObject.Properties) { $state[$p.Name] = $p.Value } }
     if ($ev.notesThere) { $state.lastCycle = $ev.cycle; $state.day = $ev.day }
-    $state.noteFile = $null; $state.noteSize = $null
+    $state.warnShown = $false
+    foreach ($k in @("noteFile", "noteSize")) { $state.Remove($k) }
+    $state.utc = (Get-Date).ToUniversalTime().ToString("o")
+    CC-WriteJson $CC_CycleFile $state
+}
+
+# compact_warn.ps1: has the agent been told at warn since the context last dropped below it or a compaction ran?
+function CC-WarnShown {
+    $cs = CC-ReadJson $CC_CycleFile
+    return ($cs -ne $null -and $cs.warnShown -eq $true)
+}
+function CC-SetWarnShown {
+    $cs = CC-ReadJson $CC_CycleFile
+    $state = @{}
+    if ($cs -ne $null) { foreach ($p in $cs.PSObject.Properties) { $state[$p.Name] = $p.Value } }
+    $state.warnShown = $true
     $state.utc = (Get-Date).ToUniversalTime().ToString("o")
     CC-WriteJson $CC_CycleFile $state
 }

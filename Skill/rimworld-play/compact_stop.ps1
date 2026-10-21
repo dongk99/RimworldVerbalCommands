@@ -7,6 +7,8 @@
 # looked at), this pauses the game (a manual /compact passes compact_gate.ps1 without its pause; user, 2026-10-19: "you
 # pause the game before compaction actually happens") and starts compact_inject.ps1, which types /compact + Enter into
 # this session's console. After the compaction resume_hook.ps1 (CC-Compacted) sets lastCycle, so the rule is no longer met.
+# User, 2026-10-21: "that valve needs to fucking work irregardless of day notes." So the context path (CC-Evaluate path
+# "context": context at or past valve, no day note looked at) injects /compact the same way.
 # The play session: RIMWORLD_PLAY=1 or its id in play_sessions\active_session.txt. Any other session: untouched.
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "compact_common.ps1")
@@ -17,7 +19,7 @@ try {
     if (-not (CC-IsPlaySession $in)) { exit 0 }
 
     $ev = CC-Evaluate $in
-    if (-not $ev.ok -or $ev.path -ne "cycle") { exit 0 }
+    if (-not $ev.ok -or -not $ev.due) { exit 0 }
 
     if ($ev.speed -ne "Paused") {
         & (Join-Path $PSScriptRoot "send.ps1") -Text "set game speed to paused." -Mode "raw apply" | Out-Null
