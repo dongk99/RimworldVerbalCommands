@@ -15,14 +15,16 @@ this might conflict with auto mode if you have claude add into your computers. a
 | PostToolUse | PowerShell\|Bash | compact_warn.ps1 | At the warn limit, tells the orchestrator once to append to the day note. |
 | PostToolUse | * | rimworld_skill_hint.py | When the agent writes "skill", hints `show skills of PAWN.` once per compaction. |
 | PostToolUse | PowerShell\|Bash | bills_hook.ps1 | Puts bills.md (every colonist's bills) into the play session when it changes. |
+| PostToolUse | PowerShell\|Bash | rimworld_vagueprompt_log.py | When a send.ps1 order fails, writes down the command the agent sent, for Vagueprompts. |
 | PreToolUse | Bash\|PowerShell\|Monitor\|Write\|Edit\|MultiEdit\|NotebookEdit | rimworld_play_scripts.py | Only the skill folder's scripts run, by full path; no new scripts, no pipe or redirect on a result; game speed 1x only. |
 | PreToolUse | Bash\|PowerShell | compact_block.ps1 | While a compaction is due, refuses every game order. |
+| PreToolUse | Bash\|PowerShell | rimworld_specialists_gate.py | Refuses every orchestrator game order unless all 8 specialists are working; after a compaction, refuses unpausing until all 8 were spawned again. |
 | PreToolUse | Read\|Grep\|Glob\|Bash\|PowerShell\|Monitor\|Write\|Edit\|MultiEdit\|NotebookEdit | rimworld_play_folder.py | Reads and writes only inside the mod folder and `<SaveData>\VerbalCommands\play_sessions\` / `delegates\`. |
 | PreToolUse | * | compact_read_first.py | Once any compaction file (compact_*.ps1/.json/.md, resume_hook.ps1, play_here.ps1) is read or written, blocks every tool call until all compaction-relevant files were read with the Read tool; the block lists them. Register it in the project's `.claude\settings.json`, not the global one. |
 | PreToolUse | Bash\|PowerShell | rimworld_required_reads.py | Blocks .ps1 commands until every file in required_reads.txt was read in full. |
 | Stop | | compact_stop.ps1 | Compaction due at turn end: pauses the game, types /compact. |
 
-rimworld_play_scripts.py, rimworld_play_folder.py, rimworld_skill_hint.py, rimworld_required_reads.py and compact_read_first.py need Python 3 (`python` on PATH).
+rimworld_play_scripts.py, rimworld_play_folder.py, rimworld_skill_hint.py, rimworld_required_reads.py, rimworld_vagueprompt_log.py, rimworld_specialists_gate.py and compact_read_first.py need Python 3 (`python` on PATH).
 
 Add this to `agent_player\.claude\settings.json` (play sessions only):
 ```json
@@ -42,13 +44,15 @@ Add this to `agent_player\.claude\settings.json` (play sessions only):
       { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<skill folder>\\compact_gate.ps1\"", "timeout": 15 }] }],
     "PostToolUse": [{ "matcher": "PowerShell|Bash", "hooks": [
       { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<skill folder>\\compact_warn.ps1\"", "timeout": 15 },
-      { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<skill folder>\\bills_hook.ps1\"", "timeout": 15 }] },
+      { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<skill folder>\\bills_hook.ps1\"", "timeout": 15 },
+      { "type": "command", "command": "python -I \"<skill folder>\\rimworld_vagueprompt_log.py\"", "timeout": 10 }] },
       { "matcher": "*", "hooks": [
       { "type": "command", "command": "python -I \"<skill folder>\\rimworld_skill_hint.py\"", "timeout": 10 }] }],
     "PreToolUse": [
       { "matcher": "Bash|PowerShell|Monitor|Write|Edit|MultiEdit|NotebookEdit", "hooks": [
         { "type": "command", "command": "python -I \"<skill folder>\\rimworld_play_scripts.py\"", "timeout": 10 }] },
       { "matcher": "Bash|PowerShell", "hooks": [{ "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<skill folder>\\compact_block.ps1\"", "timeout": 15 }] },
+      { "matcher": "Bash|PowerShell", "hooks": [{ "type": "command", "command": "python -I \"rimworld_specialists_gate.py\"", "timeout": 15 }] },
       { "matcher": "Read|Grep|Glob|Bash|PowerShell|Monitor|Write|Edit|MultiEdit|NotebookEdit", "hooks": [
         { "type": "command", "command": "python -I \"<skill folder>\\rimworld_play_folder.py\"", "timeout": 10 }] },
       { "matcher": "*", "hooks": [

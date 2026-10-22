@@ -6,7 +6,6 @@
 {YOUR DIRECTORY HERE}\SKILL.md
 P\agent_player\PLAYBOOK.md
 P\agent_player\knowhow\INDEX.md
-P\agent_player\map2.jpg
 P\agent_player\delegates\ORCHESTRATOR.md
 P\agent_player\delegates\COMMON.md
 P\agent_player\delegates\status\*.md

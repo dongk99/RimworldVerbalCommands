@@ -1,0 +1,19 @@
+flowchart TD
+    A[NEW: PreToolUse Bash / PowerShell] --> B{NEW: play session?<br/>RIMWORLD_PLAY=1 or id in active_session.txt}
+    B -- no --> OK1[NEW: exit 0]
+    B -- yes --> C{NEW: agent_id in hook input?<br/>= a specialist's own call}
+    C -- yes --> OK2[NEW: exit 0: specialists are never blocked]
+    C -- no --> D{NEW: command has send.ps1,<br/>play.ps1 or vote.ps1?}
+    D -- no --> OK3[NEW: exit 0]
+    D -- yes --> E["NEW: scan main transcript in order<br/>launch: 'Async agent launched' + agentId, role from the Agent description<br/>end: task-notification status completed / killed / failed<br/>(completed 'waiting on its own background work' = still working)<br/>resume: SendMessage to agentId = working again<br/>last compact_boundary line = compaction"]
+    E --> F["NEW: role from description keyword:<br/>schedule, work priority, drafter, equipment,<br/>bills, storage, hostile, expediter"]
+    F --> G{NEW: all 8 roles have a working agent?}
+    G -- no --> X1["NEW: exit 2: 8 specialists must be working before any game order.<br/>working: ... / not working: ..."]
+    G -- yes --> H{NEW: compaction in transcript AND<br/>command is an unpause: speed / normal / unpause}
+    H -- no --> OK4[NEW: exit 0: order runs]
+    H -- yes --> I{NEW: all 8 roles spawned<br/>after the last compaction?}
+    I -- yes --> OK5[NEW: exit 0: unpause runs]
+    I -- no --> X2["NEW: exit 2: after compaction, spawn all 8 specialists before unpausing.<br/>spawned since compaction: ... / missing: ..."]
+    J["NEW: copy by hand to mod\Skill\rimworld-play<br/>(build.ps1 does not move hooks), then build.ps1"]
+    class A,B,C,D,E,F,G,H,I,X1,X2,OK1,OK2,OK3,OK4,OK5,J new
+    classDef new fill:#b6f2b6

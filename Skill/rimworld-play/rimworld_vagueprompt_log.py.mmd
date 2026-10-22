@@ -1,0 +1,13 @@
+flowchart TD
+    copy["NEW in mod\Skill\rimworld-play: exact copy of<br/>C:\Users\dongk\.claude\hooks\rimworld_vagueprompt_log.py<br/>(ships with the mod so players get Vagueprompts)"]
+    ev["PostToolUse, tool PowerShell or Bash"] --> cmd{"tool_input.command contains send.ps1?"}
+    cmd -- no --> out[exit 0, nothing written]
+    cmd -- yes --> parse["tool output: text from first '{' to last '}' -> JSON"]
+    parse --> res{"JSON parsed and result == 'failed'?"}
+    res -- no --> out
+    res -- yes --> entry["entry: tick, when, what = the command as the model sent it,<br/>detail = reasons joined by ' / '"]
+    entry --> write["append one JSON line to<br/>SaveData\VerbalCommands\guess\agent_sends.jsonl"]
+    write --> out
+    write -.-> reader["ColonyAnalysys' GuessRecord takes the lines into the loaded save's .rws"]
+    class copy,ev,cmd,out,parse,res,entry,write,reader new
+    classDef new fill:#b6f2b6

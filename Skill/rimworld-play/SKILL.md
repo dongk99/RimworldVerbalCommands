@@ -45,7 +45,6 @@ interpreter falls short". That is a change to the mod, never a way round it.
    session (user, 2026-10-12). It is the mod author's own 54-day play of the same kind of start, day by
    day with reasoning, and it carries the end-of-day note rule (loop step 6).
 1c. User, 2026-10-16: "models may not read reference playlog unless user explicitely allows it."
-1d. Read `P\agent_player\map2.jpg` with the Read tool: the map this colony plays on (user, 2026-10-21).
 2. If `send.ps1` answers `NOT RUNNING`, RimWorld is closed and nothing was sent: tell the user to start the
    game, load the colony and tick "Agent inbox" in the mod settings. Do not go on without it.
 2b. **Start the watcher** (user, 2026-10-19: "do find a way to get rid of system notification - not user input."),
