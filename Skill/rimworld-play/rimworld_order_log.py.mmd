@@ -1,0 +1,29 @@
+flowchart TD
+    copy["mod\Skill\rimworld-play: exact copy of<br/>C:\Users\dongk\.claude\hooks\rimworld_order_log.py<br/>(ships with the mod, like rimworld_vagueprompt_log.py)"]
+    ev["PostToolUse, tool PowerShell or Bash<br/>(Hook_list_for_setup.md, matcher PowerShell|Bash, next to rimworld_vagueprompt_log.py)<br/>runs once per call: no clock, no retry loop"] --> cmd{"tool_input.command contains send.ps1?"}
+    copy -. "this file runs as" .-> ev
+    reg["9. Hook_list_for_setup.md entry has no timeout field"] -.- ev
+    cmd -- no --> out[exit 0, nothing written]
+    cmd -- yes --> tgt{"SaveData\ColonyAnalysys\order_log_target.txt exists?<br/>(written by the game: checkbox on + save name known)"}
+    tgt -- no --> out
+    tgt -- yes --> otx["tool output text: tool_response as text; or its first field of stdout / output / result / content holding '{';<br/>or the whole response as JSON; a list: its parts joined by newlines (same as rimworld_vagueprompt_log.py)"]
+    otx --> parse["first '{' to last '}' -> JSON (same as rimworld_vagueprompt_log.py); not a JSON object -> nothing"]
+    parse --> ok{"parsed?"}
+    ok -- no --> out
+    ok -- yes --> f["session = session_id<br/>tick = game_end.tick<br/>command = tool_input.command, exactly as sent<br/>result = result"]
+    f --> ag["4. agent = hook input field agent_id if present (NOT VERIFIED that Claude Code sends it);<br/>else transcript_path in ...\subagents\agent-ID.jsonl -> ID; else orchestrator"]
+    ag --> md["5. model = message.model of the last assistant record, searched in the LAST 4 MB of the transcript;<br/>with agent_id: &lt;transcript without .jsonl&gt;\subagents\agent-ID.jsonl if it exists (NOT VERIFIED)<br/>transcript unreadable or no model found -> model empty"]
+    md --> tm["6. time = hour and day zero-padded to 2 digits: 07-03 (day 120 -> 07-120)"]
+    tm --> gm["3. game = reasons, then answers, then plan_lines, then actions;<br/>one value per line (newline-joined); a non-text value written as JSON"]
+    gm --> code["2. code = per game line: string literals of VC src\VerbalCommands\*.cs,<br/>split at {..} holes, pieces of 8+ characters, lines starting with // skipped;<br/>the LONGEST piece found in the line -> File.cs:line; duplicates dropped; joined with '; '<br/>(empty where src\VerbalCommands is not on the machine)"]
+    code --> mtx["take named mutex Global\ColonyAnalysysOrderLog (wait, no timeout); released at the end<br/>pending rows written first"]
+    mtx --> csv["read the target CSV: its rows; the header row not counted;<br/>rows with fewer than 12 fields skipped when sequence / ref are worked out"]
+    csv --> callno["8. call = rows already in that CSV + 1<br/>(an older save of the same name loaded again: numbering continues, not restarted)"]
+    callno --> row["sequence / ref per (session, agent):<br/>-Reply apply|cancel -> apply|cancel, ref = last planned call<br/>result planned -> plan"]
+    row --> rp["1. replan chain: a failed call opens it; the next call gets replan, ref = the chain's last call;<br/>a result answer KEEPS it open (next call: replan again, ref = that answer call);<br/>any other result closes it; planned + replan -> plan+replan<br/>(from the 224 -> 225 -> 226 example; ORDER_LOG_CSV.md says only 'the next order after its own failed call')"]
+    rp --> app["7. append: UTF-8 with BOM on a new file, every field in quotes (quote marks doubled), CRLF line ends;<br/>header row when the file is new:<br/>call,session,agent,model,tick,time,command,result,game,code,sequence,ref"]
+    app --> out
+    app -. "any error reading or writing that CSV (e.g. open in Excel)" .-> pend["row kept in order_log_pending.jsonl;<br/>written first on the next send.ps1 call; file deleted once all are written"]
+    errx["any other error in the hook -> exit 0, nothing written"] -.- out
+    class reg,ag,md,tm,gm,code,callno,rp,app,otx,parse,csv,pend,errx new
+    classDef new fill:#b6f2b6

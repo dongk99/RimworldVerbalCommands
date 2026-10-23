@@ -1,0 +1,10 @@
+flowchart TD
+    P["param: -Text, -Model, -Harness, -Session, -Mode raw, -Reply '' | apply | cancel (:13-22)"] --> R{"RimWorldWin64 running? (:30)"}
+    R -- no --> NR["print NOT RUNNING, exit 2"]
+    R -- yes --> B["body = -Reply, else 'mode: Mode' + Text (:35-40)"]
+    B --> F["mutex; name = model-harness-time-sid_NNNNN (:55-74)<br/>tip-filter check -> router log (:82-100)"]
+    F --> W["write inbox\name.tmp, rename .txt (:101-104)"]
+    W --> O["wait for outbox\name.json, TimeoutSec (:154-162)"]
+    O --> RJ{"rejected + 'A plan is waiting'? (:168)"}
+    RJ -- yes --> RT["wait inbox_state waiting = none, send again (:169-182)"]
+    RJ -- no --> S["Slim: drop file, kind, mode, order_id, turn, text, utc and empty values; print one JSON line (:114-152, :188)"]

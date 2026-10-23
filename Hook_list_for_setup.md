@@ -16,6 +16,7 @@ this might conflict with auto mode if you have claude add into your computers. a
 | PostToolUse | * | rimworld_skill_hint.py | When the agent writes "skill", hints `show skills of PAWN.` once per compaction. |
 | PostToolUse | PowerShell\|Bash | bills_hook.ps1 | Puts bills.md (every colonist's bills) into the play session when it changes. |
 | PostToolUse | PowerShell\|Bash | rimworld_vagueprompt_log.py | When a send.ps1 order fails, writes down the command the agent sent, for Vagueprompts. |
+| PostToolUse | PowerShell\|Bash | rimworld_order_log.py | With ColonyAnalysys' "Log agent orders to CSV" on, writes every send.ps1 call as a row of <save name>.csv on the Desktop. |
 | PreToolUse | Bash\|PowerShell\|Monitor\|Write\|Edit\|MultiEdit\|NotebookEdit | rimworld_play_scripts.py | Only the skill folder's scripts run, by full path; no new scripts, no pipe or redirect on a result; game speed 1x only. |
 | PreToolUse | Bash\|PowerShell | compact_block.ps1 | While a compaction is due, refuses every game order. |
 | PreToolUse | Bash\|PowerShell | rimworld_specialists_gate.py | Refuses every orchestrator game order unless all 8 specialists are working; after a compaction, refuses unpausing until all 8 were spawned again. |
@@ -24,7 +25,7 @@ this might conflict with auto mode if you have claude add into your computers. a
 | PreToolUse | Bash\|PowerShell | rimworld_required_reads.py | Blocks .ps1 commands until every file in required_reads.txt was read in full. |
 | Stop | | compact_stop.ps1 | Compaction due at turn end: pauses the game, types /compact. |
 
-rimworld_play_scripts.py, rimworld_play_folder.py, rimworld_skill_hint.py, rimworld_required_reads.py, rimworld_vagueprompt_log.py, rimworld_specialists_gate.py and compact_read_first.py need Python 3 (`python` on PATH).
+rimworld_play_scripts.py, rimworld_play_folder.py, rimworld_skill_hint.py, rimworld_required_reads.py, rimworld_vagueprompt_log.py, rimworld_order_log.py, rimworld_specialists_gate.py and compact_read_first.py need Python 3 (`python` on PATH).
 
 Add this to `agent_player\.claude\settings.json` (play sessions only):
 ```json
@@ -45,7 +46,8 @@ Add this to `agent_player\.claude\settings.json` (play sessions only):
     "PostToolUse": [{ "matcher": "PowerShell|Bash", "hooks": [
       { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<skill folder>\\compact_warn.ps1\"", "timeout": 15 },
       { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<skill folder>\\bills_hook.ps1\"", "timeout": 15 },
-      { "type": "command", "command": "python -I \"<skill folder>\\rimworld_vagueprompt_log.py\"", "timeout": 10 }] },
+      { "type": "command", "command": "python -I \"<skill folder>\\rimworld_vagueprompt_log.py\"", "timeout": 10 },
+      { "type": "command", "command": "python -I \"<skill folder>\\rimworld_order_log.py\"" }] },
       { "matcher": "*", "hooks": [
       { "type": "command", "command": "python -I \"<skill folder>\\rimworld_skill_hint.py\"", "timeout": 10 }] }],
     "PreToolUse": [

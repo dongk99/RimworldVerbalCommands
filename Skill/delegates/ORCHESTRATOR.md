@@ -140,6 +140,8 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
 - Launch subagents before unpausing (user, 2026-10-16): at the start of a session and after a compaction,
   spawn the roster (starting order at the end of this section) while the game is paused; set the speed only
   after the last one is spawned.
+- A hook (`rimworld_specialists_gate.py`, user 2026-10-22) refuses every game order while fewer than all 8
+  specialists are running, and after a compaction refuses unpausing until all 8 were spawned after it.
 - Keep the game running. Specialists' free-class orders no longer pause it. Pause for your own tasks only
   (notes, reviewing proposals that need thought), and unpause after.
 - Your plan/apply pairs still pause while the plan waits; `send.ps1` makes a specialist that collides with it
@@ -156,7 +158,8 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
 - `HOSTILES ON MAP: ...` (pawns watch): spawn the hostile_watch specialist (section 6, `briefs\hostile_watch.md`)
   if it is not running, while you deal with the threat. It watches `hostiles_watch.ps1` and returns to you with a
   report on every new enemy, every enemy attacking, chasing or within 10 cells of one of ours, every enemy downed or
-  gone; resume it with `SendMessage` (`go on watching`) after you acted. It ends itself on `HOSTILES GONE`.
+  gone; resume it with `SendMessage` (`go on watching`) after you acted. It no longer ends on `HOSTILES GONE`
+  (2026-10-22).
 - Hourly check (user, 2026-10-19: "the 1-hour reminder does not need specialist voting. I dont trust haikus to vote
   intelligently."): the game stays paused until you have voted; specialists get the batch but do not vote. On
   `Hourly check N` (from the watcher, once per check): read the batch, act, then
@@ -228,7 +231,8 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
 - Ownership conflicts are settled by you, in the briefs, not in the game: bills (crafter time, materials) vs
   work priorities (who crafts) vs schedule (when). The briefs say what each one owns and must not touch.
 - Starting order on a new session: schedule → work_priority → equipment_config → storage_zones → bills →
-  drafter_mover (the drafter arms on events and should be last so it does not react to the others' setup).
+  expediter → hostile_watch → drafter_mover (the drafter arms on events and should be last so it does not react to
+  the others' setup).
 
 ## 5. The roster (user, 2026-10-13: all six from version one)
 
@@ -240,7 +244,7 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
 | equipment_config | equip, wear, medicine level, food/clothing groups, fire at will, self-tend | 12 h | `briefs\equipment_config.md` |
 | bills | proposes bills (food, clothing, manufacturing); sends approved ones; pauses / resumes | 6 h | `briefs\bills.md` |
 | storage_zones | filters and priorities of existing storage; `move chunks.` (moves all stone chunks inside rooms to stockpile, if there is one, to make rooms prettier); proposes new zones | 12 h | `briefs\storage_zones.md` |
-| hostile_watch | the hostile list (`hostiles_watch.ps1`): reports enemies, their weapons, health and targets; questions only. Spawned on `HOSTILES ON MAP`, ends on `HOSTILES GONE` (user, 2026-10-17) | every change of the hostile list | `briefs\hostile_watch.md` |
+| hostile_watch | the hostile list (`hostiles_watch.ps1`): reports enemies, their weapons, health and targets; questions only. Spawned with the other seven, keeps running with no hostiles (user, 2026-10-22: "8 always"; before, 2026-10-17: spawned on `HOSTILES ON MAP`, ended on `HOSTILES GONE`) | every change of the hostile list | `briefs\hostile_watch.md` |
 | expediter | `prioritize WORK at X, Z with PAWN` inside the base: material to blueprints, builders to frames, miners to marks (user, 2026-10-13); the micro orders `mine near X, Z with PAWNS.`, `mine in area AREA with PAWNS.`, `haul from X, Z with PAWNS.`, `mine nearest [COUNT] THINGS near X, Z with PAWNS.`, `mine THINGS near X, Z with PAWNS.`, `mine THINGS in area AREA with PAWNS.`, `haul THINGS near X, Z with PAWNS.` inside the base (user, 2026-10-16) | 2 h | `briefs\expediter.md` |
 
 ## 6. Spawning (what the orchestrator types)
