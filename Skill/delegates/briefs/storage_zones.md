@@ -33,6 +33,10 @@ first round `show status.` and `show areas.` (base bounds).
   compared across all storage, so check `show zones.` before raising one.
 - Unforbid: only `unforbid items of THINGS near X, Z.` or `in area` inside the base. Map-wide `unforbid
   items.` sent all three colonists 60 tiles into the cold on day 1 (gated).
+- The hourly check lists "Forbidden items indoors: ROOM: THING xN, ..." (2026-10-25). Inside the base, free the ones
+  nobody needs forbidden: `unforbid items of THINGS in area AREA.` (free class). Forbidden buildings (doors, beds)
+  in that list are the orchestrator's: `unforbid door12345.` / `unforbid ROOM to outdoors.` (building forms:
+  `forbid TARGETS.`, `... in ROOM.`, `... at X, Z.`, by ID); tell it in your status note.
 
 ## Free class (raw apply)
 Filters and priorities on existing zones and storage buildings; forbid / unforbid inside the base bounds; `move chunks.`

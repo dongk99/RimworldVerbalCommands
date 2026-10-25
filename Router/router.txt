@@ -469,6 +469,11 @@ new_form("cancel floor room", "cancel floor for {ROOM}.", [])
 fixed_form("designate cancel", "cancel all {KIND}.", [], {"MODE": "all"})
 fixed_form("designate cancel", "cancel {KIND} in area {AREA}.", [], {"MODE": "area"})
 
+# User 2026-10-25: forbid / unforbid also take a building's game ID ("door12345"), "ROOM to outdoors" / "doors to
+# outdoors" (the doors that lead outside), a room ID for ROOM, and one cell ("at SPOT", FormControls.ResolveTargets).
+# The "at" forms come first, so "at 112, 87" is never read as part of TARGETS.
+new_form("forbid", "forbid {TARGETS} at {SPOT}.", ["TARGETS"])
+new_form("unforbid", "unforbid {TARGETS} at {SPOT}.", ["TARGETS"])
 new_form("forbid", "forbid {TARGETS}[ in {ROOM}].", ["TARGETS"])
 new_form("unforbid", "unforbid {TARGETS}[ in {ROOM}].", ["TARGETS"])
 # "every bed" first, so "every" is never read as a COUNT.
@@ -934,8 +939,8 @@ help("refuel off", "turn off auto refuel for TARGETS in ROOM.", "colonists stop 
 help("fuel level", "set fuel level to N for TARGETS in ROOM.", "how much fuel colonists keep in it")
 help("door hold open", "hold door DOOR open.", "the door stays open")
 help("door let close", "let door DOOR close.", "the door closes again")
-help("forbid", "forbid TARGETS in ROOM.", "colonists leave it alone")
-help("unforbid", "unforbid TARGETS in ROOM.", "colonists may use it again")
+help("forbid", "forbid TARGETS in ROOM.", "colonists leave it alone; TARGETS may be a building's ID, ROOM to outdoors or doors to outdoors; also: at X, Z; ROOM may be a room ID")
+help("unforbid", "unforbid TARGETS in ROOM.", "colonists may use it again; TARGETS may be a building's ID, ROOM to outdoors or doors to outdoors; also: at X, Z; ROOM may be a room ID")
 DESIGNATE_HELP = {
     "chop": "marks trees to be chopped for wood",
     "cut": "marks plants to be cut down",
@@ -1241,6 +1246,19 @@ TARGET_RULES = {
     "unforbid": [BUILDING_LINES, "building"]
 }
 
+# User 2026-10-25: forbid / unforbid also take a building's game ID (one word, letters then its number, as the hourly
+# forbidden list prints it: "door12345") and "doors to outdoors" (every door that leads outside). The mod finds the
+# building, or says there is none ("ROOM to outdoors" is on the doors line).
+function forbid_target(name, item):
+    if not (name in ["forbid", "unforbid"]):
+        return false
+    return find_pattern("^[a-z_]+[0-9]+$", item) != none or item == "doors to outdoors" or room_id_to_outdoors(item)
+
+# "room412 to outdoors": one room's outside doors by its game room ID (user 2026-10-25: two rooms with one name get an
+# [error] from the mod listing their IDs and the sentence for each).
+function room_id_to_outdoors(text):
+    return find_pattern("^room[0-9]+ to outdoors$", text) != none
+
 function bad_number(slots, key, low, high):
     return has(slots, key) and not whole_number_between(slots[key], low, high)
 
@@ -1256,7 +1274,7 @@ function is_storage_place(text):
 # problem an earlier form gave, so a place added last does not hide it.
 NOT_THIS_FORM = "(not this form)"
 # The forms whose ROOM may be a game room ID (user 2026-10-17).
-ROOM_ID_FORMS = ["query room stats", "build floor room", "cancel floor room"]
+ROOM_ID_FORMS = ["query room stats", "build floor room", "cancel floor room", "forbid", "unforbid"]
 
 # One storage building by its cell or its game ID (user 2026-10-07, see PLACES); "" when fine. The cell is two
 # numbers only (no name: a name says no single building), rewritten in its one form; an ID is one word from the
@@ -1932,7 +1950,8 @@ function check_new(name, slots):
     if has(slots, "BENCH") and not listed("benches", slots["BENCH"]):
         return "'" + slots["BENCH"] + "' is not a bench on the map"
     # User 2026-10-17: the room forms also take the game's room ID ("Room412"; RoomStats.cs).
-    room_id = name in ROOM_ID_FORMS and find_pattern("^room[0-9]+$", slots["ROOM"]) != none
+    # has(): forbid / unforbid (in ROOM_ID_FORMS since 2026-10-25) may have no ROOM.
+    room_id = name in ROOM_ID_FORMS and has(slots, "ROOM") and find_pattern("^room[0-9]+$", slots["ROOM"]) != none
     if has(slots, "ROOM") and slots["ROOM"] != "those" and not room_id and not listed("rooms", slots["ROOM"]):
         return "'" + slots["ROOM"] + "' is not a room on the map"
     # User 2026-10-16: "EVERY pawn should have show health of [x] available." Guests, strangers, wild animals and enemies
@@ -1955,9 +1974,17 @@ function check_new(name, slots):
     if has(TARGET_RULES, name):
         rule = TARGET_RULES[name]
         for item in slots["TARGETS"]:
-            if item != "those" and not (item in ["them", "they"]) and not listed_any(rule[0], item):
+            if item != "those" and not (item in ["them", "they"]) and not listed_any(rule[0], item) and not forbid_target(name, item):
                 return "'" + item + "' is not a " + rule[1] + " on the map"
-    if starts_with(name, "door ") and not listed("doors", slots["DOOR"]):
+    # User 2026-10-25: one building by its cell ("forbid door at 112, 87."); the cell is two numbers.
+    if (name == "forbid" or name == "unforbid") and has(slots, "SPOT"):
+        r = read_spot(slots["SPOT"])
+        if r["why"] != "":
+            return r["why"]
+        if find_pattern("^[0-9]+, [0-9]+$", r["text"]) == none:
+            return "'" + name + " TARGETS at' takes a cell, x then z: '" + name + " door at 112, 87'"
+        slots["SPOT"] = r["text"]
+    if starts_with(name, "door ") and not listed("doors", slots["DOOR"]) and not room_id_to_outdoors(slots["DOOR"]):
         return "'" + slots["DOOR"] + "' is not a door on the map"
     if name == "medical care" and not listed("medical care", slots["LEVEL"]):
         return "'" + slots["LEVEL"] + "' is not a medical care level"

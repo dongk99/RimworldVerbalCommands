@@ -83,6 +83,10 @@ choices; game speed, windows, letters. Your brief narrows this further for your 
    - `[REMINDER] Hourly check N ...`: read the batch and act on what is yours. Only the orchestrator votes (user,
      2026-10-19: "the 1-hour reminder does not need specialist voting."); the vote line in a `send.ps1` result is not
      for you.
+     The batch has two lines every hour (2026-10-25): the drafted pawns (indoors per room, outdoors moved or not
+     since the last check) and the forbidden buildings / items indoors. The orchestrator answers them (undraft;
+     `forbid ROOM to outdoors.` instead of keeping pawns drafted indoors; `unforbid ID.`); you act only if it is
+     your brief's sentence (drafter_mover: its drafted pawns; storage_zones: items forbidden inside the base).
    - A tool result says `conditions are met for compaction...`: game orders are refused; block on `wait_round.ps1`.
      A tool result says `The orchestrator voted for compaction`: stop, write your status note to the path it names,
      and return with your report.

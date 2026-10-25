@@ -68,6 +68,13 @@ and had zero recorded harm in 1,680 logged orders (router logs 2026-10-03..13) a
   auto-engage|flee|ignore for PAWNS.`, the game's threat response), bed assignment (not bed role);
 - storage filters and priorities on existing zones and shelves; forbid / unforbid **near a spot inside the
   base** (never map-wide: see 2);
+- forbid / unforbid of buildings (same flag as the game's F "Allow" toggle; a forbidden door stops colonists passing):
+  `forbid TARGETS.`, `forbid TARGETS in ROOM.` (ROOM may be a room ID), `forbid TARGETS at X, Z.`, a building's ID
+  (`forbid door12345.`), `forbid bedroom to outdoors.`, `forbid doors to outdoors.` (`... in kitchen.` narrows it);
+  also `hold door bedroom to outdoors open.` / `let door bedroom to outdoors close.`. ROOM in "ROOM to outdoors" may
+  be a room ID (`forbid room412 to outdoors.`); a name several rooms have changes nothing and gets "[error] N rooms
+  are named ROOM: Room412, Room415. Say which one: ..." with each room's sentence: send the one you mean. Free and undone by the
+  `unforbid` twin; the orchestrator sends them (no specialist brief owns them);
 - equip and wear (the item must be in view; "No X in view" is a harmless failure);
 - undraft, cancel hunting / mining / blueprint of its own earlier marks;
 - `set game speed`, `close window`, `choose Close for letter` (orchestrator only, see 4).
@@ -164,6 +171,20 @@ specialist with the file `delegates\stop\<name>` (or `stop\ALL`), or `TaskStop`.
   intelligently."): the game stays paused until you have voted; specialists get the batch but do not vote. On
   `Hourly check N` (from the watcher, once per check): read the batch, act, then
   `powershell -File "<skill folder>\vote.ps1" -Name orchestrator -Check N`.
+  Two reminder lines are in every hourly batch (2026-10-25; purpose, user: agents draft pawns to keep them indoors
+  and forget, "so they dont forget to unforbid them and wonder why their pawns arent doing anything"):
+  - Drafted pawns. Indoors, per room: "Bob and Alice are inside bedroom. However pawns wont do anything while
+    drafted, ..." Undraft them and, to keep them in, `forbid ROOM to outdoors.` instead. Outdoors: "... are drafted
+    and haven't moved from their last spot. Drafted pawns don't eat, sleep or work." (not moved since the last
+    hourly check) or "Carol is drafted. ..." (moved or newly drafted). Undraft unless a fight is on.
+  - Forbidden things: "Forbidden buildings: door12345 (door, bedroom to outdoors), bed4567 (bed, bedroom). ..."
+    (every forbidden door, other forbidden buildings inside a room; 20 at most, then "and N more"): `unforbid
+    door12345.` allows one again. "Forbidden items indoors: storeroom: steel x75, knife; kitchen: rice x20. ..."
+    (20 rooms at most): `unforbid items of THINGS in area AREA.` allows them again. Unforbid what was forbidden
+    for a reason that is gone.
+  - You act on both yourself when needed (user, 2026-10-25: "make sure orchestrator can do the same by itself if
+    needed"): undraft, forbid / unforbid buildings and items are all in your own list (1); drafter_mover and
+    storage_zones may do their part, but you do not wait for them.
 - Compaction (user, 2026-10-18/19): when its conditions are met (a new 2-day cycle with both day notes of the last one
   written, or the context limit with today's note appended to and yesterday's note written: two day notes either way,
   since 2026-10-19), every game order is refused with `conditions are met for compaction.` There is no vote (since

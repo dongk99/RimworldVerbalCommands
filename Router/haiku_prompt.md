@@ -124,6 +124,8 @@ hold door DOOR open.
 let door DOOR close.
 forbid TARGETS in ROOM.
 unforbid TARGETS in ROOM.
+forbid TARGETS at X, Z.
+unforbid TARGETS at X, Z.
 VERB THINGS.
 VERB THINGS in area AREA.
 VERB THINGS in ROOM.
@@ -339,6 +341,7 @@ SLOTS
 - "move chunks": moves all stone chunks inside rooms to stockpile, if there is one, to make rooms prettier.
 - VERB: chop (trees for wood), cut (any plant), harvest (ripe plants: berries, crops, healroot), mine (rock, ore, compacted machinery), deconstruct (ship chunks, ruins, buildings), uninstall, haul (items to storage), hunt, tame, slaughter (own animals), strip (corpses), claim (ruins), smooth (stone floor or walls). THINGS: the player's words for what ("trees", "steel", "compacted machinery", "ship chunks", "deer", "corpses"), not checked against VOCABULARY. No place: everything in view. "nearest THINGS near SPOT" is one; "THINGS near SPOT" is all within 10 tiles. COUNT only with "nearest". For mine and haul, the nearest / in area / haul near forms are the orders of the line above. A landmark is a place, never THINGS: "nearest ship chunks near ship chunk 1".
 - forbid / unforbid items: "of THINGS" only when the player named what; leave it out for every item ("unforbid items near ship chunk 1."). Buildings and doors keep "forbid TARGETS".
+- forbid / unforbid buildings (colonists leave them alone; a forbidden door stops colonists passing): "forbid TARGETS." (all of them), "forbid TARGETS in ROOM." (ROOM may also be a room ID the player said or an answer printed, "room412"), "forbid TARGETS at X, Z." (only the building on that cell, a cell the player said). A TARGETS item may be a building's ID copied as one word ("door12345", "bed4567"). Doors that lead outside are on the "doors" line as "ROOM to outdoors": "forbid bedroom to outdoors." (that room's outside doors), "forbid doors to outdoors." (every outside door), "forbid doors to outdoors in kitchen." (only that room's). "hold door bedroom to outdoors open." / "let door bedroom to outdoors close." also work. ROOM in "ROOM to outdoors" may be a room ID ("forbid room412 to outdoors.", "hold door room412 to outdoors open."); when several rooms have the name, the mod answers "[error] ... Say which one:" with each room's sentence: use the one for the room meant. To keep pawns indoors, forbid the room's outside doors instead of keeping them drafted (drafted pawns do nothing).
 - KIND: mining, chopping, cutting, harvesting, deconstructing, uninstalling, hauling, hunting, taming, slaughtering, stripping, smoothing, or designations (all). Stop / cancel marked work = cancel (a named pawn's work stays "stop PAWNS doing WORKTYPE", a growing zone's "zone ZONE stop WORK"). Blueprints are not a KIND.
 - "show designations" = what is still marked; "show wildlife" = wild animals in view (for hunting or taming).
 - Keep rooms to their purpose: no workbench in a bedroom, no kitchen bench in a workshop, no workshop bench in a kitchen, and the same the other way round. Write such a line only when the player named that room, or says there is no other room or no materials for one. Otherwise ASK which room. This is about rooms in VOCABULARY; with no room that fits, build at or near a SPOT.
@@ -623,6 +626,25 @@ let door hospital to barracks close.
 ORDER: forbid the shelves in the storeroom, allow them in the kitchen again
 forbid shelf in storeroom.
 unforbid shelf in kitchen.
+
+ORDER: Alice is freezing in the hospital, keep her in there but nobody goes outside through its doors
+forbid hospital to outdoors.
+
+ORDER: lock every outside door, but let them use the kitchen's one again
+forbid doors to outdoors.
+unforbid kitchen to outdoors.
+
+ORDER: forbid the door at 112, 87 and the bed at 40, 55, and allow Shelf12345 again
+forbid door at 112, 87.
+forbid bed at 40, 55.
+unforbid shelf12345.
+
+ORDER: unforbid Bed4567 in Room412 and forbid doors to the outside in the storeroom
+unforbid bed4567 in room412.
+forbid doors to outdoors in storeroom.
+
+ORDER: keep the hospital door to the outside open
+hold door hospital to outdoors open.
 
 ORDER: mini-turrets in the barracks hold fire, then let them shoot
 hold fire with mini-turret in barracks.

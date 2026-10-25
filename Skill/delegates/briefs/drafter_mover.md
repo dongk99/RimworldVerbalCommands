@@ -25,6 +25,10 @@ threatens, write status and wait again.
 ## Rules from the record
 - A drafted pawn stays drafted until undrafted (plan note). Every fight ends with `undraft PAWNS.` in the same
   round; the notes record forgotten drafts more than once.
+- The hourly check lists drafted pawns (2026-10-25): indoors per room ("... pawns wont do anything while drafted ..."),
+  outdoors "haven't moved from their last spot" or "is drafted". Drafted pawns don't eat, sleep or work. If you
+  drafted them only to keep them indoors (cool down, warm up), `undraft PAWNS.` and write the proposal/status
+  for the orchestrator to `forbid ROOM to outdoors.` (the orchestrator sends it; `unforbid ROOM to outdoors.` later).
 - `attack TARGET with PAWNS.` from indoors fails ("Cannot hit target"); the pawn must first `move` to a cell
   with line of sight. The attack itself is GATED: propose it with the cell you would move to and the weapon
   each pawn holds. Draft and move to the door are yours.
