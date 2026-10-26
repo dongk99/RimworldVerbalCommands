@@ -24,14 +24,6 @@ flowchart LR
     L -- yes --> K
     L -- no --> M[Revert to previous state]
 ```
-1. **Haiku** looks at the user prompt, then replaces the player's words with something that interpreter can accept.
-2. **Haiku's output** goes into the interpreter to see if the prompt is actually valid.
-3. Interpreter's actions are described in natural language (without using an LLM) and shown to user in brief. It is likely to be somewhat vague.
-4. User can then accept actions as-is, or re-prompt. Complex orders (e.g. setting storage with filters, placing buildings, and combintions of simple tasks) gets routed to sonnet/opus
-5. Sonnet/Opus dictates complex queries into interpreter, and the interpreter makes appropriate change by interacting with VerbalCommand mod. (this might not even be necessary)
-6. Changes are then auto accepted if show intent option is off, or users can deny changes. if denied, then the game reverts to previous state.
-
-Since the interpreter accepts natural language (e.g. "build shelves that only accept food item into my freezer room"), that's all models need to type in.
 
 ## Router (Agent-play side)
 
