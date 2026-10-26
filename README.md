@@ -5,27 +5,17 @@ Currently being tested with Anthropic models (claude-haiku-4-5, claude-sonnet-5,
 
 ## Router (VerbalCommands, Human side)
 
-```mermaid
-%%{init: {'flowchart': {'nodeSpacing': 20, 'rankSpacing': 25}, 'themeVariables': {'fontSize': '12px'}}}%%
-flowchart LR
-    A[Order] --> B[1. Haiku]
-    B --> C[2. Interpreter]
-    C --> D{Valid / simple?}
-    D -- yes --> E[3. Brief natural-language action description]
-    E --> F{4. User accepts?}
-    F -- yes --> G[6. Apply changes]
-    F -- no / re-prompt --> A
-    D -- complex --> H[5. Sonnet/Opus]
-    H --> C
-    G --> I[VerbalCommand mod]
-    I --> J{Show intent?}
-    J -- off --> K[Auto-accept]
-    J -- on --> L{User accepts?}
-    L -- yes --> K
-    L -- no --> M[Revert to previous state]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="router_human_dark.svg">
+  <img src="router_human_light.svg" alt="Router, human side">
+</picture>
 
 ## Router (Agent-play side)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="router_agent_play_dark.svg">
+  <img src="router_agent_play_light.svg" alt="Router, agent-play side">
+</picture>
 
 
 
