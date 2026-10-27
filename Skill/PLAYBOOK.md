@@ -119,19 +119,42 @@ plain text.
 - Danger: `show threats.` (a bunch standing together is told as one group: its nearest member, the box round
   it, what it holds), `show alerts.`, `show letters.`
 - Stores: `show food.`, `how much steel do i have.`, `show power.`, `show temperature.`, `show weather.`
-- The map: `show map.` (coarse), `show terrain map around Bob.` (41 by 41 detail), `show roof map of 100, 80
-  to 140, 110.`; layers: terrain, resources, buildings, roof, creatures. `where is nearest steel.`,
-  `where is nearest berries to steam geyser 1.`, `where are ship chunks.`, `list mountains on map.` (a
-  drawn picture of the whole map, `map.png`: rock, ore, snow, walls, stockpiles, colonists, animals, geysers,
-  tagged, with every tag's name and cell in the text; it pauses the game: read it, then unpause; user,
-  2026-10-19: "if they say "list mountains on map", then the game just takes picture of the entire map instead.").
-- Pictures: `show picture around SPOT.` (the game's own view, 41 by 41 cells centred on SPOT) and
-  `show picture of AREA.` (centred on the middle of AREA, zoomed so all of it is in the frame). Examples:
+- The map: four views, each good at something else.
+  - `show map.` (coarse text, the whole map): 1 character = 10 by 10 cells, one symbol per block. Good for:
+    a rough idea of where ore, geysers, ship chunks and fog are. Bad for: anything smaller than a block; a
+    whole base can be a few characters, and two things in one block show as one symbol. Row labels are not
+    padded, so rows with a shorter label sit one column left of the rest and of the column ruler.
+  - `show terrain map around Bob.` (41 by 41), `show roof map of 100, 80 to 140, 110.` (up to 60 by 50)
+    (detail text): one character per cell, a legend, then colonists, animals and landmarks with their cells.
+    Layers: terrain, resources, buildings, roof, creatures; leave the layer out for all of them. Good for:
+    exact cells of ore, rock, fog and pawns. Bad for: what a building is; every building is `B` and every
+    blueprint is `x`, with no kind and no rotation. A cell with items shows `i`, which hides the stockpile
+    `z` under it. Do not use it for any building or construction work (placing, checking or fixing
+    blueprints, rooms, walls, furniture): use `show picture of AREA.` instead. If you need both the cells
+    and what the tiles look like, use both, on the same AREA: this map for the cells, the picture for the look.
+  - `list mountains on map.` (a drawn picture of the whole map, `map.png`, 4 pixels per cell: rock, ore,
+    snow, walls, stockpiles, colonists, animals, geysers, tagged, with every tag's name and cell in the
+    text; it pauses the game: read it, then unpause; user, 2026-10-19: "if they say "list mountains on map",
+    then the game just takes picture of the entire map instead."). Good for: the whole map at once (the
+    game's camera cannot fit it on one screen), the shapes of rock, ore, water and fog, and exact cells of
+    every tagged thing. Bad for: what furniture is; every building you can walk through is one rose colour
+    with no label, with no rotation. Marks close together share one K tag (the list says what each holds).
+    Ore has no cells unless you count pixels.
+- Finding things: `where is nearest steel.`, `where is nearest berries to steam geyser 1.`,
+  `where are ship chunks.`
+- Pictures: `show picture around SPOT.` (the game's own view of the 41 by 41 cells centred on SPOT, no cell
+  numbers) and `show picture of AREA.` (the game's own view of exactly the cells of AREA, with its x and z
+  drawn on every tile). Examples:
   `show picture around 120, 135.`, `show picture around Bob.`, `show picture around steam geyser 1.`,
   `show picture around 6 tiles north of Carl.`, `show picture of 100, 80 to 140, 110.`,
-  `show picture of 30 by 30 around Bob.` The answer names the PNG (`picture.png` in the outbox folder); it
-  appears once the game has drawn the frame, then open it with the Read tool. North is up; the game's UI is in
-  it, cell numbers are not. If it does not come, `failed to make picture_png.md` in the same folder says why.
+  `show picture of 30 by 30 around Bob.` The answer names the PNG (`picture.png` in the
+  outbox folder); it appears once the game has drawn the frame, then open it with the Read tool. The game's
+  UI is hidden for the shot and the picture is cut to exactly those cells; north is up. Good for: what
+  things are and which way they face (a bed from a shelf, a campfire, a bed's head end); the only view that
+  shows rotation. With coordinates (`of AREA`): also the cell of every tile, for placing, checking or fixing
+  blueprints, rooms, walls and furniture. Without coordinates (`around SPOT`): a quick look only; ask for
+  the AREA when you need cells. If it does not come, `failed to make picture_png.md` in the same folder says
+  why.
 - What you set up: `show zones.`, `show areas.`, `show blueprints.`, `show bills at BENCH.`,
   `show storage of zone Stockpile zone 1.`, `show building campfire.`, `show designations.`,
   `show wildlife.`, `show research.`, `show research path to PROJECT.`

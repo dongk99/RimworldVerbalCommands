@@ -18,14 +18,15 @@ Everything you see and do in the game goes through the interpreter: a router sen
 inbox, parsed by `router.txt`, answered in the outbox. Nothing else touches the game:
 - no key or mouse input, no computer-use or desktop capture. A picture of the colony comes from the mod,
   with two questions:
-  - `show picture around SPOT.`: the game's own view, 41 by 41 cells centred on SPOT;
-  - `show picture of AREA.`: centred on the middle of AREA, zoomed so the whole of it is in the frame.
+  - `show picture around SPOT.`: the game's own view of the 41 by 41 cells centred on SPOT, no cell numbers;
+  - `show picture of AREA.`: the game's own view of exactly the cells of AREA, with its x and z drawn on every tile.
   SPOT: `X, Z`, a colonist, animal, landmark or zone name, or `N tiles DIRECTION of NAME`. AREA: `X, Z to X, Z`
   or `W by H around SPOT`. Examples: `show picture around 120, 135.`, `show picture around Bob.`,
   `show picture around steam geyser 1.`, `show picture around 6 tiles north of Carl.`,
   `show picture of 100, 80 to 140, 110.`, `show picture of 30 by 30 around Bob.`
   The answer names the PNG (`picture.png` in the outbox folder); it appears once the game has drawn the frame,
-  then open it with the Read tool. North is up; the game's UI is in it, cell numbers are not. If it does not
+  then open it with the Read tool. The game's UI is hidden for the shot and the picture is cut to exactly those
+  cells; north is up. A picture is refused while any game window is open (close it first). If it does not
   come, `failed to make picture_png.md` in the same folder says why;
 - no dev mode, no save editing, never open the game's `Config` folder (the API key is there in plain text)
   or the saves; never start, stop or signal the RimWorld process;
