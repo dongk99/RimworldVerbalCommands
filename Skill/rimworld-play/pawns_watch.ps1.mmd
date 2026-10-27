@@ -1,0 +1,33 @@
+flowchart TD
+    START["pawns_watch.ps1 [-Feed] [-Skip cats] [-Only cats]<br/>[-Cells 3] [-IntervalMs 1000]"] --> FEED{"-Feed?"}
+    FEED -- yes --> CHILD["run itself without -Feed<br/>append every line to<br/>feed\&lt;session&gt;_pawns.log"]
+    CHILD --> NEXT["agent pulls new lines<br/>with next.ps1"]
+    FEED -- no --> READ["Read-Watch: pawn_watch.json<br/>(written by AgentPawnWatch.cs)"]
+    READ --> CHK{"RimWorld running<br/>and file readable?"}
+    CHK -- no --> NR1["NOT RUNNING: ...<br/>exit 2 / exit 1"]
+    CHK -- yes --> TG{"NEW 2026-10-26: inbox_state.json gates.tips is false?<br/>(same mod data folder; file or field missing = on)"}
+    TG -- no --> TIPS["2 TIP lines, once"]
+    TG -- yes --> NT["NEW 2026-10-26: no TIP lines (Know-how tips is off)"]
+    NT --> FULL
+    TIPS --> FULL["WATCHING pawns: N listed<br/>PAWN name at where: full line<br/>for each pawn Wanted by -Skip / -Only<br/>+ current attack lines"]
+    FULL --> HOST0["HOSTILES ON MAP if any standing"]
+    HOST0 --> LOOP["sleep IntervalMs"]
+    LOOP --> PROC{"RimWorldWin64<br/>running?"}
+    PROC -- no --> NR2["NOT RUNNING: RimWorld process not found<br/>exit 2"]
+    PROC -- yes --> UTC{"file readable and<br/>utc changed?"}
+    UTC -- no --> LOOP
+    UTC -- yes --> PAWN{"per wanted pawn"}
+    PAWN -- new id --> PNEW["PAWN NEW name at where: full line"]
+    PAWN -- text changed --> PCH["Change-Line:<br/>PAWN name: changed parts; no longer: gone parts"]
+    PAWN -- moved &gt;= Cells --> PMV["PAWN name moved to x, z<br/>(room only if it changed)"]
+    PNEW --> ATK
+    PCH --> ATK
+    PMV --> ATK
+    PAWN -- nothing --> ATK["attacks: new one prints its on line,<br/>ended one prints its off line"]
+    ATK --> LEFT["left entries with seq &gt; last:<br/>PAWN LEFT text"]
+    LEFT --> HOST{"hostiles standing<br/>flipped?"}
+    HOST -- yes --> HOUT["HOSTILES ON MAP ... spawn hostile_watch<br/>or HOSTILES GONE ..."]
+    HOST -- no --> LOOP
+    HOUT --> LOOP
+    class TG,NT new
+    classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px

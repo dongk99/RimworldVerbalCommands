@@ -114,8 +114,18 @@ if (-not (Get-Process -Name RimWorldWin64 -ErrorAction SilentlyContinue)) { "NOT
 if ($j -eq $null) { "NOT RUNNING: $file not found or unreadable (the mod build with the pawn watch is not loaded, no colony is loaded, or 'Agent inbox' is off in the mod settings)"; exit 1 }
 
 # The two tips, once (user, 2026-10-17: "Once at start of pawns shell output.").
-"TIP: you can make pawns drop items or gear by saying drop {itemname} for {pawn}. Dropepd items from inventory are forbidden so you will have to enable them in order to interact with it again."
-"TIP: you can treat visitors, allies, traders for faction relations bonus if they leave the map safely."
+# Settings gate (user, 2026-10-26): printed only while "Know-how tips" is on in the mod settings. The mod writes that gate as
+# gates.tips in <SaveData>\VerbalCommands\inbox_state.json (same folder as pawn_watch.json); only an exact false skips the
+# tips. The file unreadable or not JSON, or no gates.tips in it, counts as on.
+$tipsOn = $true
+try {
+    $state = [IO.File]::ReadAllText((Join-Path $root "inbox_state.json")) | ConvertFrom-Json
+    if ($state.PSObject.Properties["gates"] -and $state.gates.PSObject.Properties["tips"] -and ($state.gates.tips -is [bool]) -and ($state.gates.tips -eq $false)) { $tipsOn = $false }
+} catch { }
+if ($tipsOn) {
+    "TIP: you can make pawns drop items or gear by saying drop {itemname} for {pawn}. Dropepd items from inventory are forbidden so you will have to enable them in order to interact with it again."
+    "TIP: you can treat visitors, allies, traders for faction relations bonus if they leave the map safely."
+}
 
 $pawns = @{}      # id -> @{ text; x; z }
 $attacks = @{}    # key "id|attackkey" -> off line

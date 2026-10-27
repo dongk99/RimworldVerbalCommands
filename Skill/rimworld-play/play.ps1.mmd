@@ -1,0 +1,19 @@
+flowchart TD
+    P["param: -Do[], -Plan[], -Reply, -Run N, -Ask, -Model (:1-8)<br/>one call = a whole step of play (:9)"] --> R{"-Reply set? (:22)"}
+    R -- yes --> R1["send.ps1 -Reply apply|cancel<br/>answers the plan that waits (:23-24)"]
+    R -- no --> PL
+    R1 --> PL["each -Plan: send.ps1 -Text<br/>mode raw: previewed, not applied (:26-29)"]
+    PL --> DO["each -Do: send.ps1 -Text -Mode 'raw apply'<br/>applied at once (:30-33)"]
+    DO --> RU{"-Run > 0? (:34)"}
+    RU -- yes --> RU1["send.ps1 'run N hours.' raw apply (:37)"]
+    RU1 --> RU2["poll inbox_state.json every 2 s, up to 280 times:<br/>moved = not paused or tick changed;<br/>stop when moved and paused again, or not moved after 8 looks (:40-47)"]
+    RU2 --> RU3["not moved: print STALLED ...<br/>print day, hour, tick (:48-49)"]
+    RU -- no --> AS
+    RU3 --> AS{"-Ask set? (:51)"}
+    AS -- yes --> AS1["send.ps1 -Text Ask: questions last (:52-53)"]
+    S["Send-Order: adds -Model if given, runs send.ps1;<br/>prints send.ps1's whole output (:17-20)"]
+    R1 -.- S
+    PL -.- S
+    DO -.- S
+    RU1 -.- S
+    AS1 -.- S

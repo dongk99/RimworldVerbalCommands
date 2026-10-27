@@ -1,0 +1,20 @@
+flowchart TD
+    P["param: -Name, -Skip, -Only, -Cells 3, -GatherSec 5, -MaxMinutes 9, -IntervalMs 1000 (:26-34)<br/>reads only pawn_watch.json + inbox_state.json; sends nothing to the game (:16-17)"] --> RW{"RimWorldWin64 running? (:132)"}
+    RW -- no --> NR["NOT RUNNING, exit 2"]
+    RW -- yes --> CF{"-Name set: stop file / msg file / new hourly check? (:133-136)"}
+    CF -- yes --> CFo["print STOP / MESSAGE / hourly batch, exit"]
+    CF -- no --> J["read pawn_watch.json (:137)<br/>tick went back (other load) = drop saved memory (:140)"]
+    J --> H{"no hostile standing AND none listed? (:143)"}
+    H -- yes --> NH["NO HOSTILES ... Not watching. exit 0<br/>(does not start watching without hostiles)"]
+    H -- no --> M{"-Name set? (:149)"}
+    M -- "no: perpetual (Monitor tool)" --> PE["WATCHING line, whole list (:151-152)<br/>every 1 s: new pawn_watch.json (utc changed) -> Diff-Lines (:154-160)"]
+    PE --> PG{"no hostile standing? (:161)"}
+    PG -- yes --> GL["HOSTILES GONE ..., exit 0"]
+    PG -- no --> PE
+    M -- "yes: hostile_watch specialist round" --> SR{"Diff-Lines since last call has lines?<br/>(first call: the whole list) (:166-167)"}
+    SR -- yes --> SRo["print them, save memory, exit (:168-172)"]
+    SR -- no --> BL["block, every 1 s: STOP / MESSAGE / hourly -> exit;<br/>changes -> collect for 5 s more, print, exit;<br/>none standing -> HOSTILES GONE; 9 real minutes -> TIMEOUT (:178-207)"]
+    D["Diff-Lines (:102-130), per hostile (after -Skip / -Only):<br/>new on list -> HOSTILE NEW name at x, z: text | nearest colonist<br/>text changed (weapon, health, pain, bleeding, moving, manipulation, consciousness, wounds, target) -> HOSTILE ... full line<br/>moved 3 cells or more -> HOSTILE name moved to x, z | nearest colonist<br/>left the list -> HOSTILE LEFT ... (killed, captured, no longer hostile, out of view, left map)"]
+    PE -.- D
+    SR -.- D
+    BL -.- D

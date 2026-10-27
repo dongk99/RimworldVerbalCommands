@@ -35,7 +35,7 @@
   <VerbalCommands_Settings_SaveRouterLog>Save router log</VerbalCommands_Settings_SaveRouterLog>
   <VerbalCommands_Settings_SaveRouterLogTip>what was sent to Haiku, replies, and what was done.</VerbalCommands_Settings_SaveRouterLogTip>
   <VerbalCommands_Settings_AgentInbox>Agent inbox: run orders from text files in the inbox folder</VerbalCommands_Settings_AgentInbox>
-  <VerbalCommands_Settings_AgentTips>Agent tips: add know-how tips (TIP: lines) to agent inbox results</VerbalCommands_Settings_AgentTips>
+  <VerbalCommands_Settings_AgentTips>Know-how tips (agent tips)</VerbalCommands_Settings_AgentTips>
   <VerbalCommands_Settings_PathfindCost>Pathfind cost: record colonists' walks through doors and remind the agent of better door spots</VerbalCommands_Settings_PathfindCost>
   <VerbalCommands_Settings_RecordHumanPlay>Record human gameplay (log-based) for training</VerbalCommands_Settings_RecordHumanPlay>
   <VerbalCommands_Settings_Extra>Extra system prompt text</VerbalCommands_Settings_Extra>
@@ -66,6 +66,14 @@
   <VerbalCommands_Settings_VoiceToggleKeyDev>Voice toggle key (dev mode)</VerbalCommands_Settings_VoiceToggleKeyDev>
   <VerbalCommands_Settings_ChangeKey>Change…</VerbalCommands_Settings_ChangeKey>
   <VerbalCommands_Settings_RemindDevModeNotice>Remind me about the dev-mode voice key</VerbalCommands_Settings_RemindDevModeNotice>
+  <VerbalCommands_Settings_DevSection>For researcher/development purpose only, see advisory_inventory_reference.md on root folder of mod for details: Keep them ON if you have no idea what you are doing.</VerbalCommands_Settings_DevSection>
+  <VerbalCommands_Settings_RemindBase>Base and building reminders (includes 6hr, 12hr and daily)</VerbalCommands_Settings_RemindBase>
+  <VerbalCommands_Settings_RemindFood>Food and Farming reminders</VerbalCommands_Settings_RemindFood>
+  <VerbalCommands_Settings_RemindPawn>Pawn and work reminders</VerbalCommands_Settings_RemindPawn>
+  <VerbalCommands_Settings_RemindResource>Resource reminders</VerbalCommands_Settings_RemindResource>
+  <VerbalCommands_Settings_RemindUrgent>Urgent reminders</VerbalCommands_Settings_RemindUrgent>
+  <VerbalCommands_Settings_BuildChecks>Building placement checks - Mostly triggered when agents are placing a blueprint</VerbalCommands_Settings_BuildChecks>
+  <VerbalCommands_Settings_BuildAdvice>Build advice tips/notes</VerbalCommands_Settings_BuildAdvice>
   <VerbalCommands_DevModeNotice_Title>Verbal Commands: dev mode changes the voice toggle key</VerbalCommands_DevModeNotice_Title>
   <VerbalCommands_DevModeNotice_Body>Dev mode is on, so ~ (BackQuote) opens the debug log and no longer toggles voice dictation.\n\nIn dev mode, the voice toggle is {0} by default.\n\nBoth keys can be changed in Options &gt; Mod settings &gt; Verbal Commands.</VerbalCommands_DevModeNotice_Body>
   <VerbalCommands_DevModeNotice_DontRemind>Don't remind me</VerbalCommands_DevModeNotice_DontRemind>

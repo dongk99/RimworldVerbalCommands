@@ -1,0 +1,10 @@
+flowchart TB
+  in["PostToolUse, every tool; RimWorld play sessions only, the main agent only"] --> said{"the agent's own text since the last compaction says 'skill' or 'skills'?"}
+  said -- no --> none["exit, nothing printed"]
+  said -- yes --> given{"the hint is already in the transcript since that compaction?"}
+  given -- yes --> none
+  given -- no --> gate{"NEW 2026-10-26: inbox_state.json gates.tips is false?<br/>(mod data folder; file or field missing = on)"}
+  gate -- yes --> off["NEW 2026-10-26: exit, no hint (Know-how tips is off)"]
+  gate -- no --> out["print hookSpecificOutput additionalContext: the skill hint<br/>('if you want to know skills, you can say: show skills of PAWN.')"]
+  class gate,off new
+  classDef new fill:#b6f2b6,stroke:#1a7f1a,stroke-width:3px
